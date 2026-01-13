@@ -1,0 +1,30 @@
+{
+  "name": "masbaratodeals",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "better-sqlite3": "^12.6.0",
+    "chart.js": "^4.5.1",
+    "cheerio": "^1.1.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-handlebars": "^8.0.4",
+    "node-cron": "^4.2.1",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^7.0.12",
+    "open": "^11.0.0",
+    "rss-parser": "^3.13.0",
+    "telegraf": "^4.16.3",
+    "winston": "^3.19.0"
+  }
+}

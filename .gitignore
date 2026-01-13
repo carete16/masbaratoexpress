@@ -1,0 +1,8 @@
+node_modules
+.env
+dist
+.DS_Store
+src/database/deals.db
+src/database/deals.db-journal
+logs
+*.log

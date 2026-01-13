@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>+BARATO DEALS .NET | Las Mejores Ofertas de USA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sd-blue: #0060df;
+            --brand-dark: #001d3d;
+            /* Azul de tu logo */
+            --brand-red: #e63946;
+            /* Rojo de tu logo */
+            --sd-gray: #f2f2f2;
+            --sd-text: #333333;
+            --sd-border: #dddddd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: var(--sd-text);
+        }
+
+        /* Top Black Bar */
+        .top-ad-bar {
+            background: #000b1a;
+            color: #8892b0;
+            text-align: center;
+            padding: 5px;
+            font-size: 11px;
+            font-style: italic;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Header con los colores de tu LOGO */
+        header {
+            background: var(--brand-dark);
+            padding: 12px 5%;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo-icon {
+            background: var(--brand-red);
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 24px;
+            box-shadow: 0 2px 5px rgba(230, 57, 70, 0.4);
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .logo-text span {
+            color: var(--brand-red);
+            display: block;
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+
+        .search-container {
+            flex-grow: 1;
+            max-width: 550px;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            outline: none;
+            font-size: 14px;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .search-container input:focus {
+            background: white;
+            color: black;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .action-item {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            background: #444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 5px;
+            font-size: 18px;
+        }
+
+        /* Subnav */
+        .subnav {
+            border-bottom: 1px solid var(--sd-border);
+            padding: 10px 5%;
+            display: flex;
+            gap: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .subnav span:hover {
+            color: var(--sd-blue);
+            cursor: pointer;
+        }
+
+        /* Trending Tags */
+        .trending-bar {
+            padding: 15px 5%;
+            background: #fff;
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: var(--sd-blue);
+            overflow-x: auto;
+            border-bottom: 1px solid var(--sd-border);
+        }
+
+        /* Main Grid */
+        .container {
+            padding: 30px 5%;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .deals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 15px;
+        }
+
+        /* CARD SLICKDEALS EXACTA */
+        .card {
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            transition: 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .avatar {
+            width: 20px;
+            height: 20px;
+            background: #ddd;
+            border-radius: 50%;
+        }
+
+        .img-box {
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .for-you-badge {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #f0f0ff;
+            color: #6a6aff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 2px;
+        }
+
+        .deal-title {
+            font-size: 13px;
+            font-weight: 400;
+            color: #333;
+            margin-bottom: 10px;
+            height: 36px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .price-row {
+            margin-top: auto;
+        }
+
+        .price-now {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .price-was {
+            font-size: 13px;
+            color: var(--brand-red);
+            text-decoration: line-through;
+            margin-left: 5px;
+        }
+
+        .meta-info {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+            }
+
+            .header-actions {
+                display: none;
+            }
+        }
+
+        /* Amazon Compliance Footer */
+        footer {
+            background: #fdfdfd;
+            border-top: 1px solid var(--sd-border);
+            padding: 60px 10% 40px;
+            margin-top: 80px;
+            color: #666;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-col h4 {
+            color: #111;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .footer-col p,
+        .footer-col a {
+            font-size: 13px;
+            color: #666;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .footer-col a:hover {
+            color: var(--brand-red);
+        }
+
+        .amazon-disclaimer {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        .legal-footer {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-ad-bar">+BARATO DEALS .NET is community-supported. We may get paid by brands for deals.</div>
+
+    <header>
+        <a href="/" class="logo-box">
+            <div class="logo-icon">+</div>
+            <div class="logo-text">BARATO <span>DEALS .NET</span></div>
+        </a>
+        <div class="search-container">
+            <input type="text" placeholder="Search deals, coupons, stores and more...">
+        </div>
+        <div class="header-actions">
+            <div class="action-item">
+                <div class="action-icon">🔔</div>Alerts
+            </div>
+            <div class="action-item">
+                <div class="action-icon">➕</div>Post
+            </div>
+            <div class="action-item">
+                <div class="action-icon">🎁</div>Free
+            </div>
+            <div class="action-item">
+                <div class="action-icon">👤</div>Masbarato...
+            </div>
+        </div>
+    </header>
+
+    <div class="subnav">
+        <span>Categories</span>
+        <span>Coupons</span>
+        <span>Community Forums</span>
+        <span>Personal Finance</span>
+    </div>
+
+    <div class="trending-bar">
+        <b>Trending:</b>
+        <span>Top Retail Deals</span>
+        <span>Tool Deals</span>
+        <span>Tech Deals</span>
+        <span>Apparel</span>
+        <span>Laptops</span>
+        <span>Home Deals</span>
+    </div>
+
+    <div class="container">
+        <div class="section-title">
+            <span>Just For You <small style="font-size: 12px; font-weight: normal; color: #888; margin-left:10px;">About
+                    these deals ⓘ</small></span>
+        </div>
+
+        <div id="deals-grid" class="deals-grid">
+            <!-- Loader -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px;">Buscando las mejores ofertas USA...</div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="amazon-disclaimer">
+            <b>Divulgación de Afiliado:</b> En cumplimiento con las guías de la FTC y los requisitos del Programa de
+            Afiliados de Amazon Associates, le informamos que <b>+BARATO DEALS .NET</b> participa en dicho programa.
+            Esto
+            significa que podemos recibir una comisión por las compras realizadas a través de nuestros enlaces, sin
+            costo adicional para usted. Esto nos ayuda a mantener este sitio libre de anuncios intrusivos y a seguir
+            buscando las mejores ofertas de USA para nuestra comunidad.
+        </div>
+
+        <div class="footer-grid">
+            <div class="footer-col">
+                <div class="logo-box" style="margin-bottom: 20px;">
+                    <div class="logo-icon">+</div>
+                    <div class="logo-text" style="color: #111;">BARATO <span style="color: #e63946;">DEALS .NET</span>
+                    </div>
+                </div>
+                <p>Tu portal de confianza para cazar las ofertas más calientes de Estados Unidos. Verificamos cada
+                    chollazo para que ahorres tiempo y dinero.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Empresa</h4>
+                <a href="#">Sobre Nosotros</a>
+                <a href="#">Contacto</a>
+                <a href="#">Blog de Ofertas</a>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <a href="#">Política de Privacidad</a>
+                <a href="#">Términos y Condiciones</a>
+                <a href="#">Earnings Disclaimer</a>
+            </div>
+            <div class="footer-col">
+                <h4>Ayuda</h4>
+                <a href="#">Preguntas Frecuentes</a>
+                <a href="#">Soporte Telegram</a>
+                <a href="#">Reportar Oferta</a>
+            </div>
+        </div>
+
+        <div class="legal-footer">
+            <span>© 2026 +BARATO DEALS .NET. Todos los derechos reservados.</span>
+            <span>Made with ❤️ for Deal Hunters</span>
+        </div>
+    </footer>
+
+    <script>
+        async function loadDeals() {
+            try {
+                const res = await fetch('/api/deals');
+                const deals = await res.json();
+
+                const container = document.getElementById('deals-grid');
+                if (deals.length === 0) {
+                    container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px;">No hay ofertas activas hoy.</div>`;
+                    return;
+                }
+
+                container.innerHTML = deals.map(deal => {
+                    // Limpieza de imagen para Slickdeals
+                    const imageUrl = deal.image ? `https://wsrv.nl/?url=${encodeURIComponent(deal.image)}&w=300&h=300&fit=contain&bg=white` : 'https://placehold.co/300x300?text=No+Image';
+                    const userNick = ['blinkblink', 'htp182', 'ItsSoCheap', 'pennysave'][Math.floor(Math.random() * 4)];
+
+                    return `
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="avatar"></div>
+                                Found by ${userNick}
+                            </div>
+                            <div class="img-box">
+                                <span class="for-you-badge">For You</span>
+                                <img src="${imageUrl}" alt="${deal.title}" onerror="this.src='https://placehold.co/300x300?text=Image+Error'">
+                            </div>
+                            <h3 class="deal-title">${deal.title}</h3>
+                            <div class="price-row">
+                                <span class="price-now">$${deal.price_offer}</span>
+                                ${deal.price_official > 0 ? `<span class="price-was">Regular: $${deal.price_official}</span>` : ''}
+                                <div class="meta-info">+ Envío Gratis (Prime)</div>
+                                <div class="meta-info" style="color: #444; font-weight: 700; margin-top: 10px;">
+                                    <a href="${deal.link}" target="_blank" style="background: #fb641b; color: white; text-decoration: none; padding: 8px 15px; border-radius: 4px; display: inline-block; width: 100%; text-align: center;">VER EN ${deal.tienda.toUpperCase()}</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        loadDeals();
+        setInterval(loadDeals, 60000);
+    </script>
+</body>
+
+</html>
