@@ -221,12 +221,12 @@
                 <div class="stat-label">Published Deals</div>
                 <div class="stat-value" id="stat-total">0</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">24h Velocity</div>
-                <div class="stat-value" id="stat-24h">0</div>
+            <div class="stat-card" style="border-bottom: 4px solid var(--blue);">
+                <div class="stat-label">Total Clicks (CTR)</div>
+                <div class="stat-value" id="stat-clicks">0</div>
             </div>
             <div class="stat-card" style="border-left: 4px solid var(--success);">
-                <div class="stat-label">Estimated Yield</div>
+                <div class="stat-label">Estimated Yield (EPC)</div>
                 <div class="stat-value" id="stat-revenue">$0.00</div>
             </div>
         </div>
@@ -239,7 +239,7 @@
                         <tr>
                             <th>Product</th>
                             <th>Retailer</th>
-                            <th>Price</th>
+                            <th>Clicks</th>
                             <th>Activity</th>
                         </tr>
                     </thead>
@@ -272,7 +272,7 @@
                 const data = await res.json();
 
                 document.getElementById('stat-total').innerText = data.total_published;
-                document.getElementById('stat-24h').innerText = data.last_24h;
+                document.getElementById('stat-clicks').innerText = data.total_clicks;
                 document.getElementById('stat-revenue').innerText = '$' + data.estimated_revenue;
 
                 const table = document.getElementById('deals-table');
@@ -282,8 +282,10 @@
                             <div class="deal-name">${deal.title}</div>
                         </td>
                         <td><span class="tag">${deal.tienda || 'AMAZON'}</span></td>
-                        <td style="font-weight: 700;">$${deal.price_offer}</td>
-                        <td><a href="${deal.link}" target="_blank" class="btn-live">View Source</a></td>
+                        <td style="font-weight: 700; color: var(--blue); font-size: 16px;">
+                            ${deal.clicks || 0} <small style="font-size: 10px; color: #888;">clics</small>
+                        </td>
+                        <td><a href="/go/${deal.id}" target="_blank" class="btn-live">Test Link</a></td>
                     </tr>
                 `).join('');
             } catch (e) {

@@ -14,36 +14,38 @@ class AIProcessor {
         }
 
         try {
-            const prompt = `Actúa como un Copywriter experto en Marketing de Afiliación y SEO de ofertas.
-Tu objetivo es convertir esta oferta en un post irresistible para Telegram que maximice los CLICS.
+            const prompt = `Actúa como un Director de Marketing experto en Ventas y Psicología del Consumidor.
+Tu objetivo es redactar una promoción irresistible para Telegram sobre un "Chollazo Histórico".
 
-REGLAS DE ORO:
-1. Títulos con GANCHO (FOMO/Urgencia). Ej: "¡PRECIO MÍNIMO!", "¡CHOLLAZO!", "Vuela 🚀".
-2. Resalta el AHORRO REAL. El usuario debe sentir que pierde dinero si no compra.
-3. Usa MÁXIMO 4 emojis para mantener el profesionalismo.
-4. Idioma: Español neutro/latino.
+ESTRATEGIA DE VENTA:
+1. Usa gatillos de ESCASEZ y URGENCIA (¡Liquidación!, ¡Solo hoy!, ¡Se agotan!).
+2. Enfócate en la PRUEBA SOCIAL: Menciona que es una oportunidad verificada manualmente.
+3. El tono debe ser profesional pero electrizante, como alguien que acaba de descubrir un error de precio.
+4. Indica que este precio rompe el mercado comparado con el histórico.
 
 DATOS:
-- Nombre: ${deal.title}
-- Precio Antes: $${deal.price_official}
-- Precio Ahora: $${deal.price_offer}
-- Descuento: ${discount}%
+- Producto: ${deal.title}
+- Precio Normal: $${deal.price_official}
+- Precio Hoy: $${deal.price_offer}
+- Descuento Directo: ${discount}%
 - Tienda: ${deal.tienda}
 
 SALIDA (Formato HTML):
-🔥 <b>[TITULO CON GANCHO]</b>
+🚀 <b>¡[TITULO EXPLOSIVO]!</b>
 
-🛒 <b>Producto:</b> ${deal.title}
+📦 <b>Producto:</b> ${deal.title}
 🏢 <b>Tienda:</b> ${deal.tienda}
 
-💰 <b>Normal:</b> <del>$[precio_normal]</del>
-✅ <b>HOY:</b> $[precio_oferta]
-📉 <b>Ahorras:</b> $[valor_ahorro] ([porcentaje]%)
+💰 <b>Antes:</b> <del>$${deal.price_official}</del>
+🔥 <b>PÁGALO POR SOLO:</b> $${deal.price_offer}
+📉 <b>AHORRO TOTAL:</b> $${discount}% (Ahorras $[valor_ahorro])
 
-⚡ <i>¡Liquidación por tiempo limitado!</i>
-👉 <b>COMPRA AQUÍ:</b> [link]
+⭐ <i>Oportunidad Verificada por el equipo +BARATO</i>
+━━━━━━━━━━━━━━━━━━
+👉 <b>VER OFERTA AQUÍ:</b> [link]
+━━━━━━━━━━━━━━━━━━
 
-#BaratoDealsNET #Oferta #Ahorro`;
+#MasbaratoDeals #OportunidadUnica #AhorroUSA`;
 
             const response = await axios.post('https://api.openai.com/v1/chat/completions', {
                 model: this.model,
@@ -62,18 +64,22 @@ SALIDA (Formato HTML):
 
     fallbackRewrite(deal, discount) {
         const ahorro = deal.price_official - deal.price_offer;
-        return `🔥 ${deal.title.toUpperCase()} EN OFERTA
+        const ahorroPorcentaje = discount || Math.round((ahorro / deal.price_official) * 100);
 
-🛒 Producto: ${deal.title}
+        return `🚀 <b>¡CHOLLAZO DETECTADO EN ${deal.tienda.toUpperCase()}!</b>
 
-💰 Antes: $${deal.price_official.toLocaleString()}
-🔥 Ahora: $${deal.price_offer.toLocaleString()}
-💸 Ahorro: $${ahorro.toLocaleString()} (${discount}%)
+🔥 <b>${deal.title.toUpperCase()}</b>
 
-⏰ Oferta por tiempo limitado
-👉 Comprar aquí: ${deal.link}
+💰 <b>Precio Normal:</b> <del>$${deal.price_official.toLocaleString()}</del>
+✅ <b>PRECIO HOY:</b> $${deal.price_offer.toLocaleString()}
+📉 <b>AHORRAS:</b> $${ahorro.toLocaleString()} (${ahorroPorcentaje}%)
 
-#MasbaratoDeals #Ofertas #Descuentos`;
+⭐ <i>Oferta exclusiva verificada por +BARATO DEALS</i>
+━━━━━━━━━━━━━━━━━━
+👉 <b>COMPRA AQUÍ:</b> ${deal.link}
+━━━━━━━━━━━━━━━━━━
+
+#MasbaratoDeals #OfertasUSA #${deal.tienda.replace(/\s+/g, '')} #Ahorro`;
     }
 }
 

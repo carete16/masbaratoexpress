@@ -19,17 +19,37 @@ app.get('/api/deals', (req, res) => {
     }
 });
 
+// MOTOR DE REDIRECCIÓN Y TRACKING
+app.get('/go/:id', (req, res) => {
+    try {
+        const dealId = req.params.id;
+        const deal = db.prepare('SELECT link FROM published_deals WHERE id = ?').get(dealId);
+
+        if (deal) {
+            // Registrar click
+            db.prepare('UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?').run(dealId);
+            // Redirigir
+            return res.redirect(deal.link);
+        }
+        res.status(404).send('Oferta no encontrada o expirada.');
+    } catch (error) {
+        res.status(500).send('Error en la redirección.');
+    }
+});
+
 // API para estadísticas (Admin)
 app.get('/api/stats', (req, res) => {
     try {
         const total = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
+        const totalClicks = db.prepare('SELECT SUM(clicks) as clicks FROM published_deals').get().clicks || 0;
         const last24h = db.prepare("SELECT COUNT(*) as count FROM published_deals WHERE posted_at > datetime('now', '-24 hours')").get().count;
         const recentDeals = db.prepare('SELECT * FROM published_deals ORDER BY posted_at DESC LIMIT 10').all();
 
         res.json({
             total_published: total,
+            total_clicks: totalClicks,
             last_24h: last24h,
-            estimated_revenue: (total * 0.5).toFixed(2),
+            estimated_revenue: (totalClicks * 0.15).toFixed(2), // Estimación más conservadora por clic (EPC)
             recent_deals: recentDeals
         });
     } catch (error) {
@@ -40,6 +60,23 @@ app.get('/api/stats', (req, res) => {
 // Portal Público de Ofertas (Lo que verá Amazon)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/portal.html'));
+});
+
+// Páginas Legales y Corporativas (Vital para Amazon)
+app.get('/privacy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/privacy.html'));
+});
+
+app.get('/terms', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/terms.html'));
+});
+
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/about.html'));
+});
+
+app.get('/contact', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/contact.html'));
 });
 
 // Dashboard de Control (Solo para el dueño)

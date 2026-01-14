@@ -5,34 +5,39 @@ const AIProcessor = require('./AIProcessor');
 
 class CoreProcessor {
     constructor() {
-        this.minDiscount = 25;
+        this.minDiscount = 30; // Solo lo que de verdad vale la pena (Standard de Marketing)
+        this.minScore = 50;    // Filtro de validación social (Reddit Ups / Slickdeals Heat)
     }
 
     async processDeals(deals) {
         const validDeals = [];
 
         for (const deal of deals) {
-            // 1. Verificar duplicados
-            if (isRecentlyPublished(deal.link)) {
-                logger.info(`Producto duplicado omitido: ${deal.title}`);
-                continue;
-            }
+            // 1. Detección implacable de Duplicados (Evitar repeticiones)
+            if (isRecentlyPublished(deal.link)) continue;
 
-            // 2. Transformar Link a Afiliado (Monetización)
+            // 2. Transformar Link (Monetización)
             deal.link = LinkTransformer.transform(deal.link);
 
-            // 3. Calcular descuento
+            // 3. Análisis de Oportunidad (Matemática de Venta)
             const discount = this.calculateDiscount(deal.price_official, deal.price_offer);
 
-            // Filtro de descuento
-            if (discount > 0 && discount < this.minDiscount) {
-                logger.info(`Descuento insuficiente (${discount}%): ${deal.title}`);
+            // Lógica de "Ganga Real / Verdadero Chollazo": 
+            // - O tiene un descuento masivo (>=30%)
+            // - O es un producto con alta validación social (Score >= 50)
+            const isLegendaryDeal = discount >= this.minDiscount;
+            const isHighDemand = (deal.score || 0) >= this.minScore;
+
+            if (!isLegendaryDeal && !isHighDemand) {
+                // Si no cumple ninguno de los dos criterios de elite, se descarta
                 continue;
             }
 
-            // 4. Formatear para Telegram con IA (Viralización)
+            // 4. Formatear con Copywriting de Alto Impacto (IA)
             const viralContent = await AIProcessor.rewriteViral(deal, discount || 0);
             validDeals.push({ ...deal, viralContent });
+
+            logger.info(`✅ OFERTA VALIDADA: ${deal.title} [Dcto: ${discount}% | Score: ${deal.score}]`);
         }
 
         return validDeals;

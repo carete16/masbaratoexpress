@@ -56,6 +56,14 @@ class SlickdealsCollector {
                     } else continue;
                 }
 
+                // Determinar tienda real
+                let realTienda = 'USA Store';
+                const lowerTitle = title.toLowerCase();
+                if (lowerTitle.includes('amazon')) realTienda = 'Amazon USA';
+                else if (lowerTitle.includes('ebay')) realTienda = 'eBay';
+                else if (lowerTitle.includes('walmart')) realTienda = 'Walmart';
+                else if (lowerTitle.includes('best buy') || lowerTitle.includes('bestbuy')) realTienda = 'Best Buy';
+
                 deals.push({
                     id: `rd_${data.id}`,
                     title: title.split(' - ')[0].replace(/\[.*?\]/g, '').trim(),
@@ -63,7 +71,7 @@ class SlickdealsCollector {
                     price_official: Math.round(offerPrice * 1.5), // Estimación profesional
                     link: data.url,
                     image: imageUrl,
-                    tienda: title.toLowerCase().includes('amazon') ? 'Amazon USA' : 'USA Store',
+                    tienda: realTienda,
                     categoria: 'Tecnología',
                     score: data.ups || 10 // "Heat" de la oferta
                 });

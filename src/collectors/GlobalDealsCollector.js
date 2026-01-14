@@ -1,11 +1,13 @@
 const logger = require('../utils/logger');
 const SlickdealsCollector = require('./SlickdealsCollector');
+const SlickRSSCollector = require('./SlickRSSCollector');
 
 class GlobalDealsCollector {
     constructor() {
         // Podríamos añadir más fuentes USA aquí en el futuro
         this.usaSources = [
-            SlickdealsCollector
+            SlickdealsCollector,
+            SlickRSSCollector
         ];
     }
 

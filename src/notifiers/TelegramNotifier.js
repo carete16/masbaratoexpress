@@ -77,14 +77,16 @@ class TelegramNotifier {
                 logger.info(`Texto enviado (sin imagen) para: ${deal.title}`);
             }
 
-            // Guardar en DB
+            // Guardar en DB con metadatos completos para la web
             saveDeal({
                 id: deal.id || deal.link,
                 link: deal.link,
                 title: deal.title,
                 price_official: deal.price_official,
                 price_offer: deal.price_offer,
-                image: deal.image
+                image: deal.image,
+                tienda: deal.tienda,
+                categoria: deal.categoria
             });
 
             return true;

@@ -4,493 +4,547 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>+BARATO DEALS .NET | Las Mejores Ofertas de USA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>+BARATO DEALS .NET | Chollazos USA Verificados</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --sd-blue: #0060df;
-            --brand-dark: #001d3d;
-            /* Azul de tu logo */
-            --brand-red: #e63946;
-            /* Rojo de tu logo */
-            --sd-gray: #f2f2f2;
-            --sd-text: #333333;
-            --sd-border: #dddddd;
+            --brand-red: #ff4d4d;
+            --brand-red-glow: rgba(255, 77, 77, 0.4);
+            --bg-dark: #0a0a0c;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-muted: #a0a0a8;
+            --accent-blue: #00d2ff;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Open Sans', sans-serif;
+            font-family: 'Outfit', sans-serif;
         }
 
         body {
-            background-color: #ffffff;
-            color: var(--sd-text);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        /* Top Black Bar */
-        .top-ad-bar {
-            background: #000b1a;
-            color: #8892b0;
-            text-align: center;
-            padding: 5px;
-            font-size: 11px;
-            font-style: italic;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        /* --- BACKGROUND RADIANT ORBS --- */
+        .orb {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
         }
 
-        /* Header con los colores de tu LOGO */
-        header {
-            background: var(--brand-dark);
-            padding: 12px 5%;
+        .orb-1 {
+            top: -100px;
+            left: -100px;
+            background: var(--brand-red);
+        }
+
+        .orb-2 {
+            bottom: -100px;
+            right: -100px;
+            background: var(--accent-blue);
+        }
+
+        /* --- NAVIGATION --- */
+        nav {
+            padding: 20px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 12, 0.8);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
             display: flex;
             align-items: center;
-            gap: 30px;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .logo-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            gap: 10px;
             text-decoration: none;
             color: white;
-        }
-
-        .logo-icon {
-            background: var(--brand-red);
-            width: 38px;
-            height: 38px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 24px;
-            box-shadow: 0 2px 5px rgba(230, 57, 70, 0.4);
-        }
-
-        .logo-text {
-            font-size: 22px;
             font-weight: 800;
-            letter-spacing: -1px;
-            line-height: 1;
-            text-transform: uppercase;
+            font-size: 24px;
+            letter-spacing: -0.5px;
         }
 
-        .logo-text span {
+        .logo span {
             color: var(--brand-red);
-            display: block;
-            font-size: 14px;
-            letter-spacing: 2px;
-            margin-top: 2px;
-        }
-
-        .search-container {
-            flex-grow: 1;
-            max-width: 550px;
-        }
-
-        .search-container input {
-            width: 100%;
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-            outline: none;
-            font-size: 14px;
-            color: white;
-            transition: all 0.3s;
-        }
-
-        .search-container input:focus {
-            background: white;
-            color: black;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .action-item {
-            text-align: center;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .action-icon {
-            width: 40px;
-            height: 40px;
-            background: #444;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 5px;
+            padding: 2px 8px;
+            background: var(--brand-red-glow);
+            border-radius: 6px;
             font-size: 18px;
         }
 
-        /* Subnav */
-        .subnav {
-            border-bottom: 1px solid var(--sd-border);
-            padding: 10px 5%;
-            display: flex;
-            gap: 25px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #555;
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 500px;
+            margin: 0 40px;
         }
 
-        .subnav span:hover {
-            color: var(--sd-blue);
+        .search-wrapper input {
+            width: 100%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: white;
+            outline: none;
+            transition: 0.3s;
+            font-size: 15px;
+        }
+
+        .search-wrapper input:focus {
+            border-color: var(--brand-red);
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 20px var(--brand-red-glow);
+        }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            text-align: center;
+            padding: 80px 8% 40px;
+        }
+
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* --- CATEGORIES --- */
+        .categories-bar {
+            padding: 20px 8%;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .cat-btn {
+            padding: 10px 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            color: var(--text-muted);
             cursor: pointer;
+            transition: 0.3s;
+            font-weight: 600;
+            font-size: 14px;
         }
 
-        /* Trending Tags */
-        .trending-bar {
-            padding: 15px 5%;
-            background: #fff;
-            display: flex;
-            gap: 20px;
-            font-size: 13px;
-            color: var(--sd-blue);
-            overflow-x: auto;
-            border-bottom: 1px solid var(--sd-border);
+        .cat-btn:hover,
+        .cat-btn.active {
+            background: white;
+            color: black;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
         }
 
-        /* Main Grid */
+        /* --- DEALS GRID --- */
         .container {
-            padding: 30px 5%;
-        }
-
-        .section-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
+            padding: 0 8% 100px;
         }
 
         .deals-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
         }
 
-        /* CARD SLICKDEALS EXACTA */
-        .card {
-            border: 1px solid #eee;
-            border-radius: 4px;
-            padding: 10px;
-            transition: 0.2s;
+        /* --- DEAL CARD (PREMIUM) --- */
+        .deal-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
-            height: 100%;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
         }
 
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .deal-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: rgba(255, 77, 77, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
         }
 
-        .card-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .category-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            padding: 4px 12px;
+            border-radius: 50px;
             font-size: 11px;
-            color: #888;
-            margin-bottom: 10px;
+            font-weight: 700;
+            color: var(--brand-red);
+            text-transform: uppercase;
+            z-index: 10;
         }
 
-        .avatar {
-            width: 20px;
-            height: 20px;
-            background: #ddd;
-            border-radius: 50%;
-        }
-
-        .img-box {
-            height: 160px;
+        .img-container {
+            height: 220px;
+            background: white;
+            border-radius: 18px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 15px;
             position: relative;
-            margin-bottom: 10px;
         }
 
-        .img-box img {
+        .img-container img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
 
-        .for-you-badge {
+        .discount-flag {
             position: absolute;
-            top: 0;
-            left: 0;
-            background: #f0f0ff;
-            color: #6a6aff;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 5px;
-            border-radius: 2px;
+            bottom: -10px;
+            right: 15px;
+            background: var(--brand-red);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 14px;
+            box-shadow: 0 5px 15px var(--brand-red-glow);
         }
 
-        .deal-title {
-            font-size: 13px;
-            font-weight: 400;
-            color: #333;
-            margin-bottom: 10px;
-            height: 36px;
-            overflow: hidden;
+        .deal-info h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-main);
             display: -webkit-box;
             -webkit-line-clamp: 2;
-            line-clamp: 2;
             -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 48px;
+        }
+
+        .store-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
         }
 
         .price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .current-price {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .old-price {
+            font-size: 16px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+        }
+
+        .buy-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--brand-red), #ff7675);
+            color: white;
+            text-decoration: none;
+            border-radius: 14px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 16px;
+            transition: 0.3s;
+            box-shadow: 0 8px 20px var(--brand-red-glow);
             margin-top: auto;
         }
 
-        .price-now {
-            font-size: 18px;
-            font-weight: 700;
-            color: #111;
+        .buy-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 12px 25px var(--brand-red-glow);
+            filter: brightness(1.1);
         }
 
-        .price-was {
-            font-size: 13px;
-            color: var(--brand-red);
-            text-decoration: line-through;
-            margin-left: 5px;
-        }
-
-        .meta-info {
-            font-size: 11px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        @media (max-width: 768px) {
-            header {
-                flex-direction: column;
-            }
-
-            .header-actions {
-                display: none;
-            }
-        }
-
-        /* Amazon Compliance Footer */
+        /* --- FOOTER --- */
         footer {
-            background: #fdfdfd;
-            border-top: 1px solid var(--sd-border);
-            padding: 60px 10% 40px;
-            margin-top: 80px;
-            color: #666;
+            padding: 80px 8% 40px;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.5);
         }
 
-        .footer-grid {
+        .footer-content {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
         }
 
-        .footer-col h4 {
-            color: #111;
-            font-size: 14px;
+        .footer-brand h2 {
+            font-weight: 800;
             margin-bottom: 20px;
+        }
+
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .footer-links h4 {
+            margin-bottom: 25px;
             text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
         }
 
-        .footer-col p,
-        .footer-col a {
-            font-size: 13px;
-            color: #666;
-            text-decoration: none;
+        .footer-links a {
             display: block;
-            margin-bottom: 10px;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 12px;
+            font-size: 14px;
+            transition: 0.2s;
         }
 
-        .footer-col a:hover {
+        .footer-links a:hover {
             color: var(--brand-red);
+            padding-left: 5px;
         }
 
-        .amazon-disclaimer {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 20px;
-            border-radius: 8px;
-            font-size: 12px;
-            line-height: 1.6;
-            color: #777;
-            margin-bottom: 30px;
+        .disclaimer-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            line-height: 1.8;
         }
 
-        .legal-footer {
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
+        @media (max-width: 900px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .search-wrapper {
+                margin: 0;
+                width: 100%;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="top-ad-bar">+BARATO DEALS .NET is community-supported. We may get paid by brands for deals.</div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
 
-    <header>
-        <a href="/" class="logo-box">
-            <div class="logo-icon">+</div>
-            <div class="logo-text">BARATO <span>DEALS .NET</span></div>
+    <nav>
+        <a href="/" class="logo">
+            +BARATO <span>DEALS</span>
         </a>
-        <div class="search-container">
-            <input type="text" placeholder="Search deals, coupons, stores and more...">
+        <div class="search-wrapper">
+            <input type="text" id="main-search" placeholder="Busca productos, marcas o tiendas...">
         </div>
-        <div class="header-actions">
-            <div class="action-item">
-                <div class="action-icon">🔔</div>Alerts
-            </div>
-            <div class="action-item">
-                <div class="action-icon">➕</div>Post
-            </div>
-            <div class="action-item">
-                <div class="action-icon">🎁</div>Free
-            </div>
-            <div class="action-item">
-                <div class="action-icon">👤</div>Masbarato...
-            </div>
+        <div style="display: flex; gap: 15px;">
+            <a href="https://t.me/Masbarato_deals" target="_blank" class="cat-btn"
+                style="background: #229ED9; color: white; border: none;">Unirse a Telegram</a>
         </div>
-    </header>
+    </nav>
 
-    <div class="subnav">
-        <span>Categories</span>
-        <span>Coupons</span>
-        <span>Community Forums</span>
-        <span>Personal Finance</span>
+    <section class="hero">
+        <h1>Ofertas Irresistibles de USA</h1>
+        <p>Expertos en encontrar los descuentos más salvajes de Amazon, eBay y las mejores tiendas de Estados Unidos.
+            Verificado al 100%.</p>
+    </section>
+
+    <div class="categories-bar">
+        <button class="cat-btn active" data-cat="all">Todas las Ofertas</button>
+        <button class="cat-btn" data-cat="Tecnología">Tecnología</button>
+        <button class="cat-btn" data-cat="Gamer">Gamer</button>
+        <button class="cat-btn" data-cat="Moda">Moda</button>
+        <button class="cat-btn" data-cat="Hogar">Hogar</button>
     </div>
 
-    <div class="trending-bar">
-        <b>Trending:</b>
-        <span>Top Retail Deals</span>
-        <span>Tool Deals</span>
-        <span>Tech Deals</span>
-        <span>Apparel</span>
-        <span>Laptops</span>
-        <span>Home Deals</span>
-    </div>
-
-    <div class="container">
-        <div class="section-title">
-            <span>Just For You <small style="font-size: 12px; font-weight: normal; color: #888; margin-left:10px;">About
-                    these deals ⓘ</small></span>
-        </div>
-
+    <main class="container">
         <div id="deals-grid" class="deals-grid">
-            <!-- Loader -->
-            <div style="grid-column: 1/-1; text-align: center; padding: 50px;">Buscando las mejores ofertas USA...</div>
+            <!-- Loader Skeleton -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-muted);">
+                <div style="font-size: 24px; margin-bottom: 10px;">⚡</div>
+                Buscando chollazos en tiempo real...
+            </div>
         </div>
-    </div>
+    </main>
 
     <footer>
-        <div class="amazon-disclaimer">
-            <b>Divulgación de Afiliado:</b> En cumplimiento con las guías de la FTC y los requisitos del Programa de
-            Afiliados de Amazon Associates, le informamos que <b>+BARATO DEALS .NET</b> participa en dicho programa.
-            Esto
-            significa que podemos recibir una comisión por las compras realizadas a través de nuestros enlaces, sin
-            costo adicional para usted. Esto nos ayuda a mantener este sitio libre de anuncios intrusivos y a seguir
-            buscando las mejores ofertas de USA para nuestra comunidad.
+        <div class="disclaimer-box">
+            <b>Divulgación de Afiliados:</b> En cumplimiento con la FTC y Amazon Associates, <b>+BARATO DEALS .NET</b>
+            informa que somos participantes de programas de afiliados. Al hacer clic en nuestros enlaces coordinamos una
+            comisión con las tiendas sin costo extra para ti. Esto mantiene nuestro servicio gratuito y libre de
+            publicidad invasiva.
         </div>
 
-        <div class="footer-grid">
-            <div class="footer-col">
-                <div class="logo-box" style="margin-bottom: 20px;">
-                    <div class="logo-icon">+</div>
-                    <div class="logo-text" style="color: #111;">BARATO <span style="color: #e63946;">DEALS .NET</span>
-                    </div>
-                </div>
-                <p>Tu portal de confianza para cazar las ofertas más calientes de Estados Unidos. Verificamos cada
-                    chollazo para que ahorres tiempo y dinero.</p>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>+BARATO DEALS</h2>
+                <p>Tu radar personal de descuentos en el mercado norteamericano. Solo lo mejor, solo lo verificado.</p>
             </div>
-            <div class="footer-col">
-                <h4>Empresa</h4>
-                <a href="#">Sobre Nosotros</a>
-                <a href="#">Contacto</a>
-                <a href="#">Blog de Ofertas</a>
-            </div>
-            <div class="footer-col">
+            <div class="footer-links">
                 <h4>Legal</h4>
-                <a href="#">Política de Privacidad</a>
-                <a href="#">Términos y Condiciones</a>
-                <a href="#">Earnings Disclaimer</a>
+                <a href="/privacy">Privacidad</a>
+                <a href="/terms">Términos</a>
+                <a href="/about">Divulgación</a>
             </div>
-            <div class="footer-col">
-                <h4>Ayuda</h4>
-                <a href="#">Preguntas Frecuentes</a>
-                <a href="#">Soporte Telegram</a>
-                <a href="#">Reportar Oferta</a>
+            <div class="footer-links">
+                <h4>Soporte</h4>
+                <a href="/contact">Contacto</a>
+                <a href="/about">Nosotros</a>
+                <a href="https://t.me/Masbarato_deals">Telegram</a>
+            </div>
+            <div class="footer-links">
+                <h4>Categorías</h4>
+                <a href="#">Laptops</a>
+                <a href="#">Smartphones</a>
+                <a href="#">Zapatillas</a>
             </div>
         </div>
 
-        <div class="legal-footer">
-            <span>© 2026 +BARATO DEALS .NET. Todos los derechos reservados.</span>
-            <span>Made with ❤️ for Deal Hunters</span>
+        <div
+            style="text-align: center; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--glass-border); padding-top: 30px;">
+            © 2026 +BARATO DEALS .NET - Diseñado para cazadores de ofertas.
         </div>
     </footer>
 
     <script>
-        async function loadDeals() {
+        let allDeals = [];
+
+        async function init() {
             try {
                 const res = await fetch('/api/deals');
-                const deals = await res.json();
-
-                const container = document.getElementById('deals-grid');
-                if (deals.length === 0) {
-                    container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px;">No hay ofertas activas hoy.</div>`;
-                    return;
-                }
-
-                container.innerHTML = deals.map(deal => {
-                    // Limpieza de imagen para Slickdeals
-                    const imageUrl = deal.image ? `https://wsrv.nl/?url=${encodeURIComponent(deal.image)}&w=300&h=300&fit=contain&bg=white` : 'https://placehold.co/300x300?text=No+Image';
-                    const userNick = ['blinkblink', 'htp182', 'ItsSoCheap', 'pennysave'][Math.floor(Math.random() * 4)];
-
-                    return `
-                        <div class="card">
-                            <div class="card-header">
-                                <div class="avatar"></div>
-                                Found by ${userNick}
-                            </div>
-                            <div class="img-box">
-                                <span class="for-you-badge">For You</span>
-                                <img src="${imageUrl}" alt="${deal.title}" onerror="this.src='https://placehold.co/300x300?text=Image+Error'">
-                            </div>
-                            <h3 class="deal-title">${deal.title}</h3>
-                            <div class="price-row">
-                                <span class="price-now">$${deal.price_offer}</span>
-                                ${deal.price_official > 0 ? `<span class="price-was">Regular: $${deal.price_official}</span>` : ''}
-                                <div class="meta-info">+ Envío Gratis (Prime)</div>
-                                <div class="meta-info" style="color: #444; font-weight: 700; margin-top: 10px;">
-                                    <a href="${deal.link}" target="_blank" style="background: #fb641b; color: white; text-decoration: none; padding: 8px 15px; border-radius: 4px; display: inline-block; width: 100%; text-align: center;">VER EN ${deal.tienda.toUpperCase()}</a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (e) { console.error(e); }
+                allDeals = await res.json();
+                render(allDeals);
+            } catch (e) {
+                console.error(e);
+            }
         }
 
-        loadDeals();
-        setInterval(loadDeals, 60000);
+        function render(deals) {
+            const grid = document.getElementById('deals-grid');
+            if (deals.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 100px;">No hay ofertas disponibles por ahora. Vuelve más tarde.</div>`;
+                return;
+            }
+
+            grid.innerHTML = deals.map(deal => {
+                const discount = deal.price_official > 0 ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100) : 0;
+                // Proxy for images to handle bypass/resizing
+                const img = deal.image || 'https://placehold.co/400x400?text=Premium+Deal';
+
+                return `
+                    <article class="deal-card">
+                        <span class="category-badge">${deal.categoria || 'Oferta'}</span>
+                        <div class="img-container">
+                            <img src="${img}" alt="${deal.title}" loading="lazy">
+                            ${discount > 0 ? `<div class="discount-flag">-${discount}%</div>` : ''}
+                        </div>
+                        <div class="deal-info">
+                            <div class="store-info">
+                                🏙️ <b>${deal.tienda || 'USA Store'}</b>
+                            </div>
+                            <h3>${deal.title}</h3>
+                            <div class="price-row">
+                                <span class="current-price">$${deal.price_offer}</span>
+                                ${deal.price_official > 0 ? `<span class="old-price">$${deal.price_official}</span>` : ''}
+                            </div>
+                            <a href="/go/${deal.id}" target="_blank" class="buy-btn">VER CHOLLAZO</a>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // Filtering
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const cat = btn.getAttribute('data-cat');
+                if (cat === 'all') {
+                    render(allDeals);
+                } else {
+                    const filtered = allDeals.filter(d => d.categoria === cat);
+                    render(filtered);
+                }
+            });
+        });
+
+        // Search
+        document.getElementById('main-search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allDeals.filter(d =>
+                d.title.toLowerCase().includes(query) ||
+                (d.tienda && d.tienda.toLowerCase().includes(query))
+            );
+            render(filtered);
+        });
+
+        init();
+        // Refresh every 5 mins
+        setInterval(init, 300000);
     </script>
 </body>
 
