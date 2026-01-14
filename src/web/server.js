@@ -9,6 +9,10 @@ const db = new Database(path.resolve(__dirname, '../database/deals.db'));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/health', (req, res) => {
+    res.send('OK - Server is Live');
+});
+
 // API para obtener ofertas (Pública)
 app.get('/api/deals', (req, res) => {
     try {
