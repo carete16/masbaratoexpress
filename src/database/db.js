@@ -3,15 +3,14 @@ const path = require('path');
 const logger = require('../utils/logger');
 require('dotenv').config();
 
-// Determinar ruta de la DB absoluta
-const dbPath = path.resolve(__dirname, '../../src/database/deals.db');
+// Usar el directorio actual de ejecución (root) para localizar la DB
+const dbPath = path.resolve(process.cwd(), 'src/database/deals.db');
 
 let db;
 try {
   db = new Database(dbPath);
-  logger.info(`💾 DB Conectada en: ${dbPath}`);
+  logger.info(`💾 Base de datos conectada en: ${dbPath}`);
 
-  // Inicializar Tablas
   db.exec(`
       CREATE TABLE IF NOT EXISTS published_deals (
         id TEXT PRIMARY KEY,
@@ -27,8 +26,7 @@ try {
       )
     `);
 } catch (error) {
-  logger.error(`❌ Error al conectar DB: ${error.message}`);
-  // Fallback a memoria si falla disco (evita crash en Render)
+  logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
   db = new Database(':memory:');
 }
 
@@ -49,32 +47,23 @@ const saveDeal = (deal) => {
       deal.categoria || 'Tecnología'
     );
   } catch (e) {
-    logger.error(`Error guardando deal: ${e.message}`);
+    logger.error(`Error guardando: ${e.message}`);
   }
 };
 
 const registerClick = (dealId) => {
   try {
-    const stmt = db.prepare("UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?");
-    return stmt.run(dealId);
+    db.prepare("UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?").run(dealId);
   } catch (e) {
-    logger.error(`Error registrando click: ${e.message}`);
+    logger.error(`Error click: ${e.message}`);
   }
 };
 
 const isRecentlyPublished = (link) => {
   try {
-    const stmt = db.prepare(`
-      SELECT * FROM published_deals 
-      WHERE link = ? AND posted_at > datetime('now', '-168 hours')
-    `);
+    const stmt = db.prepare(`SELECT * FROM published_deals WHERE link = ? AND posted_at > datetime('now', '-168 hours')`);
     return stmt.get(link) !== undefined;
   } catch (e) { return false; }
 };
 
-module.exports = {
-  db, // Exportar la instancia para uso directo en server.js
-  saveDeal,
-  isRecentlyPublished,
-  registerClick
-};
+module.exports = { db, saveDeal, isRecentlyPublished, registerClick };

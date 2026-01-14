@@ -5,26 +5,36 @@ const logger = require('../utils/logger');
 require('dotenv').config();
 
 const app = express();
-const viewsPath = path.join(__dirname, 'views');
-const publicPath = path.join(__dirname, 'public');
 
+// Rutas absolutas garantizadas
+const viewsPath = path.resolve(__dirname, 'views');
+const publicPath = path.resolve(__dirname, 'public');
+
+// Servir archivos estáticos
 app.use(express.static(publicPath));
 
-app.get('/health', (req, res) => {
-    res.send('OK - Server is Live');
+// Logger de rutas para Render
+app.use((req, res, next) => {
+    logger.info(`Incoming request: ${req.method} ${req.url}`);
+    next();
 });
 
-// API para obtener ofertas (Pública)
+app.get('/health', (req, res) => {
+    res.status(200).send('OK - Server is Live');
+});
+
+// API para obtener ofertas
 app.get('/api/deals', (req, res) => {
     try {
         const deals = db.prepare('SELECT * FROM published_deals ORDER BY posted_at DESC LIMIT 24').all();
-        res.json(deals);
+        res.json(deals || []);
     } catch (error) {
+        logger.error(`API Error: ${error.message}`);
         res.status(500).json({ error: error.message });
     }
 });
 
-// MOTOR DE REDIRECCIÓN Y TRACKING
+// Redirección con tracking
 app.get('/go/:id', (req, res) => {
     try {
         const dealId = req.params.id;
@@ -35,22 +45,41 @@ app.get('/go/:id', (req, res) => {
         }
         res.status(404).send('Oferta no encontrada');
     } catch (error) {
-        res.status(500).send('Error en la redirección.');
+        res.status(500).send('Error');
     }
 });
 
-// API para estadísticas (Admin)
+// Rutas de las páginas
+app.get('/', (req, res) => {
+    const file = path.join(viewsPath, 'portal.html');
+    res.sendFile(file, (err) => {
+        if (err) {
+            logger.error(`Error sending portal.html: ${err.message}`);
+            res.status(500).send('Error loading page structure');
+        }
+    });
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(viewsPath, 'index.html'));
+});
+
+// Páginas legales
+['privacy', 'terms', 'about', 'contact'].forEach(p => {
+    app.get(`/${p}`, (req, res) => {
+        res.sendFile(path.join(viewsPath, `${p}.html`));
+    });
+});
+
+// Estadísticas para el Admin
 app.get('/api/stats', (req, res) => {
     try {
         const total = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
         const totalClicks = db.prepare('SELECT SUM(clicks) as clicks FROM published_deals').get().clicks || 0;
-        const last24h = db.prepare("SELECT COUNT(*) as count FROM published_deals WHERE posted_at > datetime('now', '-24 hours')").get().count;
         const recentDeals = db.prepare('SELECT * FROM published_deals ORDER BY posted_at DESC LIMIT 10').all();
-
         res.json({
             total_published: total,
             total_clicks: totalClicks,
-            last_24h: last24h,
             estimated_revenue: (totalClicks * 0.15).toFixed(2),
             recent_deals: recentDeals
         });
@@ -59,17 +88,9 @@ app.get('/api/stats', (req, res) => {
     }
 });
 
-// Rutas de Páginas
-app.get('/', (req, res) => res.sendFile(path.join(viewsPath, 'portal.html')));
-app.get('/privacy', (req, res) => res.sendFile(path.join(viewsPath, 'privacy.html')));
-app.get('/terms', (req, res) => res.sendFile(path.join(viewsPath, 'terms.html')));
-app.get('/about', (req, res) => res.sendFile(path.join(viewsPath, 'about.html')));
-app.get('/contact', (req, res) => res.sendFile(path.join(viewsPath, 'contact.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(viewsPath, 'index.html')));
-
 function startServer(port = 4000) {
     app.listen(port, '0.0.0.0', () => {
-        logger.info(`🌐 SITIO WEB PÚBLICO: http://localhost:${port}`);
+        logger.info(`🌐 Servidor activo en puerto ${port}`);
     });
 }
 
