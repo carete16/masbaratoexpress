@@ -18,7 +18,7 @@ class CoreProcessor {
             if (isRecentlyPublished(deal.link)) continue;
 
             // 2. Transformar Link (Monetización)
-            deal.link = LinkTransformer.transform(deal.link);
+            deal.link = await LinkTransformer.transform(deal.link);
 
             // 3. Mejora Visual (Extraer imagen HD original)
             deal.image = await VisualScraper.getHighResImage(deal.link, deal.image);
