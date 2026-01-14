@@ -1,6 +1,7 @@
 const { isRecentlyPublished } = require('../database/db');
 const logger = require('../utils/logger');
 const LinkTransformer = require('../utils/LinkTransformer');
+const VisualScraper = require('../utils/VisualScraper');
 const AIProcessor = require('./AIProcessor');
 
 class CoreProcessor {
@@ -19,7 +20,10 @@ class CoreProcessor {
             // 2. Transformar Link (Monetización)
             deal.link = LinkTransformer.transform(deal.link);
 
-            // 3. Análisis de Oportunidad (Matemática de Venta)
+            // 3. Mejora Visual (Extraer imagen HD original)
+            deal.image = await VisualScraper.getHighResImage(deal.link, deal.image);
+
+            // 4. Análisis de Oportunidad (Matemática de Venta)
             const discount = this.calculateDiscount(deal.price_official, deal.price_offer);
 
             // Lógica de "Ganga Real / Verdadero Chollazo": 
