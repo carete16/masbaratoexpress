@@ -1,32 +1,24 @@
-const express = require('express');
-const app = express();
+const http = require('http');
 const port = process.env.PORT || 10000;
 
-// Middleware para ver logs en Render
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - Petición: ${req.method} ${req.url}`);
-  next();
+const server = http.createServer((req, res) => {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.end(`
+    <html>
+      <head><title>MasbaratoDeals - Live</title></head>
+      <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
+        <div style="border:2px solid #00ff00; padding:50px; display:inline-block; border-radius:30px;">
+          <h1 style="color:#00ff00; font-size:50px; margin-bottom:10px;">🔥 CONEXIÓN TOTAL 🔥</h1>
+          <p style="font-size:24px; color:#aaa;">MasbaratoDeals está funcionando en Render.</p>
+          <p style="font-weight:bold;">Estado: ONLINE ✅</p>
+          <p style="font-size:14px; color:#555;">Puerto: ${port}</p>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
-// RESPUESTA DE EMERGENCIA (Si nada más funciona, esto aparecerá)
-app.get('/', (req, res) => {
-  res.send(`
-        <body style="background:#0a0a0b; color:white; font-family:sans-serif; text-align:center; padding:50px;">
-            <div style="border:2px solid #333; padding:40px; border-radius:20px; display:inline-block;">
-                <h1 style="color:#00ff88; font-size:40px;">🚀 MASBARATODEALS ONLINE</h1>
-                <p style="font-size:18px; color:#aaa;">El servidor ha despertado correctamente.</p>
-                <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
-                <p>Si ves esto, la conexión GitHub -> Render está FUNCIONANDO.</p>
-                <button onclick="location.reload()" style="background:#00ff88; color:black; border:0; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">
-                    RECARGAR PAGINA
-                </button>
-            </div>
-        </body>
-    `);
-});
-
-app.get('/health', (req, res) => res.send('OK'));
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`>>> SERVIDOR ACTIVO EN PUERTO ${port} <<<`);
+server.listen(port, '0.0.0.0', () => {
+  console.log(`🚀 Servidor de emergencia corriendo en el puerto ${port}`);
 });
