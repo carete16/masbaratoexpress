@@ -6,13 +6,11 @@ services:
     buildCommand: npm install
     startCommand: node index.js
     envVars:
-      - key: NODE_VERSION
-        value: 18.0.0
       - key: PORT
-        value: 4000
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: TELEGRAM_CHANNEL_ID
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
+        value: 10000
+      - key: NODE_VERSION
+        value: 20
+      - key: AMAZON_TAG
+        value: masbaratodeal-20
+      - key: SOVRN_URL_PREFIX
+        value: https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u=

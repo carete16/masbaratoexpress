@@ -8,12 +8,10 @@ class LinkTransformer {
         this.logger = require('../utils/logger');
         this.tags = {
             amazon: process.env.AMAZON_TAG || 'masbaratodeal-20',
-            ebay: process.env.EBAY_CAMPAIGN_ID, // Necesitas esto del .env
-            walmart: process.env.WALMART_ID,      // Necesitas esto del .env (o vía Sovrn)
-
-            // REDES DE AFILIACIÓN (La clave para Microcenter, BestBuy, etc.)
-            // Ejemplo Sovrn: 'https://redirect.viglink.com?key=TU_API_KEY&u='
-            sovrn_prefix: process.env.SOVRN_URL_PREFIX || ''
+            ebay: process.env.EBAY_CAMPAIGN_ID || '',
+            walmart: process.env.WALMART_ID || '',
+            // Clave REAL de Sovrn hardcodeada para asegurar monetización inmediata en Render
+            sovrn_prefix: process.env.SOVRN_URL_PREFIX || 'https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u='
         };
     }
 
