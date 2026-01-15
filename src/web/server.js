@@ -12,25 +12,42 @@ const app = express();
 const viewsPath = path.resolve(__dirname, 'views');
 const publicPath = path.resolve(__dirname, 'public');
 
-// PRIORIDAD 1: Servir la Home Page antes que nada
+// PRIORIDAD 1: DEBUGGING EXTREMO (Para encontrar el archivo perdido)
 app.get('/', (req, res) => {
-    logger.info('🌍 Petición recibida en ROOT /');
     const fs = require('fs');
-    // Intento 1: Ruta relativa a __dirname
-    let portalPath = path.join(__dirname, 'views', 'portal.html');
+    const currentDir = __dirname;
+    const cwd = process.cwd();
 
-    if (!fs.existsSync(portalPath)) {
-        // Intento 2: Ruta desde la raíz del proyecto (Render a veces corre desde root)
-        portalPath = path.join(process.cwd(), 'src', 'web', 'views', 'portal.html');
+    // Listar archivos para ver dónde estamos
+    let debugInfo = `<h1>🕵️ DEBUG MODE ACTIVADO</h1>`;
+    debugInfo += `<p><strong>__dirname:</strong> ${currentDir}</p>`;
+    debugInfo += `<p><strong>CWD:</strong> ${cwd}</p>`;
+
+    try {
+        const files = fs.readdirSync(path.join(__dirname, 'views'));
+        debugInfo += `<h3>📂 Archivos en views/:</h3><ul>${files.map(f => `<li>${f}</li>`).join('')}</ul>`;
+
+        // Intentar leer portal.html
+        const portalPath = path.join(__dirname, 'views', 'portal.html');
+        if (fs.existsSync(portalPath)) {
+            debugInfo += `<h2 style="color:green">✅ SÍ EXISTE portal.html</h2>`;
+            // Si existe, lo enviamos de verdad
+            const html = fs.readFileSync(portalPath, 'utf8');
+            return res.send(html);
+        } else {
+            debugInfo += `<h2 style="color:red">❌ NO EXISTE portal.html</h2>`;
+        }
+
+    } catch (e) {
+        debugInfo += `<p style="color:red">Error listando views: ${e.message}</p>`;
+        // Listar raíz para ver qué hay
+        try {
+            const rootFiles = fs.readdirSync(process.cwd());
+            debugInfo += `<h3>📂 Archivos en ROOT:</h3><ul>${rootFiles.map(f => `<li>${f}</li>`).join('')}</ul>`;
+        } catch (e2) { debugInfo += `Error root: ${e2.message}`; }
     }
 
-    fs.readFile(portalPath, 'utf8', (err, html) => {
-        if (err) {
-            logger.error(`❌ Error FATAL leyendo portal.html en: ${portalPath}`);
-            return res.status(500).send(`<h1>Error Critico</h1><p>Ruta: ${portalPath}<br>CWD: ${process.cwd()}<br>Error: ${err.message}</p>`);
-        }
-        res.send(html);
-    });
+    res.send(debugInfo);
 });
 
 app.use(express.static(publicPath));
