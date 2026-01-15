@@ -1,44 +1,32 @@
 const express = require('express');
-const path = require('path');
-const fs = require('fs');
 const app = express();
 const port = process.env.PORT || 10000;
 
-// Log visual en consola de Render
-console.log("-----------------------------------------");
-console.log("🚀 ARRANCANDO MASBARATODEALS EN LA NUBE");
-console.log("-----------------------------------------");
-
-// Servir archivos estáticos si existen
-const publicPath = path.join(__dirname, 'src', 'web', 'public');
-if (fs.existsSync(publicPath)) {
-  app.use(express.static(publicPath));
-}
-
-// RUTA MAESTRA (Carga la web premium)
-app.get('/', (req, res) => {
-  const portalPath = path.join(__dirname, 'src', 'web', 'views', 'portal.html');
-
-  if (fs.existsSync(portalPath)) {
-    res.sendFile(portalPath);
-  } else {
-    // Si el archivo falta por alguna razón, mostramos una web de emergencia bonita
-    res.send(`
-            <body style="background:#0a0a0b; color:white; font-family:sans-serif; text-align:center; padding:100px;">
-                <h1 style="color:#ff4d4d;">⚠️ Sistema en Reconfiguración</h1>
-                <p>La plataforma está online pero falta el archivo portal.html.</p>
-                <p>Verificando rutas internas...</p>
-                <div style="background:#1a1a1c; padding:20px; border-radius:10px; display:inline-block;">
-                    Ruta buscada: ${portalPath}
-                </div>
-            </body>
-        `);
-  }
+// Middleware para ver logs en Render
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - Petición: ${req.method} ${req.url}`);
+  next();
 });
 
-// Endpoint de salud para Render
-app.get('/health', (req, res) => res.status(200).send('OK'));
+// RESPUESTA DE EMERGENCIA (Si nada más funciona, esto aparecerá)
+app.get('/', (req, res) => {
+  res.send(`
+        <body style="background:#0a0a0b; color:white; font-family:sans-serif; text-align:center; padding:50px;">
+            <div style="border:2px solid #333; padding:40px; border-radius:20px; display:inline-block;">
+                <h1 style="color:#00ff88; font-size:40px;">🚀 MASBARATODEALS ONLINE</h1>
+                <p style="font-size:18px; color:#aaa;">El servidor ha despertado correctamente.</p>
+                <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+                <p>Si ves esto, la conexión GitHub -> Render está FUNCIONANDO.</p>
+                <button onclick="location.reload()" style="background:#00ff88; color:black; border:0; padding:10px 20px; border-radius:5px; font-weight:bold; cursor:pointer;">
+                    RECARGAR PAGINA
+                </button>
+            </div>
+        </body>
+    `);
+});
+
+app.get('/health', (req, res) => res.send('OK'));
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`✅ Servidor en línea en el puerto ${port}`);
+  console.log(`>>> SERVIDOR ACTIVO EN PUERTO ${port} <<<`);
 });
