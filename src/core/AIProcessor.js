@@ -14,14 +14,12 @@ class AIProcessor {
         }
 
         try {
-            const prompt = `Actúa como un Director de Marketing experto en Ventas y Psicología del Consumidor.
-Tu objetivo es redactar una promoción irresistible para Telegram sobre un "Chollazo Histórico".
+            const isHistoric = deal.isHistoricLow;
 
-ESTRATEGIA DE VENTA:
-1. Usa gatillos de ESCASEZ y URGENCIA (¡Liquidación!, ¡Solo hoy!, ¡Se agotan!).
-2. Enfócate en la PRUEBA SOCIAL: Menciona que es una oportunidad verificada manualmente.
-3. El tono debe ser profesional pero electrizante, como alguien que acaba de descubrir un error de precio.
-4. Indica que este precio rompe el mercado comparado con el histórico.
+            let systemPrompt = `Actúa como un Director de Marketing experto en Ventas y Psicología del Consumidor para Telegram.`;
+
+            let userPrompt = `
+OBJETIVO: Redactar una promoción irresistible.
 
 DATOS:
 - Producto: ${deal.title}
@@ -29,27 +27,36 @@ DATOS:
 - Precio Hoy: $${deal.price_offer}
 - Descuento Directo: ${discount}%
 - Tienda: ${deal.tienda}
+${isHistoric ? '- CONTEXTO: ¡ES EL PRECIO MÁS BAJO DE LA HISTORIA (ALL TIME LOW)! 🔥💎' : '- Contexto: Buen descuento verificado.'}
 
-SALIDA (Formato HTML):
-🚀 <b>¡[TITULO EXPLOSIVO]!</b>
+ESTRATEGIA DE MENSAJE:
+1. Tono: Urgente pero profesional. "Alguien se equivocó con este precio".
+2. ${isHistoric ? 'DESTACA EN NEGRITA QUE ES MÍNIMO HISTÓRICO.' : 'Destaca el ahorro.'}
+3. Usa emojis estratégicos (🔥, 💎, 🚨, 📉).
+
+SALIDA (Formato HTML estricto):
+${isHistoric ? '🚨 <b>¡MÍNIMO HISTÓRICO DETECTADO!</b>' : '🚀 <b>¡[TITULO EXPLOSIVO]!</b>'}
 
 📦 <b>Producto:</b> ${deal.title}
 🏢 <b>Tienda:</b> ${deal.tienda}
 
 💰 <b>Antes:</b> <del>$${deal.price_official}</del>
 🔥 <b>PÁGALO POR SOLO:</b> $${deal.price_offer}
-📉 <b>AHORRO TOTAL:</b> $${discount}% (Ahorras $[valor_ahorro])
+📉 <b>AHORRO:</b> ${discount}% ${isHistoric ? '(¡PRECIO JAMÁS VISTO!)' : ''}
 
-⭐ <i>Oportunidad Verificada por el equipo +BARATO</i>
+⭐ <i>${isHistoric ? '💎 Oportunidad Única Verificada (ATL)' : 'Oportunidad Verificada por el equipo +BARATO'}</i>
 ━━━━━━━━━━━━━━━━━━
 👉 <b>VER OFERTA AQUÍ:</b> [link]
 ━━━━━━━━━━━━━━━━━━
 
-#MasbaratoDeals #OportunidadUnica #AhorroUSA`;
+#MasbaratoDeals #OfertasUSA ${isHistoric ? '#MinimoHistorico #Ganga' : '#Descuentos'}`;
 
             const response = await axios.post('https://api.openai.com/v1/chat/completions', {
                 model: this.model,
-                messages: [{ role: 'user', content: prompt }],
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
                 temperature: 0.7
             }, {
                 headers: { 'Authorization': `Bearer ${this.apiKey}` }
@@ -66,7 +73,7 @@ SALIDA (Formato HTML):
         const ahorro = deal.price_official - deal.price_offer;
         const ahorroPorcentaje = discount || Math.round((ahorro / deal.price_official) * 100);
 
-        return `🚀 <b>¡CHOLLAZO DETECTADO EN ${deal.tienda.toUpperCase()}!</b>
+        return `🚀 <b>¡OFERTA DETECTADA EN ${deal.tienda.toUpperCase()}!</b>
 
 🔥 <b>${deal.title.toUpperCase()}</b>
 

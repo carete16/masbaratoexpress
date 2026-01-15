@@ -3,19 +3,42 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>+BARATO DEALS .NET | Chollazos USA Verificados</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- SEO Meta Tags -->
+    <title>+BARATO DEALS | Las Mejores Ofertas de USA Verificadas</title>
+    <meta name="description"
+        content="🔥 Descubre descuentos verificados de hasta 90% en Amazon, eBay y Walmart. Rastreamos mínimos históricos en tiempo real para ti.">
+    <meta name="theme-color" content="#0f0f12">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
     <style>
         :root {
-            --brand-red: #ff4d4d;
-            --brand-red-glow: rgba(255, 77, 77, 0.4);
-            --bg-dark: #0a0a0c;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
-            --text-muted: #a0a0a8;
-            --accent-blue: #00d2ff;
+            --bg-dark: #0f0f12;
+            --bg-card: #18181b;
+            --bg-card-hover: #202025;
+            --primary: #f87171;
+            /* Rojo suave premium */
+            --accent: #38bdf8;
+            /* Azul eléctrico */
+            --gold: #fbbf24;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --border: rgba(255, 255, 255, 0.08);
+            --radius: 16px;
         }
 
         * {
@@ -23,366 +46,375 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
-            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
-        /* --- BACKGROUND RADIANT ORBS --- */
+        /* --- ORBS --- */
         .orb {
             position: fixed;
-            width: 500px;
-            height: 500px;
             border-radius: 50%;
-            filter: blur(120px);
+            filter: blur(100px);
             z-index: -1;
-            opacity: 0.15;
-            pointer-events: none;
+            opacity: 0.2;
         }
 
         .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
             top: -100px;
             left: -100px;
-            background: var(--brand-red);
         }
 
         .orb-2 {
-            bottom: -100px;
-            right: -100px;
-            background: var(--accent-blue);
+            width: 300px;
+            height: 300px;
+            background: var(--accent);
+            bottom: 0;
+            right: -50px;
         }
 
-        /* --- NAVIGATION --- */
-        nav {
-            padding: 20px 8%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(10, 10, 12, 0.8);
-            backdrop-filter: blur(20px);
+        /* --- HEADER --- */
+        header {
             position: sticky;
             top: 0;
             z-index: 1000;
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .logo {
+            background: rgba(15, 15, 18, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 5%;
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+        }
+
+        .brand {
+            font-weight: 900;
+            font-size: 22px;
+            color: white;
             text-decoration: none;
-            color: white;
-            font-weight: 800;
-            font-size: 24px;
             letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .logo span {
-            color: var(--brand-red);
-            padding: 2px 8px;
-            background: var(--brand-red-glow);
-            border-radius: 6px;
-            font-size: 18px;
+        .brand span {
+            color: var(--primary);
         }
 
-        .search-wrapper {
-            position: relative;
-            flex: 1;
-            max-width: 500px;
-            margin: 0 40px;
-        }
-
-        .search-wrapper input {
-            width: 100%;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            padding: 12px 20px;
-            border-radius: 12px;
+        .cta-telegram {
+            background: #229ED9;
             color: white;
-            outline: none;
-            transition: 0.3s;
-            font-size: 15px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
         }
 
-        .search-wrapper input:focus {
-            border-color: var(--brand-red);
-            background: rgba(255, 255, 255, 0.06);
-            box-shadow: 0 0 20px var(--brand-red-glow);
+        .cta-telegram:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 158, 217, 0.4);
         }
 
-        /* --- HERO SECTION --- */
+        /* --- HERO --- */
         .hero {
+            padding: 40px 5%;
             text-align: center;
-            padding: 80px 8% 40px;
         }
 
         .hero h1 {
-            font-size: 52px;
+            font-size: 38px;
+            line-height: 1.1;
             font-weight: 800;
-            margin-bottom: 15px;
-            background: linear-gradient(90deg, #fff, #888);
+            margin-bottom: 12px;
+            background: linear-gradient(to right, #fff, #a1a1aa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .hero p {
             color: var(--text-muted);
-            font-size: 18px;
+            font-size: 16px;
+            max-width: 500px;
+            margin: 0 auto 24px;
+        }
+
+        .search-container {
             max-width: 600px;
             margin: 0 auto;
+            position: relative;
         }
 
-        /* --- CATEGORIES --- */
-        .categories-bar {
-            padding: 20px 8%;
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-
-        .cat-btn {
-            padding: 10px 24px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 50px;
-            color: var(--text-muted);
-            cursor: pointer;
+        .search-input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 14px 20px;
+            border-radius: 14px;
+            color: white;
+            font-size: 16px;
+            outline: none;
             transition: 0.3s;
-            font-weight: 600;
-            font-size: 14px;
         }
 
-        .cat-btn:hover,
-        .cat-btn.active {
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.2);
+        }
+
+        /* --- FILTERS --- */
+        .filters {
+            display: flex;
+            gap: 10px;
+            padding: 10px 5%;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .filters::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .filter-chip.active {
             background: white;
             color: black;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+            border-color: white;
         }
 
-        /* --- DEALS GRID --- */
-        .container {
-            padding: 0 8% 100px;
-        }
-
-        .deals-grid {
+        /* --- GRID --- */
+        .grid-container {
+            padding: 20px 5%;
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
+            gap: 24px;
+            margin-bottom: 60px;
         }
 
-        /* --- DEAL CARD (PREMIUM) --- */
-        .deal-card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 20px;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        @media (max-width: 600px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+                /* Tarjetas grandes en móvil */
+                padding: 16px;
+                gap: 24px;
+            }
+        }
+
+        /* --- CARD --- */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            backdrop-filter: blur(10px);
+            transition: transform 0.2s, box-shadow 0.2s;
             position: relative;
-            overflow: hidden;
         }
 
-        .deal-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            border-color: rgba(255, 77, 77, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
         }
 
-        .category-badge {
+        /* Historic Low Style */
+        .card.historic {
+            border: 1px solid rgba(251, 191, 36, 0.5);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.1);
+        }
+
+        .historic-badge {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-            padding: 4px 12px;
-            border-radius: 50px;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--brand-red);
+            top: 12px;
+            left: 12px;
+            background: linear-gradient(135deg, #fbbf24, #d97706);
+            color: black;
+            font-weight: 800;
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
             text-transform: uppercase;
             z-index: 10;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            animation: pulse-gold 2s infinite;
         }
 
-        .img-container {
-            height: 220px;
+        .img-wrapper {
             background: white;
-            border-radius: 18px;
-            margin-bottom: 20px;
+            height: 240px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 20px;
             position: relative;
         }
 
-        .img-container img {
+        .img-wrapper img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+            mix-blend-mode: multiply;
         }
 
-        .discount-flag {
+        .discount-tag {
             position: absolute;
-            bottom: -10px;
-            right: 15px;
-            background: var(--brand-red);
+            bottom: 12px;
+            right: 12px;
+            background: var(--primary);
             color: white;
-            padding: 5px 12px;
-            border-radius: 10px;
             font-weight: 800;
             font-size: 14px;
-            box-shadow: 0 5px 15px var(--brand-red-glow);
+            padding: 4px 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(248, 113, 113, 0.4);
         }
 
-        .deal-info h3 {
-            font-size: 17px;
+        .card-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .store-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-title {
+            font-size: 16px;
             font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--text-main);
+            line-height: 1.4;
+            color: white;
+            margin-bottom: 12px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            height: 48px;
+            flex: 1;
         }
 
-        .store-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 12px;
-        }
-
-        .price-row {
+        .prices {
             display: flex;
             align-items: baseline;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
-        .current-price {
-            font-size: 26px;
+        .price-now {
+            font-size: 24px;
             font-weight: 800;
-            color: var(--text-main);
+            color: white;
         }
 
-        .old-price {
-            font-size: 16px;
+        .price-old {
+            font-size: 14px;
             color: var(--text-muted);
             text-decoration: line-through;
         }
 
         .buy-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--brand-red), #ff7675);
-            color: white;
+            background: white;
+            color: black;
             text-decoration: none;
-            border-radius: 14px;
+            padding: 12px;
+            border-radius: 12px;
             text-align: center;
             font-weight: 700;
-            font-size: 16px;
-            transition: 0.3s;
-            box-shadow: 0 8px 20px var(--brand-red-glow);
-            margin-top: auto;
+            font-size: 14px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
         .buy-btn:hover {
-            transform: scale(1.03);
-            box-shadow: 0 12px 25px var(--brand-red-glow);
-            filter: brightness(1.1);
+            transform: scale(1.02);
+            background: var(--primary);
+            color: white;
         }
 
-        /* --- FOOTER --- */
-        footer {
-            padding: 80px 8% 40px;
-            border-top: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.5);
+        /* Share Bar inside card */
+        .share-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
         }
 
-        .footer-content {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr 1fr;
-            gap: 60px;
-            margin-bottom: 60px;
-        }
-
-        .footer-brand h2 {
-            font-weight: 800;
-            margin-bottom: 20px;
-        }
-
-        .footer-brand p {
+        .share-icon {
+            flex: 1;
+            text-align: center;
+            font-size: 14px;
             color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        .footer-links h4 {
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-
-        .footer-links a {
-            display: block;
-            color: var(--text-muted);
-            text-decoration: none;
-            margin-bottom: 12px;
-            font-size: 14px;
+            cursor: pointer;
             transition: 0.2s;
+            text-decoration: none;
         }
 
-        .footer-links a:hover {
-            color: var(--brand-red);
-            padding-left: 5px;
+        .share-icon:hover {
+            color: white;
         }
 
-        .disclaimer-box {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--glass-border);
-            padding: 30px;
-            border-radius: 20px;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 40px;
-            line-height: 1.8;
+        footer {
+            margin-top: auto;
+            padding: 40px 5%;
+            border-top: 1px solid var(--border);
+            text-align: center;
         }
 
-        @media (max-width: 900px) {
-            .footer-content {
-                grid-template-columns: 1fr 1fr;
+        @keyframes pulse-gold {
+            0% {
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
             }
 
-            .hero h1 {
-                font-size: 36px;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .footer-content {
-                grid-template-columns: 1fr;
+            70% {
+                box-shadow: 0 0 0 6px rgba(251, 191, 36, 0);
             }
 
-            nav {
-                flex-direction: column;
-                gap: 20px;
-            }
-
-            .search-wrapper {
-                margin: 0;
-                width: 100%;
+            100% {
+                box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
             }
         }
     </style>
@@ -392,80 +424,63 @@
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
 
-    <nav>
-        <a href="/" class="logo">
+    <header>
+        <a href="/" class="brand">
             +BARATO <span>DEALS</span>
         </a>
-        <div class="search-wrapper">
-            <input type="text" id="main-search" placeholder="Busca productos, marcas o tiendas...">
-        </div>
-        <div style="display: flex; gap: 15px;">
-            <a href="https://t.me/Masbarato_deals" target="_blank" class="cat-btn"
-                style="background: #229ED9; color: white; border: none;">Unirse a Telegram</a>
-        </div>
-    </nav>
+        <a href="https://t.me/Masbarato_deals" target="_blank" class="cta-telegram">
+            🚀 Unirme
+        </a>
+    </header>
 
-    <section class="hero">
-        <h1>Ofertas Irresistibles de USA</h1>
-        <p>Expertos en encontrar los descuentos más salvajes de Amazon, eBay y las mejores tiendas de Estados Unidos.
-            Verificado al 100%.</p>
-    </section>
-
-    <div class="categories-bar">
-        <button class="cat-btn active" data-cat="all">Todas las Ofertas</button>
-        <button class="cat-btn" data-cat="Tecnología">Tecnología</button>
-        <button class="cat-btn" data-cat="Gamer">Gamer</button>
-        <button class="cat-btn" data-cat="Moda">Moda</button>
-        <button class="cat-btn" data-cat="Hogar">Hogar</button>
+    <div class="hero">
+        <h1>Las Mejores Ofertas<br>Verificadas de USA</h1>
+        <p>Rastreamos Amazon, eBay y Walmart en tiempo real para encontrar errores de precio y liquidaciones.</p>
+        <div class="search-container">
+            <input type="text" id="search" class="search-input"
+                placeholder="🔍  Buscar (ej: iPhone, Laptop, Zapatillas)...">
+        </div>
     </div>
 
-    <main class="container">
-        <div id="deals-grid" class="deals-grid">
-            <!-- Loader Skeleton -->
-            <div style="grid-column: 1/-1; text-align: center; padding: 100px; color: var(--text-muted);">
-                <div style="font-size: 24px; margin-bottom: 10px;">⚡</div>
-                Buscando chollazos en tiempo real...
-            </div>
+    <div class="filters">
+        <button class="filter-chip active" data-cat="all">Todas</button>
+        <button class="filter-chip" data-cat="Tecnología">Tecnología 💻</button>
+        <button class="filter-chip" data-cat="Gamer">Gamer 🎮</button>
+        <button class="filter-chip" data-cat="Moda">Moda 👟</button>
+        <button class="filter-chip" data-cat="Hogar">Hogar 🏠</button>
+    </div>
+
+    <div class="grid-container" id="grid">
+        <!-- Skeleton Loading State -->
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted);">
+            <div style="font-size: 30px; margin-bottom: 10px;">⚡</div>
+            Cargando ofertas...
         </div>
-    </main>
+    </div>
+
+    <!-- Newsletter Widget -->
+    <div
+        style="margin: 0 5% 60px; background: var(--bg-card); border: 1px solid var(--border); padding: 30px; border-radius: 20px; text-align: center;">
+        <h3 style="margin-bottom: 10px;">📩 No te pierdas los errores de precio</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Te avisamos solo cuando encontramos
+            algo realmente épico.</p>
+        <form id="newsletter-form" style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto;">
+            <input type="email" id="email" placeholder="tu@email.com" required
+                style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #0f0f12; color: white;">
+            <button type="submit"
+                style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer;">SÍ
+                QUIERO</button>
+        </form>
+        <div id="msg" style="margin-top: 10px; font-size: 13px;"></div>
+    </div>
 
     <footer>
-        <div class="disclaimer-box">
-            <b>Divulgación de Afiliados:</b> En cumplimiento con la FTC y Amazon Associates, <b>+BARATO DEALS .NET</b>
-            informa que somos participantes de programas de afiliados. Al hacer clic en nuestros enlaces coordinamos una
-            comisión con las tiendas sin costo extra para ti. Esto mantiene nuestro servicio gratuito y libre de
-            publicidad invasiva.
-        </div>
-
-        <div class="footer-content">
-            <div class="footer-brand">
-                <h2>+BARATO DEALS</h2>
-                <p>Tu radar personal de descuentos en el mercado norteamericano. Solo lo mejor, solo lo verificado.</p>
-            </div>
-            <div class="footer-links">
-                <h4>Legal</h4>
-                <a href="/privacy">Privacidad</a>
-                <a href="/terms">Términos</a>
-                <a href="/about">Divulgación</a>
-            </div>
-            <div class="footer-links">
-                <h4>Soporte</h4>
-                <a href="/contact">Contacto</a>
-                <a href="/about">Nosotros</a>
-                <a href="https://t.me/Masbarato_deals">Telegram</a>
-            </div>
-            <div class="footer-links">
-                <h4>Categorías</h4>
-                <a href="#">Laptops</a>
-                <a href="#">Smartphones</a>
-                <a href="#">Zapatillas</a>
-            </div>
-        </div>
-
-        <div
-            style="text-align: center; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--glass-border); padding-top: 30px;">
-            © 2026 +BARATO DEALS .NET - Diseñado para cazadores de ofertas.
-        </div>
+        <p style="color: var(--text-muted); font-size: 12px; line-height: 1.6;">
+            <b>Divulgación:</b> Somos participantes de programas de afiliados (Amazon, eBay, etc).
+            Al comprar a través de nuestros enlaces, ganamos una comisión sin costo extra para ti.
+            <br><br>
+            © 2026 +BARATO DEALS .NET
+        </p>
     </footer>
 
     <script>
@@ -482,69 +497,121 @@
         }
 
         function render(deals) {
-            const grid = document.getElementById('deals-grid');
+            const grid = document.getElementById('grid');
             if (deals.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 100px;">No hay ofertas disponibles por ahora. Vuelve más tarde.</div>`;
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 50px;">No hay ofertas disponibles por ahora.</div>`;
                 return;
             }
 
             grid.innerHTML = deals.map(deal => {
-                const discount = deal.price_official > 0 ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100) : 0;
-                // Proxy for images to handle bypass/resizing
-                const img = deal.image || 'https://placehold.co/400x400?text=Premium+Deal';
+                const discount = deal.price_official > 0
+                    ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
+                    : 0;
+
+                const isHistoric = deal.is_historic_low || (deal.title && /lowest|all time low/i.test(deal.title));
+                const img = deal.image || 'https://placehold.co/400x400/18181b/ffffff?text=Oferta+Top';
+
+                // Share Links
+                const postUrl = window.location.origin + '/go/' + deal.id;
+                const txt = `🔥 ${deal.title} ($${deal.price_offer})`;
+
+                const wa = `https://wa.me/?text=${encodeURIComponent(txt + ' ' + postUrl)}`;
+                const tg = `https://t.me/share/url?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(txt)}`;
+                const fb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
 
                 return `
-                    <article class="deal-card">
-                        <span class="category-badge">${deal.categoria || 'Oferta'}</span>
-                        <div class="img-container">
-                            <img src="${img}" alt="${deal.title}" loading="lazy">
-                            ${discount > 0 ? `<div class="discount-flag">-${discount}%</div>` : ''}
+                <article class="card ${isHistoric ? 'historic' : ''}">
+                    ${isHistoric ? '<div class="historic-badge">🏆 RÉCORD HISTÓRICO</div>' : ''}
+                    
+                    <div class="img-wrapper">
+                        <img src="${img}" alt="${deal.title}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/400x400/18181b/ffffff?text=Oferta+Top';">
+                        ${discount > 0 ? `<div class="discount-tag">-${discount}%</div>` : ''}
+                    </div>
+                    
+                    <div class="card-content">
+                        <div class="card-meta">
+                            <span class="store-tag">🛍️ ${deal.tienda || 'Tienda USA'}</span>
+                            <span>${getTimeAgo(deal.posted_at)}</span>
                         </div>
-                        <div class="deal-info">
-                            <div class="store-info">
-                                🏙️ <b>${deal.tienda || 'USA Store'}</b>
-                            </div>
-                            <h3>${deal.title}</h3>
-                            <div class="price-row">
-                                <span class="current-price">$${deal.price_offer}</span>
-                                ${deal.price_official > 0 ? `<span class="old-price">$${deal.price_official}</span>` : ''}
-                            </div>
-                            <a href="/go/${deal.id}" target="_blank" class="buy-btn">VER CHOLLAZO</a>
+                        
+                        <h3 class="card-title">${deal.title}</h3>
+                        
+                        <div class="prices">
+                            <span class="price-now">$${deal.price_offer}</span>
+                            ${deal.price_official > 0 ? `<span class="price-old">$${deal.price_official}</span>` : ''}
                         </div>
-                    </article>
+                        
+                        <a href="/go/${deal.id}" target="_blank" class="buy-btn">
+                            VER OFERTA ↗
+                        </a>
+                        
+                        <div class="share-row">
+                            <a href="${wa}" target="_blank" class="share-icon">📱 WhatsApp</a>
+                            <a href="${tg}" target="_blank" class="share-icon">✈️ Telegram</a>
+                        </div>
+                    </div>
+                </article>
                 `;
             }).join('');
         }
 
-        // Filtering
-        document.querySelectorAll('.cat-btn').forEach(btn => {
+        function getTimeAgo(dateStr) {
+            if (!dateStr) return 'Hoy';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.round(diffMs / 60000);
+
+            if (diffMins < 60) return `Hace ${diffMins} min`;
+            const diffHours = Math.round(diffMins / 60);
+            if (diffHours < 24) return `Hace ${diffHours}h`;
+            return 'Hace 1d+';
+        }
+
+        // Filters
+        document.querySelectorAll('.filter-chip').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                const cat = btn.getAttribute('data-cat');
-                if (cat === 'all') {
-                    render(allDeals);
-                } else {
-                    const filtered = allDeals.filter(d => d.categoria === cat);
-                    render(filtered);
-                }
+                const cat = btn.dataset.cat;
+                if (cat === 'all') render(allDeals);
+                else render(allDeals.filter(d => d.categoria === cat));
             });
         });
 
         // Search
-        document.getElementById('main-search').addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filtered = allDeals.filter(d =>
-                d.title.toLowerCase().includes(query) ||
-                (d.tienda && d.tienda.toLowerCase().includes(query))
-            );
-            render(filtered);
+        document.getElementById('search').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            render(allDeals.filter(d =>
+                d.title.toLowerCase().includes(q) ||
+                (d.tienda && d.tienda.toLowerCase().includes(q))
+            ));
+        });
+
+        // Newsletter
+        document.getElementById('newsletter-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const msg = document.getElementById('msg');
+            msg.textContent = 'Suscribiendo...';
+
+            try {
+                await fetch('/api/newsletter', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                msg.textContent = '✅ ¡Listo! Te avisaremos de ofertas épicas.';
+                msg.style.color = '#4ade80';
+            } catch (err) {
+                msg.textContent = '❌ Error de conexión.';
+                msg.style.color = '#f87171';
+            }
         });
 
         init();
-        // Refresh every 5 mins
-        setInterval(init, 300000);
+        setInterval(init, 60000); // Auto-refresh cada minuto
     </script>
 </body>
 

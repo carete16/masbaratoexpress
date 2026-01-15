@@ -59,11 +59,23 @@ const registerClick = (dealId) => {
   }
 };
 
-const isRecentlyPublished = (link) => {
+const isRecentlyPublished = (link, title = '') => {
   try {
-    const stmt = db.prepare(`SELECT * FROM published_deals WHERE link = ? AND posted_at > datetime('now', '-168 hours')`);
-    return stmt.get(link) !== undefined;
-  } catch (e) { return false; }
+    // Check by link (primary)
+    const byLink = db.prepare(`SELECT * FROM published_deals WHERE link = ? AND posted_at > datetime('now', '-168 hours')`);
+    if (byLink.get(link)) return true;
+
+    // Check by title similarity (secondary - prevent same product with different link)
+    if (title) {
+      const cleanTitle = title.toLowerCase().trim().substring(0, 50); // First 50 chars
+      const byTitle = db.prepare(`SELECT * FROM published_deals WHERE LOWER(SUBSTR(title, 1, 50)) = ? AND posted_at > datetime('now', '-168 hours')`);
+      if (byTitle.get(cleanTitle)) return true;
+    }
+
+    return false;
+  } catch (e) {
+    return false;
+  }
 };
 
 module.exports = { db, saveDeal, isRecentlyPublished, registerClick };

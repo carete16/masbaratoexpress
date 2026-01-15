@@ -39,6 +39,24 @@ class SlickdealsCollector {
                 const priceMatch = title.match(/\$(\d+(\.\d{2})?)/);
                 const offerPrice = priceMatch ? parseFloat(priceMatch[1]) : 0;
 
+                // Extraer precio ANTERIOR (Was $XX)
+                let originalPrice = 0;
+
+                // Patrones comunes en Reddit r/deals: "was $XX", "$XX -> $YY", "List: $XX"
+                const wasMatch = title.match(/(?:was|list|reg|regular)\:?\s*\$(\d+(\.\d{2})?)/i);
+
+                if (wasMatch) {
+                    originalPrice = parseFloat(wasMatch[1]);
+                }
+
+                // Detección de Mínimo Histórico en Reddit
+                const isAllTimeLow = /lowest|all[\s-]time[\s-]low|ATL|best[\s-]price|historic/i.test(title);
+
+                // Si no hay precio original explícito, usamos una estimación conservadora
+                if (originalPrice === 0 && offerPrice > 0) {
+                    originalPrice = parseFloat((offerPrice * 1.25).toFixed(2));
+                }
+
                 const asin = this.extractAsin(data.url) || this.extractAsin(data.title);
                 let imageUrl = data.thumbnail && data.thumbnail.startsWith('http') ? data.thumbnail : '';
 
@@ -64,16 +82,21 @@ class SlickdealsCollector {
                 else if (lowerTitle.includes('walmart')) realTienda = 'Walmart';
                 else if (lowerTitle.includes('best buy') || lowerTitle.includes('bestbuy')) realTienda = 'Best Buy';
 
+                // Score base (Reddit Ups) + Bonus por Mínimo Histórico
+                let score = data.ups || 10;
+                if (isAllTimeLow) score += 50; // Bonus por ser mínimo histórico
+
                 deals.push({
                     id: `rd_${data.id}`,
                     title: title.split(' - ')[0].replace(/\[.*?\]/g, '').trim(),
                     price_offer: offerPrice,
-                    price_official: Math.round(offerPrice * 1.5), // Estimación profesional
+                    price_official: originalPrice,
                     link: data.url,
                     image: imageUrl,
                     tienda: realTienda,
                     categoria: 'Tecnología',
-                    score: data.ups || 10 // "Heat" de la oferta
+                    score: score,
+                    is_historic_low: isAllTimeLow
                 });
 
                 if (deals.length >= 10) break;
