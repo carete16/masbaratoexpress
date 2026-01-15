@@ -1,59 +1,44 @@
-const cron = require('node-cron');
-const logger = require('./src/utils/logger');
-const CoreProcessor = require('./src/core/CoreProcessor');
-const TelegramNotifier = require('./src/notifiers/TelegramNotifier');
-const GlobalDealsCollector = require('./src/collectors/GlobalDealsCollector');
-const { db } = require('./src/database/db'); // DB Compartida
-const { startServer } = require('./src/web/server');
-require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const app = express();
+const port = process.env.PORT || 10000;
 
-async function runBot() {
-  try {
-    logger.info('Iniciando ciclo de recolección...');
-    const rawDeals = await GlobalDealsCollector.getDeals();
-    const validDeals = await CoreProcessor.processDeals(rawDeals);
+// Log visual en consola de Render
+console.log("-----------------------------------------");
+console.log("🚀 ARRANCANDO MASBARATODEALS EN LA NUBE");
+console.log("-----------------------------------------");
 
-    logger.info(`${validDeals.length} ofertas nuevas validadas.`);
-
-    for (const deal of validDeals) {
-      await TelegramNotifier.sendOffer(deal);
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
-  } catch (error) {
-    logger.error(`Error Bot: ${error.message}`);
-  }
+// Servir archivos estáticos si existen
+const publicPath = path.join(__dirname, 'src', 'web', 'public');
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath));
 }
 
-// 1. Iniciar Servidor Web Inmediatamente (Prioridad para Render)
-const PORT = process.env.PORT || 10000;
-startServer(PORT);
+// RUTA MAESTRA (Carga la web premium)
+app.get('/', (req, res) => {
+  const portalPath = path.join(__dirname, 'src', 'web', 'views', 'portal.html');
 
-// 2. Iniciar Bot en segundo plano
-async function startApp() {
-  try {
-    logger.info('Iniciando procesos de fondo...');
-    await runBot();
-
-    // Programar ciclos
-    cron.schedule(`*/30 * * * *`, () => runBot());
-
-    // Telegraf Commands
-    const bot = TelegramNotifier.bot;
-    bot.start((ctx) => ctx.reply('🚀 +BARATO DEALS Activo'));
-    bot.command('status', (ctx) => {
-      try {
-        const total = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
-        ctx.reply(`📊 Total en DB: ${total}\n🌐 https://masbaratodeals-net.onrender.com`);
-      } catch (e) {
-        ctx.reply('Error consultando DB');
-      }
-    });
-    bot.launch().catch(err => logger.error(`Error Telegraf: ${err.message}`));
-  } catch (err) {
-    logger.error(`Fallo en arranque secundario: ${err.message}`);
+  if (fs.existsSync(portalPath)) {
+    res.sendFile(portalPath);
+  } else {
+    // Si el archivo falta por alguna razón, mostramos una web de emergencia bonita
+    res.send(`
+            <body style="background:#0a0a0b; color:white; font-family:sans-serif; text-align:center; padding:100px;">
+                <h1 style="color:#ff4d4d;">⚠️ Sistema en Reconfiguración</h1>
+                <p>La plataforma está online pero falta el archivo portal.html.</p>
+                <p>Verificando rutas internas...</p>
+                <div style="background:#1a1a1c; padding:20px; border-radius:10px; display:inline-block;">
+                    Ruta buscada: ${portalPath}
+                </div>
+            </body>
+        `);
   }
-}
+});
 
-startApp();
+// Endpoint de salud para Render
+app.get('/health', (req, res) => res.status(200).send('OK'));
 
-logger.info(`Bot y Servidor listos. Puerto: ${PORT}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`✅ Servidor en línea en el puerto ${port}`);
+});
