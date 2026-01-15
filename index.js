@@ -3,11 +3,16 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 10000;
 
-console.log(">>> SISTEMA DE EMERGENCIA NIVEL 0 INICIADO <<<");
+// Log para Render
+console.log(">>> MASBARATODEALS: MODO ALTA COMPATIBILIDAD <<<");
 
-// Servir la web que está en la raíz directamente
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+// Servir archivos estáticos DESDE LA RAÍZ Y DESDE PUBLIC
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
+
+// RUTA MAESTRA: Servir index.html de la carpeta public
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, '0.0.0.0', () => {
