@@ -12,6 +12,27 @@ const app = express();
 const viewsPath = path.resolve(__dirname, 'views');
 const publicPath = path.resolve(__dirname, 'public');
 
+// PRIORIDAD 1: Servir la Home Page antes que nada
+app.get('/', (req, res) => {
+    logger.info('🌍 Petición recibida en ROOT /');
+    const fs = require('fs');
+    // Intento 1: Ruta relativa a __dirname
+    let portalPath = path.join(__dirname, 'views', 'portal.html');
+
+    if (!fs.existsSync(portalPath)) {
+        // Intento 2: Ruta desde la raíz del proyecto (Render a veces corre desde root)
+        portalPath = path.join(process.cwd(), 'src', 'web', 'views', 'portal.html');
+    }
+
+    fs.readFile(portalPath, 'utf8', (err, html) => {
+        if (err) {
+            logger.error(`❌ Error FATAL leyendo portal.html en: ${portalPath}`);
+            return res.status(500).send(`<h1>Error Critico</h1><p>Ruta: ${portalPath}<br>CWD: ${process.cwd()}<br>Error: ${err.message}</p>`);
+        }
+        res.send(html);
+    });
+});
+
 app.use(express.static(publicPath));
 
 // Endpoint de prueba rápida
@@ -31,20 +52,6 @@ app.get('/api/deals', (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
-});
-
-// Portal Principal Robusto
-app.get('/', (req, res) => {
-    const fs = require('fs');
-    const portalPath = path.join(__dirname, 'views', 'portal.html');
-
-    fs.readFile(portalPath, 'utf8', (err, html) => {
-        if (err) {
-            logger.error(`❌ Error FATAL leyendo portal.html en: ${portalPath}`);
-            return res.status(500).send(`<h1>Error Interno</h1><p>No se pudo cargar la web. Ruta: ${portalPath}. Error: ${err.message}</p>`);
-        }
-        res.send(html);
-    });
 });
 
 // Manejador 404 explícito
