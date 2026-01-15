@@ -1,24 +1,45 @@
-const http = require('http');
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const app = express();
 const port = process.env.PORT || 10000;
 
-const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.end(`
-    <html>
-      <head><title>MasbaratoDeals - Live</title></head>
-      <body style="background:#000; color:#fff; font-family:sans-serif; text-align:center; padding-top:100px;">
-        <div style="border:2px solid #00ff00; padding:50px; display:inline-block; border-radius:30px;">
-          <h1 style="color:#00ff00; font-size:50px; margin-bottom:10px;">🔥 CONEXIÓN TOTAL 🔥</h1>
-          <p style="font-size:24px; color:#aaa;">MasbaratoDeals está funcionando en Render.</p>
-          <p style="font-weight:bold;">Estado: ONLINE ✅</p>
-          <p style="font-size:14px; color:#555;">Puerto: ${port}</p>
-        </div>
-      </body>
-    </html>
-  `);
+// Log para depuración en Render
+console.log("Iniciando MasbaratoDeals...");
+
+// Intentar encontrar el portal.html en las rutas posibles
+const findPortal = () => {
+  const paths = [
+    path.join(__dirname, 'src', 'web', 'views', 'portal.html'),
+    path.join(__dirname, 'portal.html'),
+    path.join(__dirname, 'index.html')
+  ];
+  for (let p of paths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+};
+
+// Servir archivos estáticos (CSS, Imágenes)
+app.use(express.static(path.join(__dirname, 'src', 'web', 'public')));
+app.use(express.static(__dirname));
+
+// RUTA MAESTRA
+app.get('*', (req, res) => {
+  const filePath = findPortal();
+  if (filePath) {
+    res.sendFile(filePath);
+  } else {
+    res.status(200).send(`
+            <body style="background:#000; color:#0f0; font-family:sans-serif; text-align:center; padding:50px;">
+                <h1>🚀 MASBARATODEALS ACTIVO</h1>
+                <p>El servidor funciona, pero no encuentro el archivo portal.html.</p>
+                <p>Buscando en: ${__dirname}</p>
+            </body>
+        `);
+  }
 });
 
-server.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Servidor de emergencia corriendo en el puerto ${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Servidor escuchando en puerto ${port}`);
 });
