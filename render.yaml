@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: masbaratodeals-app-v1
+    name: masbaratodeals-final
     env: node
     plan: free
     buildCommand: npm install
@@ -9,8 +9,6 @@ services:
       - key: PORT
         value: 10000
       - key: NODE_VERSION
-        value: 20
+        value: 18.16.0
       - key: AMAZON_TAG
         value: masbaratodeal-20
-      - key: SOVRN_URL_PREFIX
-        value: https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u=
