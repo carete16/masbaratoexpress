@@ -12,42 +12,23 @@ const app = express();
 const viewsPath = path.resolve(__dirname, 'views');
 const publicPath = path.resolve(__dirname, 'public');
 
-// PRIORIDAD 1: DEBUGGING EXTREMO (Para encontrar el archivo perdido)
+// PRIORIDAD 1: Servir la Home Page
 app.get('/', (req, res) => {
     const fs = require('fs');
-    const currentDir = __dirname;
-    const cwd = process.cwd();
+    // Búsqueda inteligente de portal.html (soporta varios niveles de carpetas)
+    let portalPath = path.join(__dirname, 'views', 'portal.html');
 
-    // Listar archivos para ver dónde estamos
-    let debugInfo = `<h1>🕵️ DEBUG MODE ACTIVADO</h1>`;
-    debugInfo += `<p><strong>__dirname:</strong> ${currentDir}</p>`;
-    debugInfo += `<p><strong>CWD:</strong> ${cwd}</p>`;
-
-    try {
-        const files = fs.readdirSync(path.join(__dirname, 'views'));
-        debugInfo += `<h3>📂 Archivos en views/:</h3><ul>${files.map(f => `<li>${f}</li>`).join('')}</ul>`;
-
-        // Intentar leer portal.html
-        const portalPath = path.join(__dirname, 'views', 'portal.html');
-        if (fs.existsSync(portalPath)) {
-            debugInfo += `<h2 style="color:green">✅ SÍ EXISTE portal.html</h2>`;
-            // Si existe, lo enviamos de verdad
-            const html = fs.readFileSync(portalPath, 'utf8');
-            return res.send(html);
-        } else {
-            debugInfo += `<h2 style="color:red">❌ NO EXISTE portal.html</h2>`;
-        }
-
-    } catch (e) {
-        debugInfo += `<p style="color:red">Error listando views: ${e.message}</p>`;
-        // Listar raíz para ver qué hay
-        try {
-            const rootFiles = fs.readdirSync(process.cwd());
-            debugInfo += `<h3>📂 Archivos en ROOT:</h3><ul>${rootFiles.map(f => `<li>${f}</li>`).join('')}</ul>`;
-        } catch (e2) { debugInfo += `Error root: ${e2.message}`; }
+    // Si no está ahí, probar ruta relativa al proceso (útil en algunos despliegues)
+    if (!fs.existsSync(portalPath)) {
+        portalPath = path.resolve(process.cwd(), 'src', 'web', 'views', 'portal.html');
     }
 
-    res.send(debugInfo);
+    if (fs.existsSync(portalPath)) {
+        res.sendFile(portalPath);
+    } else {
+        logger.error(`❌ No se encontró portal.html en: ${portalPath}`);
+        res.status(500).send('<h1>Error de Configuración</h1><p>No se pudo localizar el archivo de la interfaz principal.</p>');
+    }
 });
 
 app.use(express.static(publicPath));
