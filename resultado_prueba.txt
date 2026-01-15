@@ -1,0 +1,26 @@
+[dotenv@17.2.3] injecting env (16) from .env -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+🛠️  CONFIGURACIÓN ACTUAL DEL SISTEMA:
+-------------------------------------
+Amazon Tag: masbaratodeal-20
+eBay ID:    ⚠️ NO CONFIGURADO
+Walmart ID: ⚠️ NO CONFIGURADO
+Sovrn Key:  ✅ ACTIVO
+-------------------------------------
+
+🧪 PRUEBA: Amazon con Tag Ajeno
+🔴 Original:     https://www.amazon.com/dp/B08H75RTZ8?tag=otro-afiliado-20&linkCode=gg2
+🟢 Transformado: https://www.amazon.com/dp/B08H75RTZ8?tag=masbaratodeal-20
+RESULTADO: ✅ LIMPIO Y MONETIZADO
+---------------------------------------------------------------
+🧪 PRUEBA: eBay con ID Ajeno
+🔴 Original:     https://www.ebay.com/itm/157519572776?mkevt=1&mkcid=1&mkrid=711-53200-19255-0&campid=5337259887&toolid=10001&customid=58f20abef21111f09ba10e9da356a67b0INT
+🟢 Transformado: https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u=https%3A%2F%2Fwww.ebay.com%2Fitm%2F157519572776
+RESULTADO: ✅ LIMPIO Y MONETIZADO
+---------------------------------------------------------------
+🧪 PRUEBA: Walmart Sucio
+🔴 Original:     https://www.walmart.com/ip/PS5-Console/123456?u1=parásito&oid=123
+🟢 Transformado: https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u=https%3A%2F%2Fwww.walmart.com%2Fip%2FPS5-Console%2F123456%3Foid%3D123
+RESULTADO: ✅ LIMPIO Y MONETIZADO
+---------------------------------------------------------------
+
+⚠️ NOTA: Si ves enlaces de Sovrn (redirect.viglink...) es porque no tienes ID directo para esa tienda y usamos el Universal.

@@ -82,22 +82,34 @@ class LinkTransformer {
             }
 
             // 2. MONETIZACIÓN LIMPIA (Ocultar origen)
+
+            // PASO PREVIO: Limpieza Profunda de Afiliados Ajenos
+            // Quitamos parámetros conocidos de otros marketers para que no interfieran
+            try {
+                const urlObj = new URL(url);
+                const badParams = [
+                    'tag', 'ascsubtag', 'ref', 'ref_', 'campid', 'mkcid', 'mkrid', 'customid', 'toolid',
+                    'mkevt', 'aff', 'affiliate', 'adgroupid', 'u1', 'u2', 'aid', 'qid', 'sr', 'linkCode'
+                ];
+                badParams.forEach(p => urlObj.searchParams.delete(p));
+                url = urlObj.toString();
+            } catch (e) { /* Si falla parsing, seguimos con url raw */ }
+
             // 5. Monetización de Tiendas Específicas (Directa)
             if (url.includes('amazon')) {
+                // Amazon ya está limpio arriba, solo insertamos nuestro tag
                 const urlObj = new URL(url);
-                ['tag', 'ascsubtag', 'ref_', 'ref', 'qid', 'sr', 'linkCode', 'psc'].forEach(p => urlObj.searchParams.delete(p));
                 urlObj.searchParams.set('tag', this.tags.amazon);
                 return urlObj.toString();
+
             } else if (url.includes('ebay') && this.tags.ebay) {
                 // Formato directo eBay Partner Network
+                // La URL 'url' ya viene limpia de 'campid', 'customid', etc.
                 return `https://www.ebay.com/rover/1/${this.tags.ebay}/1?mpre=${encodeURIComponent(url)}`;
+
             } else if (url.includes('walmart') && this.tags.walmart) {
-                // Formato directo Walmart (Impact Radius)
-                // Nota: El formato `walmart.com/ip/${this.tags.walmart}?u=${encodeURIComponent(url)}` es para deep-linking con Impact Radius.
-                // Si `this.tags.walmart` es un ID de Impact Radius, esto es correcto.
-                // Si es un ID de otro programa, podría necesitar otro formato.
-                // Por ahora, asumimos Impact Radius o similar que usa 'u=' para el URL original.
                 return `https://walmart.com/ip/${this.tags.walmart}?u=${encodeURIComponent(url)}`;
+
             } else if (url.includes('aliexpress') && this.tags.aliexpress) {
                 const urlObj = new URL(url);
                 urlObj.searchParams.set('aff_short_key', this.tags.aliexpress);
@@ -106,9 +118,7 @@ class LinkTransformer {
             }
 
             // 6. Monetización UNIVERSAL (Microcenter, BestBuy, Target, Nike...)
-            // Si tenemos configurado un prefijo de red (Sovrn/Skimlinks), lo usamos para TODO lo demás
             if (this.tags.sovrn_prefix) {
-                // Evitar doble encode si ya trae query params complejos
                 return `${this.tags.sovrn_prefix}${encodeURIComponent(url)}`;
             }
 
