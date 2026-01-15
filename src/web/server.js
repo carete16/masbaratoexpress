@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const { db } = require('../database/db');
 const logger = require('../utils/logger');
+const LinkTransformer = require('../utils/LinkTransformer');
 require('dotenv').config();
 
 const app = express();
@@ -83,6 +84,51 @@ app.post('/api/newsletter', (req, res) => {
     } catch (error) {
         logger.error(`Error newsletter: ${error.message}`);
         res.status(500).json({ error: 'Error al suscribir' });
+    }
+});
+
+// SUBMIT DEAL API (User Generated Content)
+app.post('/api/submit-deal', async (req, res) => {
+    try {
+        const { title, price, link } = req.body;
+
+        if (!title || !price || !link) {
+            return res.status(400).json({ error: 'Faltan datos (título, precio, link)' });
+        }
+
+        // 1. Monetizar Link
+        const monetizedLink = await LinkTransformer.transform(link);
+
+        // Si el link fue rechazado (ej: slickdeals puro irrecuperable), error
+        if (!monetizedLink) {
+            return res.status(400).json({ error: 'Enlace no válido.' });
+        }
+
+        // 2. Extraer tienda básica
+        let store = 'Oferta Usuario';
+        if (monetizedLink.includes('amazon')) store = 'Amazon';
+        else if (monetizedLink.includes('walmart')) store = 'Walmart';
+        else if (monetizedLink.includes('ebay')) store = 'eBay';
+
+        // 3. Guardar en DB
+        const stmt = db.prepare(`
+            INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, posted_at, score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+        `);
+
+        // ID aleatorio
+        const id = Math.random().toString(36).substring(2, 11);
+        // Imagen por defecto (el usuario no sube foto aun)
+        const img = 'https://placehold.co/400x400/18181b/ffffff?text=Oferta+Usuario';
+
+        stmt.run(id, title, price, 0, monetizedLink, img, store, 100); // Score 100 para destacar
+
+        logger.info(`✅ Oferta de Usuario recibida: ${title}`);
+        res.status(200).json({ success: true });
+
+    } catch (e) {
+        logger.error(`Error Submit Deal: ${e.message}`);
+        res.status(500).json({ error: 'Error interno' });
     }
 });
 

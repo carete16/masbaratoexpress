@@ -30,6 +30,25 @@ class CoreProcessor {
                 continue; // DESCARTAR esta oferta completamente
             }
 
+            // 📢 CORRECCIÓN DE NOMBRE DE TIENDA 📢
+            // Si el link final es de Amazon, Walmart, etc., actualizar el nombre de la tienda.
+            // Si venía como "Slickdeals", eliminarlo.
+            if (deal.link) {
+                if (deal.link.includes('amazon')) deal.tienda = 'Amazon';
+                else if (deal.link.includes('walmart')) deal.tienda = 'Walmart';
+                else if (deal.link.includes('ebay')) deal.tienda = 'eBay';
+                else if (deal.link.includes('bestbuy')) deal.tienda = 'BestBuy';
+                else if (deal.link.includes('target')) deal.tienda = 'Target';
+                else if (deal.link.includes('newegg')) deal.tienda = 'Newegg';
+                else if (deal.link.includes('walgreens')) deal.tienda = 'Walgreens';
+                else if (deal.link.includes('nike')) deal.tienda = 'Nike';
+            }
+
+            // Si después de todo la tienda sigue diciendo "Slickdeals" (o variantes), lo ocultamos.
+            if (!deal.tienda || /slickdeals|slick/i.test(deal.tienda)) {
+                deal.tienda = 'Oferta Verificada';
+            }
+
             // 3. Mejora Visual (Extraer imagen HD original)
             deal.image = await VisualScraper.getHighResImage(deal.link, deal.image);
 
