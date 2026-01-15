@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: masbaratodeals-net
+    name: masbaratodeals-app-v1
     env: node
     plan: free
     buildCommand: npm install

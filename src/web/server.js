@@ -52,10 +52,10 @@ app.get('/api/deals', (req, res) => {
     }
 });
 
-// Manejador 404 explícito
+// Manejador Global (Redirigir todo lo desconocido a la Home)
 app.use((req, res, next) => {
-    if (req.path.startsWith('/api')) return next(); // Dejar pasar APIs
-    res.status(404).send('<h1>404 - Página No Encontrada</h1><p>La ruta que buscas no existe en MasbaratoDeals.</p>');
+    if (req.path.startsWith('/api')) return next();
+    res.redirect('/');
 });
 
 // Otras rutas

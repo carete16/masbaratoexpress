@@ -24,27 +24,36 @@ async function runBot() {
   }
 }
 
-// Iniciar Servidor Web
-const PORT = process.env.PORT || 10000; // Preferir 10000 para Render
+// 1. Iniciar Servidor Web Inmediatamente (Prioridad para Render)
+const PORT = process.env.PORT || 10000;
 startServer(PORT);
 
-// Iniciar Bot
-runBot();
-
-// Programar ciclos
-cron.schedule(`*/30 * * * *`, () => runBot());
-
-// Telegraf Commands
-const bot = TelegramNotifier.bot;
-bot.start((ctx) => ctx.reply('🚀 +BARATO DEALS Activo'));
-bot.command('status', (ctx) => {
+// 2. Iniciar Bot en segundo plano
+async function startApp() {
   try {
-    const total = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
-    ctx.reply(`📊 Total en DB: ${total}\n🌐 https://masbaratodeals-net.onrender.com`);
-  } catch (e) {
-    ctx.reply('Error consultando DB');
+    logger.info('Iniciando procesos de fondo...');
+    await runBot();
+
+    // Programar ciclos
+    cron.schedule(`*/30 * * * *`, () => runBot());
+
+    // Telegraf Commands
+    const bot = TelegramNotifier.bot;
+    bot.start((ctx) => ctx.reply('🚀 +BARATO DEALS Activo'));
+    bot.command('status', (ctx) => {
+      try {
+        const total = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
+        ctx.reply(`📊 Total en DB: ${total}\n🌐 https://masbaratodeals-net.onrender.com`);
+      } catch (e) {
+        ctx.reply('Error consultando DB');
+      }
+    });
+    bot.launch().catch(err => logger.error(`Error Telegraf: ${err.message}`));
+  } catch (err) {
+    logger.error(`Fallo en arranque secundario: ${err.message}`);
   }
-});
-bot.launch().catch(err => logger.error(`Error Telegraf: ${err.message}`));
+}
+
+startApp();
 
 logger.info(`Bot y Servidor listos. Puerto: ${PORT}`);
