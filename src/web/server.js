@@ -3,6 +3,7 @@ const path = require('path');
 const { db } = require('../database/db');
 const logger = require('../utils/logger');
 const LinkTransformer = require('../utils/LinkTransformer');
+const VisualScraper = require('../utils/VisualScraper');
 require('dotenv').config();
 
 const app = express();
@@ -32,15 +33,24 @@ app.get('/api/deals', (req, res) => {
     }
 });
 
-// Portal Principal con manejo de error explícito
+// Portal Principal Robusto
 app.get('/', (req, res) => {
-    const portalFile = path.join(viewsPath, 'portal.html');
-    res.sendFile(portalFile, (err) => {
+    const fs = require('fs');
+    const portalPath = path.join(__dirname, 'views', 'portal.html');
+
+    fs.readFile(portalPath, 'utf8', (err, html) => {
         if (err) {
-            logger.error(`Error cargando portal.html: ${err.message}`);
-            res.status(500).send(`Error critico: No se encuentra el archivo portal.html en ${viewsPath}.`);
+            logger.error(`❌ Error FATAL leyendo portal.html en: ${portalPath}`);
+            return res.status(500).send(`<h1>Error Interno</h1><p>No se pudo cargar la web. Ruta: ${portalPath}. Error: ${err.message}</p>`);
         }
+        res.send(html);
     });
+});
+
+// Manejador 404 explícito
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next(); // Dejar pasar APIs
+    res.status(404).send('<h1>404 - Página No Encontrada</h1><p>La ruta que buscas no existe en MasbaratoDeals.</p>');
 });
 
 // Otras rutas
@@ -87,48 +97,127 @@ app.post('/api/newsletter', (req, res) => {
     }
 });
 
-// SUBMIT DEAL API (User Generated Content)
-app.post('/api/submit-deal', async (req, res) => {
+// 1. API: ANALIZAR ENLACE (Scraping en vivo)
+app.post('/api/analyze-deal', async (req, res) => {
     try {
-        const { title, price, link } = req.body;
+        const { link } = req.body;
+        if (!link) return res.status(400).json({ error: 'Falta el enlace' });
 
-        if (!title || !price || !link) {
-            return res.status(400).json({ error: 'Faltan datos (título, precio, link)' });
-        }
-
-        // 1. Monetizar Link
+        // Monetizar
         const monetizedLink = await LinkTransformer.transform(link);
+        if (!monetizedLink) return res.status(400).json({ error: 'Enlace no válido.' });
 
-        // Si el link fue rechazado (ej: slickdeals puro irrecuperable), error
-        if (!monetizedLink) {
-            return res.status(400).json({ error: 'Enlace no válido.' });
-        }
-
-        // 2. Extraer tienda básica
+        // Tienda
         let store = 'Oferta Usuario';
         if (monetizedLink.includes('amazon')) store = 'Amazon';
         else if (monetizedLink.includes('walmart')) store = 'Walmart';
         else if (monetizedLink.includes('ebay')) store = 'eBay';
+        else if (monetizedLink.includes('bestbuy')) store = 'BestBuy';
 
-        // 3. Guardar en DB
-        const stmt = db.prepare(`
-            INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, posted_at, score)
-            VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
-        `);
+        // Scraping Logic
+        let title = '';
+        let price = 0;
+        let img = '';
 
-        // ID aleatorio
-        const id = Math.random().toString(36).substring(2, 11);
-        // Imagen por defecto (el usuario no sube foto aun)
-        const img = 'https://placehold.co/400x400/18181b/ffffff?text=Oferta+Usuario';
+        try {
+            const axios = require('axios');
+            const response = await axios.get(link, {
+                timeout: 8000,
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+            });
+            const html = response.data;
 
-        stmt.run(id, title, price, 0, monetizedLink, img, store, 100); // Score 100 para destacar
+            // Title
+            const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/i);
+            const tagTitle = html.match(/<title>(.*?)<\/title>/i);
+            if (ogTitle) title = ogTitle[1];
+            else if (tagTitle) title = tagTitle[1];
 
-        logger.info(`✅ Oferta de Usuario recibida: ${title}`);
-        res.status(200).json({ success: true });
+            // Cleanup Title
+            title = title.split('|')[0].replace(/Amazon\.com:?/i, '').trim();
+
+            // Image
+            const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/i);
+            if (ogImage) img = ogImage[1];
+
+            // Price
+            const priceRegex = /["']?(?:price|amount)["']?:\s*["']?(\d+\.?\d*)["']?|(\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/i;
+            const priceMatch = html.match(priceRegex);
+            if (priceMatch) {
+                const rawPrice = priceMatch[1] || priceMatch[2];
+                if (rawPrice) price = parseFloat(rawPrice.replace(/[$,]/g, ''));
+            }
+
+            // Amazon ASIN Image Override
+            if (store === 'Amazon') {
+                const asinMatch = link.match(/\/([A-Z0-9]{10})(?:[/?]|$)/);
+                if (asinMatch) img = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&Format=_SL500_&ASIN=${asinMatch[1]}&MarketPlace=US`;
+            }
+
+        } catch (e) {
+            logger.warn(`Scraping fallido: ${e.message}`);
+        }
+
+        res.json({ success: true, title, price, img, store, finalLink: monetizedLink });
 
     } catch (e) {
-        logger.error(`Error Submit Deal: ${e.message}`);
-        res.status(500).json({ error: 'Error interno' });
+        res.status(500).json({ error: 'Error analizando' });
+    }
+});
+
+// 2. API: PUBLICAR OFERTA (Guardar datos finales)
+app.post('/api/submit-deal', (req, res) => {
+    try {
+        const { title, price, price_official, link, image, store, category, description } = req.body;
+
+        if (!title || !price || !link) return res.status(400).json({ error: 'Faltan datos obligatorios' });
+
+        const uuid = Math.random().toString(36).substring(2, 11);
+        const stmt = db.prepare(`
+            INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, posted_at, score)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+        `);
+
+        stmt.run(uuid, title, price, price_official || 0, link, image, store || 'Oferta Usuario', category || 'Otros', description || '', 100);
+
+        logger.info(`✅ Oferta Publicada por Usuario: ${title}`);
+        res.json({ success: true });
+
+    } catch (e) {
+        logger.error(`Error guardando: ${e.message}`);
+        res.status(500).json({ error: 'Error al guardar' });
+    }
+});
+
+// 3. API: ACTUALIZAR OFERTA (Admin)
+app.post('/api/update-deal', (req, res) => {
+    try {
+        const { id, title, price, price_official, link, image, store, category, description } = req.body;
+        if (!id) return res.status(400).json({ error: 'Falta ID' });
+
+        const stmt = db.prepare(`
+            UPDATE published_deals 
+            SET title=?, price_offer=?, price_official=?, link=?, image=?, tienda=?, categoria=?, description=?
+            WHERE id=?
+        `);
+        stmt.run(title, price, price_official || 0, link, image, store, category, description || '', id);
+
+        logger.info(`✏️ Oferta Editada: ${title}`);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 4. API: BORRAR OFERTA (Admin)
+app.post('/api/delete-deal', (req, res) => {
+    try {
+        const { id } = req.body;
+        db.prepare('DELETE FROM published_deals WHERE id = ?').run(id);
+        logger.info(`🗑️ Oferta Eliminada: ${id}`);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
