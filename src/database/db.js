@@ -6,6 +6,13 @@ require('dotenv').config();
 // Usar el directorio actual de ejecución (root) para localizar la DB
 const dbPath = path.resolve(process.cwd(), 'src/database/deals.db');
 
+// Asegurar que el directorio existe (CRÍTICO PARA RENDER)
+const fs = require('fs');
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 let db;
 try {
   db = new Database(dbPath);
