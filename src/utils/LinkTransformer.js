@@ -1,3 +1,5 @@
+const logger = require('./logger');
+
 /**
  * Este módulo se encarga de convertir links normales en links de afiliado.
  * Actúa bajo una lógica de "Multi-Tienda" para ocultar el origen (Slickdeals, etc).
@@ -5,7 +7,6 @@
 class LinkTransformer {
     constructor() {
         require('dotenv').config();
-        this.logger = require('../utils/logger');
         this.tags = {
             amazon: process.env.AMAZON_TAG || 'masbaratodeal-20',
             ebay: process.env.EBAY_CAMPAIGN_ID || '',
@@ -23,7 +24,7 @@ class LinkTransformer {
         try {
             // 1. "DESMANTELAR" Slickdeals: Obtener la tienda real
             if (url.includes('slickdeals.net')) {
-                this.logger.info(`🕵️ BYPASS SLICKDEALS INICIADO: ${url.substring(0, 80)}...`);
+                logger.info(`🕵️ BYPASS SLICKDEALS INICIADO: ${url.substring(0, 80)}...`);
 
                 // Opción A: Extraer de u2 (Rápido)
                 if (url.includes('u2=')) {
@@ -124,19 +125,19 @@ class LinkTransformer {
 
             // 🚨 VALIDACIÓN FINAL: Asegurar que NO se devuelva un link de Slickdeals
             if (url.includes('slickdeals.net')) {
-                this.logger.error(`❌ FALLO EN BYPASS: El link sigue siendo de Slickdeals: ${url}`);
-                this.logger.error(`   Link original era: ${originalUrl}`);
+                logger.error(`❌ FALLO EN BYPASS: El link sigue siendo de Slickdeals: ${url}`);
+                logger.error(`   Link original era: ${originalUrl}`);
                 return null; // Devolver null para que CoreProcessor lo descarte
             }
 
             // ✅ Log de éxito si venía de Slickdeals
             if (originalUrl.includes('slickdeals.net') && !url.includes('slickdeals.net')) {
-                this.logger.info(`✅ BYPASS EXITOSO: ${originalUrl.substring(0, 50)}... → ${url.substring(0, 50)}...`);
+                logger.info(`✅ BYPASS EXITOSO: ${originalUrl.substring(0, 50)}... → ${url.substring(0, 50)}...`);
             }
 
             return url;
         } catch (e) {
-            this.logger.error(`Error en LinkTransformer: ${e.message}`);
+            logger.error(`Error en LinkTransformer: ${e.message}`);
             return url;
         }
     }
