@@ -50,6 +50,9 @@ class CoreProcessor {
                         if (expedition.price_offer) deal.price_offer = expedition.price_offer;
                         if (expedition.price_official) deal.price_official = expedition.price_official;
 
+                        // LOG DE PRECIOS PARA DEBUG
+                        logger.info(`💰 Análisis de Precios: Oferta $${deal.price_offer} | Antes $${deal.price_official || 'N/A'}`);
+
                         // IMAGEN: Priorizar la de alta calidad encontrada por el bot
                         if (expedition.image && !expedition.image.includes('placehold.co')) {
                             deal.image = expedition.image;
