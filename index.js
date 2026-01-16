@@ -208,6 +208,41 @@ app.post('/api/login', (req, res) => {
   }
 });
 
+// --- SEEDER ENDPOINT (Para llenar DB vacía) ---
+app.post('/api/seed', authMiddleware, async (req, res) => {
+  try {
+    const Telegram = require('./src/notifiers/TelegramNotifier');
+    const PROMOS = [
+      { title: "Apple iPhone 15 Pro Max", price: 999.00, official: 1199.00, link: "https://www.amazon.com/dp/B0CMZ7S85D", img: "https://m.media-amazon.com/images/I/81+E8pU1LWL._AC_SL1500_.jpg", cat: "Tecnología", desc: "🔥 Mínimo histórico Titanio." },
+      { title: "Sony PlayStation 5 Slim", price: 449.00, official: 499.99, link: "https://www.amazon.com/dp/B0CL5K56Z1", img: "https://m.media-amazon.com/images/I/41M7C7c+NML._SL500_.jpg", cat: "Gamer", desc: "🎮 La consola más buscada." },
+      { title: "Samsung 65-inch Crystal UHD 4K", price: 397.99, official: 479.99, link: "https://www.amazon.com/dp/B0BVMXW266", img: "https://m.media-amazon.com/images/I/91M-1Z-wNGL._AC_SL1500_.jpg", cat: "Hogar", desc: "📺 Cine en casa 4K." },
+      { title: "Ninja Air Fryer 4-Qt", price: 89.95, official: 129.99, link: "https://www.amazon.com/dp/B07FDJMC9Q", img: "https://m.media-amazon.com/images/I/71y+UGuJl5L._AC_SL1500_.jpg", cat: "Hogar", desc: "🍳 Cocina saludable." }
+    ];
+
+    let count = 0;
+    for (const p of PROMOS) {
+      const exists = db.prepare('SELECT id FROM published_deals WHERE link = ?').get(p.link);
+      if (exists) continue;
+
+      const uuid = Math.random().toString(36).substring(2, 11);
+      db.prepare(`
+                INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, posted_at, score)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 500)
+            `).run(uuid, p.title, p.price, p.official, p.link, p.img, 'Amazon', p.cat, p.desc);
+
+      // Notificar TG
+      await Telegram.sendOffer({
+        id: uuid, title: p.title, price_offer: p.price, price_official: p.official,
+        link: p.link, image: p.img, tienda: 'Amazon', categoria: p.cat,
+        viralContent: `<b>🔥 ${p.title}</b>\n💰 $${p.price} <s>$${p.official}</s>\n${p.desc}\n👉 <a href="${p.link}">VER OFERTA</a>`
+      });
+      count++;
+      await new Promise(r => setTimeout(r, 2000));
+    }
+    res.json({ success: true, seeded: count });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // 6. SEO ENDPOINTS (Sitemap Automático)
 app.get('/sitemap.xml', (req, res) => {
   try {
