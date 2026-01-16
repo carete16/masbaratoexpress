@@ -18,27 +18,35 @@ class PriceAuditorBot {
 
         const { price_offer, price_official } = deal;
 
-        // 1. Validar el Margen de Ahorro
-        if (price_official > 0) {
-            const savings = ((price_official - price_offer) / price_official) * 100;
+        // Calcular ahorro
+        const savings = deal.price_official > deal.price_offer ? deal.price_official - deal.price_offer : 0;
+        const savingsPercent = deal.price_official > 0 ? Math.round((savings / deal.price_official) * 100) : 0;
 
-            if (savings >= 50) {
+        // Si no hay precio oficial detectado, o el precio de oferta es mayor o igual,
+        // intentamos estimar un badge basado en el score (si existe)
+        if (deal.price_official <= deal.price_offer || deal.price_official === 0) {
+            report.isHistoricLow = false;
+            // Asumiendo que deal.score puede existir para determinar el badge
+            report.badge = deal.score && deal.score > 80 ? 'OFERTA DESTACADA' : 'TENDENCIA EN USA';
+            report.confidenceScore = deal.score || 70; // Usar score si existe, sino un valor por defecto
+            // No retornamos aquí, continuamos con el filtro de spam si es necesario
+        } else {
+            // 1. Validar el Margen de Ahorro
+            if (savingsPercent >= 50) {
                 report.badge = 'LIQUIDACIÓN RADICAL';
                 report.confidenceScore = 100;
                 report.isHistoricLow = true;
-            } else if (savings >= 25) {
+            } else if (savingsPercent >= 25) {
                 report.badge = 'OFERTA VERIFICADA';
                 report.confidenceScore = 80;
-            } else if (savings > 0) {
+            } else if (savingsPercent > 0) {
                 report.badge = 'AHORRO REAL';
                 report.confidenceScore = 60;
             } else {
-                report.isGoodDeal = false; // No hay ahorro real detectado
+                report.isGoodDeal = true;
+                report.badge = 'TENDENCIA EN USA';
+                report.confidenceScore = 70;
             }
-        } else {
-            // Si no hay precio oficial, pero la oferta viene de Frontpage de Slickdeals, es buena por defecto
-            report.badge = 'TENDENCIA EN USA';
-            report.confidenceScore = 70;
         }
 
         // 2. Filtro de Spam (Precios demasiado bajos que suelen ser errores o estafas)

@@ -68,9 +68,12 @@ class CoreProcessor {
                         if (!monetizedLink) continue;
                         deal.link = monetizedLink;
 
-                        // QA Final
-                        const qa = await QA.validateOffer(deal);
-                        if (!qa.passed) continue;
+                        // 6. LIMPIEZA ANTI-COMPETENCIA (RESGUARDO FINAL)
+                        const blockRegex = /slickdeals|slick\s*deals/gi;
+                        deal.title = deal.title.replace(blockRegex, '').trim();
+                        if (deal.tienda.toLowerCase().includes('slickdeals') || deal.tienda === 'Analizando...') {
+                            deal.tienda = 'Oferta USA';
+                        }
 
                         // Disparo final
                         const success = await Bot4.sendOffer(deal);

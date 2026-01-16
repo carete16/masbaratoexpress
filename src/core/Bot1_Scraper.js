@@ -78,7 +78,7 @@ class SlickdealsProScraper {
         }
 
         // Tienda (Base - Reconocimiento ampliado)
-        let tienda = 'Analizando...';
+        let tienda = 'Oferta USA';
         const tLower = title.toLowerCase();
         const storeMap = {
             'walmart': 'Walmart', 'ebay': 'eBay', 'best buy': 'Best Buy', 'amazon': 'Amazon',
@@ -95,9 +95,25 @@ class SlickdealsProScraper {
             }
         }
 
+        // LIMPIEZA EXTREMA DEL TÍTULO (Para paridad con Slickdeals)
+        let cleanTitle = title
+            .replace(/slickdeals/gi, '') // Quitar marca
+            .replace(/\[.*?\]/g, '') // Quitar corchetes
+            .replace(/\$(\d+(?:\.\d{2})?)/g, '') // Quitar cualquier precio $99.99
+            .replace(/(?:Reg\.|Was|MSRP|List|List Price)\s*:\s*\$\d+(?:\.\d{2})?/gi, '') // Quitar MSRP del texto
+            .replace(/\s+\+/g, '') // Quitar signos + sueltos
+            .replace(/Free Shipping/gi, '') // Quitar envío gratis del título (redundante)
+            .replace(/Prime Members/gi, '') // Quitar menciones a membresías
+            .replace(/Kindle eBook/gi, '')
+            .replace(/\s\s+/g, ' ') // Quitar espacios dobles
+            .trim();
+
+        // Si el título quedó vacío por error, usar el original sin marcas
+        if (!cleanTitle || cleanTitle.length < 5) cleanTitle = title.replace(/slickdeals/gi, '').trim();
+
         return {
             id: require('crypto').createHash('md5').update(link).digest('hex').substring(0, 10),
-            title: title.replace(/slickdeals/gi, '').trim(),
+            title: cleanTitle,
             link: link,
             image: image,
             price_offer: price_offer,

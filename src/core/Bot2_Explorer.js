@@ -47,15 +47,14 @@ class DeepExplorerBot {
             }
 
             // PRECIO ORIGINAL (MSRP / List Price / Reg Price / Was)
-            // Agregando selectores específicos de tiendas USA
+            // Agregando selectores PROFUNDOS de Slickdeals
             const originalPriceText = $('.listPrice').first().text().trim() ||
                 $('.oldPrice').first().text().trim() ||
                 $('.regPrice').first().text().trim() ||
                 $('.strike').first().text().trim() ||
-                $('.strikethrough').first().text().trim() ||
                 $('.itemPrice.reg').text().trim() ||
-                $('.price--msrp').text().trim() ||
-                $('.price--was').text().trim();
+                $('[data-bhw="ListPrice"]').text().trim() ||
+                $('.strikethrough').first().text().trim();
 
             if (originalPriceText) {
                 const match = originalPriceText.match(/\$(\d+(?:\.\d{2})?)/);
@@ -64,13 +63,21 @@ class DeepExplorerBot {
 
             // Si aún no tenemos precio oficial, buscar en el texto descriptivo (Reg., MSRP, Was)
             if (!result.price_official || result.price_official <= result.price_offer) {
-                const text = $('.itemDetails, .description, .dealTitle').text();
-                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List|Original)\s*:\s*\$(\d+(?:\.\d{2})?)/i) ||
+                const text = $('.itemDetails, .description, .dealTitle, .mainContent').text();
+                // Patrones comunes en Slickdeals: "List Price: $99.99", "Was $99.99", "$99.99 (Reg. $150)"
+                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List|List Price|Original)\s*[:\-]?\s*\$(\d+(?:\.\d{2})?)/i) ||
                     text.match(/\$(\d+(?:\.\d{2})?)\s*(?:Reg\.|Was|MSRP|List|Original)/i);
                 if (regMatch) result.price_official = parseFloat(regMatch[1]);
             }
 
-            // Garantizar que si el precio oficial es menor o igual al de oferta, se anule para no mostrar errores visuales
+            // SEGURIDAD: Si no hay MSRP, intentar extraerlo del título si el scraper falló
+            if (!result.price_official) {
+                const pageTitle = $('title').text();
+                const titleMatch = pageTitle.match(/(?:Reg\.|Was|MSRP|List)\s*\$(\d+(?:\.\d{2})?)/i);
+                if (titleMatch) result.price_official = parseFloat(titleMatch[1]);
+            }
+
+            // Garantizar que si el precio oficial es menor o igual al de oferta, se anule (Data Sanitize)
             if (result.price_official <= result.price_offer) result.price_official = 0;
 
             // B. DETECTAR IMAGEN DE ALTA CALIDAD
@@ -159,11 +166,22 @@ class DeepExplorerBot {
                     }
                 }
 
-                if (result.store === 'Oferta USA') {
+                if (result.store === 'Oferta USA' || result.store.toLowerCase().includes('slickdeals')) {
                     const parts = domain.split('.');
-                    const name = parts.length > 2 ? parts[1] : parts[0];
+                    let name = parts.length > 2 ? parts[1] : parts[0];
+
+                    // BLOQUEO ABSOLUTO: Prohibido decir Slickdeals
+                    if (name.toLowerCase().includes('slickdeals')) {
+                        name = 'Oferta USA';
+                    }
+
                     result.store = name.charAt(0).toUpperCase() + name.slice(1);
                 }
+            }
+
+            // G. LIMPIEZA FINAL DE SEGURIDAD (Doble Check)
+            if (result.store.toLowerCase().includes('slickdeals')) {
+                result.store = 'Oferta USA';
             }
 
             logger.info(`✅ BOT 1 completado. Tienda: ${result.store}`);
