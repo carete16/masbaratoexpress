@@ -51,37 +51,66 @@ app.get('/go/:id', (req, res) => {
   } catch (e) { res.status(500).send('Error'); }
 });
 
+// Middleware de Autenticación
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'AdminMasbarato2026!'; // CLAVE MAESTRA
+const authMiddleware = (req, res, next) => {
+  const pwd = req.headers['x-admin-password'];
+  if (pwd !== ADMIN_PASSWORD) return res.status(403).json({ error: 'Acceso denegado. Contraseña incorrecta.' });
+  next();
+};
+
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) res.json({ success: true, token: 'session_ok' });
+  else res.status(401).json({ error: 'Contraseña incorrecta' });
+});
+
 app.post('/api/analyze-deal', async (req, res) => {
   try {
     const { link } = req.body;
     if (!link) return res.status(400).json({ error: 'Falta el enlace' });
     const monetizedLink = await LinkTransformer.transform(link);
-    if (!monetizedLink) return res.status(400).json({ error: 'Enlace no válido.' });
 
+    // Auto-detect store
     let store = 'Oferta';
-    if (monetizedLink.includes('amazon')) store = 'Amazon';
-    else if (monetizedLink.includes('walmart')) store = 'Walmart';
-    else if (monetizedLink.includes('ebay')) store = 'eBay';
+    if (/amazon/i.test(link)) store = 'Amazon';
+    else if (/walmart/i.test(link)) store = 'Walmart';
+    else if (/ebay/i.test(link)) store = 'eBay';
+    else if (/bestbuy/i.test(link)) store = 'Best Buy';
+    else if (/target/i.test(link)) store = 'Target';
+    else if (/nike/i.test(link)) store = 'Nike';
 
     // Scraping simple
     const axios = require('axios');
-    const response = await axios.get(link, { timeout: 5000 }).catch(() => null);
-    let title = "Nueva Oferta";
-    let img = "https://placehold.co/400x400/18181b/ffffff?text=Oferta+USA";
+    const response = await axios.get(link, {
+      timeout: 5000,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+    }).catch(() => null);
+
+    let title = "";
+    let img = "";
+    let price = "";
 
     if (response) {
       const html = response.data;
       const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/i);
       if (ogTitle) title = ogTitle[1];
+
       const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/i);
       if (ogImage) img = ogImage[1];
+
+      // Intentar extraer precio (muy básico)
+      const priceMatch = html.match(/\$[\d,]+\.\d{2}/);
+      if (priceMatch) price = parseFloat(priceMatch[0].replace('$', '').replace(',', ''));
     }
 
-    res.json({ success: true, title, store, img, link: monetizedLink });
+    res.json({ success: true, title, price, store, img, link: monetizedLink || link });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/submit-deal', (req, res) => {
+// --- ENDPOINTS PROTEGIDOS ---
+
+app.post('/api/submit-deal', authMiddleware, (req, res) => {
   try {
     const { title, price, price_official, link, image, store, category, description } = req.body;
     const uuid = Math.random().toString(36).substring(2, 11);
@@ -90,6 +119,34 @@ app.post('/api/submit-deal', (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 100)
         `);
     stmt.run(uuid, title, price, price_official || 0, link, image, store, category, description || '');
+
+    // Notificar al canal Telegram
+    try {
+      const Telegram = require('./src/notifiers/TelegramNotifier');
+      Telegram.sendManualDeal({ title, price_offer: price, price_official, link, image, description });
+    } catch (e) { console.error("Error notificando TG:", e); }
+
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/update-deal', authMiddleware, (req, res) => {
+  try {
+    const { id, title, price, price_official, link, image, store, category, description } = req.body;
+    const stmt = db.prepare(`
+            UPDATE published_deals 
+            SET title=?, price_offer=?, price_official=?, link=?, image=?, tienda=?, categoria=?, description=?
+            WHERE id=?
+        `);
+    stmt.run(title, price, price_official || 0, link, image, store, category, description || '', id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/delete-deal', authMiddleware, (req, res) => {
+  try {
+    const { id } = req.body;
+    db.prepare('DELETE FROM published_deals WHERE id = ?').run(id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

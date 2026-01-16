@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - MasbaratoDeals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #111;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-box {
+            background: #18181b;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 20px 0;
+            background: #0f0f12;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            border-color: #3b82f6;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        .error {
+            color: #f87171;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-box">
+        <h1 style="margin:0 0 10px 0;">🔐 Acceso Admin</h1>
+        <p style="color:#aaa; font-size:14px;">Solo personal autorizado</p>
+
+        <form id="loginForm">
+            <input type="password" id="password" placeholder="Contraseña Maestra..." required autofocus>
+            <button type="submit" id="btn">ENTRAR</button>
+            <div id="error" class="error">Contraseña incorrecta</div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pwd = document.getElementById('password').value;
+            const btn = document.getElementById('btn');
+            const err = document.getElementById('error');
+
+            btn.innerText = 'Verificando...';
+            btn.disabled = true;
+            err.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pwd })
+                });
+
+                if (res.ok) {
+                    // Guardar Token y Contraseña (necesaria para headers)
+                    localStorage.setItem('admin_token', 'session_ok');
+                    localStorage.setItem('admin_password', pwd);
+                    window.location.href = '/?admin=1'; // Redirigir al dashboard
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                err.style.display = 'block';
+                btn.innerText = 'ENTRAR';
+                btn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
