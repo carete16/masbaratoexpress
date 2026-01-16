@@ -42,8 +42,16 @@ class DeepExplorerBot {
             // A. EXTRACCIÓN DE PRECIOS (PARIDAD TOTAL)
             const priceText = $('.dealPrice').first().text().trim() || $('.itemPrice').first().text().trim() || $('[data-bhw="Price"]').text().trim();
             if (priceText) {
+                // Capturar el primer precio que aparezca (el de oferta)
                 const match = priceText.match(/\$(\d+(?:\.\d{2})?)/);
                 if (match) result.price_offer = parseFloat(match[1]);
+            }
+
+            // Si el precio de oferta es nulo, buscarlo en el título o descripción prominente
+            if (!result.price_offer) {
+                const titleText = $('.dealTitle').text();
+                const offerTitleMatch = titleText.match(/\$(\d+(?:\.\d{2})?)/);
+                if (offerTitleMatch) result.price_offer = parseFloat(offerTitleMatch[1]);
             }
 
             // PRECIO ORIGINAL (MSRP / List Price / Reg Price / Was)
@@ -65,9 +73,10 @@ class DeepExplorerBot {
             if (!result.price_official || result.price_official <= result.price_offer) {
                 const text = $('.itemDetails, .description, .dealTitle, .mainContent').text();
                 // Patrones comunes en Slickdeals: "List Price: $99.99", "Was $99.99", "$99.99 (Reg. $150)"
-                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List|List Price|Original)\s*[:\-]?\s*\$(\d+(?:\.\d{2})?)/i) ||
-                    text.match(/\$(\d+(?:\.\d{2})?)\s*(?:Reg\.|Was|MSRP|List|Original)/i);
-                if (regMatch) result.price_official = parseFloat(regMatch[1]);
+                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List|List Price|Original|Retail)\s*[:\-]?\s*(\$[\d,]+\.?\d*)/i);
+                if (regMatch) {
+                    result.price_official = parseFloat(regMatch[1].replace('$', '').replace(',', ''));
+                }
             }
 
             // SEGURIDAD: Si no hay MSRP, intentar extraerlo del título si el scraper falló
@@ -78,7 +87,7 @@ class DeepExplorerBot {
             }
 
             // Garantizar que si el precio oficial es menor o igual al de oferta, se anule (Data Sanitize)
-            if (result.price_official <= result.price_offer) result.price_official = 0;
+            if (result.price_official && result.price_official <= result.price_offer) result.price_official = 0;
 
             // B. DETECTAR IMAGEN DE ALTA CALIDAD
             result.image = $('.itemImage img, .mainImage img, .imageContainer img').attr('src') ||
@@ -87,9 +96,21 @@ class DeepExplorerBot {
 
             if (result.image && result.image.startsWith('//')) result.image = 'https:' + result.image;
 
-            // C. DETECTAR CUPÓN
+            // C. DETECTAR CUPÓN (Múltiples fuentes)
             result.coupon = $('.couponCode, .promoCode, [data-bhw="CouponCode"]').first().text().trim() ||
                 $('button[data-clipboard-text]').attr('data-clipboard-text');
+
+            // Búsqueda inteligente de cupones en el contenido (Si falla el selector directo)
+            if (!result.coupon) {
+                const descText = $('.itemDetails, .description, .mainContent').text() || '';
+                // Buscar patrones como: "code ENERO50", "coupon HALLAZGOS", ó texto en mayúsculas de 4-15 chars
+                const couponMatches = descText.match(/(?:code|coupon|código|cupón)[:\s]?\s*([A-Z0-9]{4,15})/i) ||
+                    descText.match(/([A-Z0-9]{5,15})\s*(?:Copy Code)/i);
+                if (couponMatches) {
+                    result.coupon = couponMatches[1].toUpperCase();
+                    logger.info(`🎯 Cupón detectado en texto: ${result.coupon}`);
+                }
+            }
 
             // D. VERIFICAR SI ESTÁ EXPIRADA
             const expiredSignals = $('.expired, .dealExpired, :contains("Deal is Expired")').length > 0;
@@ -99,13 +120,13 @@ class DeepExplorerBot {
                 return result;
             }
 
-            // E. SEGUIR EL RASTRO HASTA LA TIENDA REAL
-            let buyNowLinks = $('a.buyNow, a.button--primary, a.button--checkout, a[data-bhw="BuyNowButton"]');
+            // E. SEGUIR EL RASTRO HASTA LA TIENDA REAL (Búsqueda Agresiva)
+            let buyNowLinks = $('a.buyNow, a.button--primary, a.button--checkout, a[data-bhw="BuyNowButton"], a.button, .buyNow .button, a:contains("Consigue"), a:contains("Amazon"), a:contains("eBay"), a:contains("Walmart")');
             let buyNowLink = null;
 
             for (let i = 0; i < buyNowLinks.length; i++) {
                 let href = $(buyNowLinks[i]).attr('data-href') || $(buyNowLinks[i]).attr('href');
-                if (href && !href.includes('product-reviews') && !href.includes('/reviews/')) {
+                if (href && !href.includes('product-reviews') && !href.includes('/reviews/') && href !== '#') {
                     buyNowLink = href;
                     break;
                 }
@@ -126,28 +147,38 @@ class DeepExplorerBot {
             if (buyNowLink) {
                 if (buyNowLink.startsWith('/')) buyNowLink = 'https://slickdeals.net' + buyNowLink;
 
-                // Intento de resolución profunda (u2 es el bypass más directo)
+                // 1. INTENTO POR PARÁMETROS (Rápido)
                 try {
-                    const params = new URL(buyNowLink, 'https://slickdeals.net').searchParams;
-                    const u2 = params.get('u2') || params.get('url') || params.get('lno');
-                    if (u2) result.finalUrl = decodeURIComponent(u2);
+                    const u = new URL(buyNowLink, 'https://slickdeals.net');
+                    const realUrl = u.searchParams.get('u2') || u.searchParams.get('url') || u.searchParams.get('lno') || u.searchParams.get('u');
+                    if (realUrl && realUrl.startsWith('http')) {
+                        result.finalUrl = decodeURIComponent(realUrl);
+                    }
                 } catch (e) { }
 
-                // Si no se resolvió por parámetros, intentamos rastreo físico
-                if (result.finalUrl.includes('slickdeals.net')) {
+                // 2. INTENTO POR RASTREO FÍSICO (Si sigue siendo Slickdeals)
+                if (result.finalUrl.includes('slickdeals.net') || result.finalUrl.includes('redirect.viglink.com')) {
                     try {
                         const shopRes = await axios.get(buyNowLink, {
                             headers: {
                                 'User-Agent': this.userAgent,
                                 'Referer': 'https://slickdeals.net/'
                             },
-                            maxRedirects: 10,
-                            timeout: 10000
+                            maxRedirects: 15,
+                            timeout: 12000
                         });
-                        result.finalUrl = shopRes.request?.res?.responseUrl || shopRes.config?.url || buyNowLink;
+
+                        let candidate = shopRes.request?.res?.responseUrl || shopRes.config?.url;
+
+                        // Si el resultado sigue teniendo el envoltorio de Viglink/Slickdeals, extraer de nuevo
+                        if (candidate && (candidate.includes('u2=') || candidate.includes('u='))) {
+                            const cUrl = new URL(candidate);
+                            candidate = cUrl.searchParams.get('u2') || cUrl.searchParams.get('u') || candidate;
+                        }
+
+                        result.finalUrl = decodeURIComponent(candidate);
                     } catch (e) {
                         logger.warn(`⚠️ Error resolviendo link físico: ${e.message}`);
-                        // Fallback: buscar cualquier URL externa en el cuerpo si falló el axios
                     }
                 }
             }

@@ -3,7 +3,7 @@ const db = require('../database/db');
 
 class CoreProcessor {
     constructor() {
-        this.interval = 10 * 60 * 1000; // 10 minutos para dar tiempo a la exploración profunda
+        this.interval = 5 * 60 * 1000; // 5 minutos: Máxima frescura de ofertas
     }
 
     async start() {
