@@ -30,10 +30,11 @@ const authMiddleware = (req, res, next) => {
 // 1. OBTENER OFERTAS (PÚBLICO)
 app.get('/api/deals', (req, res) => {
   try {
-    // Solo últimas 100 ofertas de la última semana
+    // Solo últimas 100 ofertas PUBLICADAS de la última semana
     const deals = db.prepare(`
             SELECT * FROM published_deals 
-            WHERE posted_at > datetime('now', '-7 days') 
+            WHERE status = 'published' 
+            AND posted_at > datetime('now', '-7 days') 
             ORDER BY posted_at DESC 
             LIMIT 100
         `).all();
@@ -41,6 +42,34 @@ app.get('/api/deals', (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// 1b. OBTENER OFERTAS PENDIENTES (ADMIN)
+app.get('/api/admin/pending', authMiddleware, (req, res) => {
+  try {
+    const deals = db.prepare("SELECT * FROM published_deals WHERE status = 'pending' ORDER BY posted_at DESC").all();
+    res.json(deals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 1c. SUBIR OFERTA PÚBLICA (PORTAL COLABORADORES)
+app.post('/api/public-submit', async (req, res) => {
+  try {
+    const { title, price, price_official, link, image, store, category, description } = req.body;
+
+    // Generar ID único
+    const uuid = 'user_' + Math.random().toString(36).substring(2, 11);
+
+    // Guardar como PENDIENTE
+    const stmt = db.prepare(`
+        INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, status, posted_at, score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', datetime('now'), 10)
+    `);
+    stmt.run(uuid, title, price, price_official || 0, link, image, store, category, description || '', 10);
+
+    console.log(`📩 Nueva oferta colaborativa pendiente de inspección: ${title}`);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 2. REDIRECTOR INTELIGENTE (PÚBLICO)
@@ -184,6 +213,35 @@ app.post('/api/update-deal', authMiddleware, async (req, res) => {
             WHERE id=?
         `);
     stmt.run(title, price, price_official || 0, link, image, store, category, description || '', coupon || null, id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 5. APROBAR OFERTA (ADMIN - INSPECCIÓN)
+app.post('/api/approve-deal', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.body;
+    const deal = db.prepare("SELECT * FROM published_deals WHERE id = ?").get(id);
+
+    if (!deal) return res.status(404).json({ error: 'Oferta no encontrada' });
+
+    // 💰 MONETIZACIÓN AUTOMÁTICA AL APROBAR
+    const monetizedLink = await LinkTransformer.transform(deal.link);
+    const finalLink = monetizedLink || deal.link;
+
+    // ACTUALIZAR A PUBLICADA
+    db.prepare(`
+        UPDATE published_deals 
+        SET status = 'published', link = ?, posted_at = datetime('now') 
+        WHERE id = ?
+    `).run(finalLink, id);
+
+    // NOTIFICAR A TELEGRAM
+    try {
+      const Telegram = require('./src/notifiers/TelegramNotifier');
+      await Telegram.sendDeal({ ...deal, link: finalLink });
+    } catch (e) { console.error("Error TG:", e); }
+
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

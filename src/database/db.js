@@ -31,15 +31,17 @@ try {
         clicks INTEGER DEFAULT 0,
         description TEXT,
         coupon TEXT,
+        status TEXT DEFAULT 'published', -- 'published', 'pending', 'rejected'
         posted_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
   // --- MIGRACIONES AUTOMÁTICAS (SAFE ADD COLUMN) ---
-  try { db.exec("ALTER TABLE published_deals ADD COLUMN description TEXT"); } catch (e) { /* Columna ya y existe o error ignorables */ }
-  try { db.exec("ALTER TABLE published_deals ADD COLUMN coupon TEXT"); } catch (e) { /* Columna ya existe */ }
-  try { db.exec("ALTER TABLE published_deals ADD COLUMN is_historic_low BOOLEAN DEFAULT 0"); } catch (e) { /* Columna ya existe */ }
-  try { db.exec("ALTER TABLE published_deals ADD COLUMN score INTEGER DEFAULT 0"); } catch (e) { /* Columna ya existe */ }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN description TEXT"); } catch (e) { }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN coupon TEXT"); } catch (e) { }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN status TEXT DEFAULT 'published'"); } catch (e) { }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN is_historic_low BOOLEAN DEFAULT 0"); } catch (e) { }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN score INTEGER DEFAULT 0"); } catch (e) { }
 
 } catch (error) {
   logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
