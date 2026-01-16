@@ -1,5 +1,5 @@
 {
-  "name": "masbaratodeals",
+  "name": "masbarato-web",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -7,5 +7,8 @@
   },
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
