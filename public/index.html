@@ -555,170 +555,230 @@
         <button class="filter-chip" data-cat="Tecnología">💻 Tech</button>
         <button class="filter-chip" data-cat="Gamer">🎮 Gamers</button>
         <button class="filter-chip" data-cat="Moda">👟 Moda</button>
-        <!-- Submit Deal Modal (Professional Wizard) -->
-        <div id="submitModal" class="modal-overlay">
-            <div class="modal">
-                <button class="close-modal" onclick="closeModal()">×</button>
-                <h2 style="font-size: 22px; font-weight: 800; color: #111;">📢 Publicar Oferta</h2>
+    </div>
 
-                <form id="submit-form">
-                    <!-- STEP 1: URL -->
-                    <div class="form-group">
-                        <label
-                            style="font-weight:700; color:var(--primary); font-size: 14px; margin-bottom: 6px; display:block;">Paso
-                            1: Enlace de la Oferta</label>
-                        <div style="display:flex; gap:10px;">
-                            <input type="url" id="d-link" class="form-input" placeholder="https://amazon.com/..."
-                                required style="margin-top:0;">
-                            <button type="button" id="btn-analyze" onclick="analyzeLink()"
-                                style="background:var(--bg-main); border:1px solid var(--border); color:#555; padding:0 15px; border-radius:8px; cursor:pointer; font-size: 16px;">
-                                🔍
-                            </button>
-                        </div>
-                    </div>
+    <footer>
+        <p>
+            <b>© 2026 +BARATO DEALS</b><br>
+            Rastreamos las mejores ofertas de USA para ti.<br><br>
+            <span style="opacity:0.6; font-size:11px;">
+                Participamos en programas de afiliados. Al comprar a través de nuestros enlaces, podemos ganar una
+                comisión.
+            </span>
+        </p>
+    </footer>
 
-                    <!-- STEP 2: DETAILS (Hidden initially) -->
-                    <div id="step-2"
-                        style="display:none; border-top:1px solid #eee; margin-top:20px; padding-top:20px;">
-                        <div style="display:flex; gap:15px; margin-bottom:15px;">
-                            <!-- Image Preview -->
-                            <div
-                                style="width:80px; height:80px; background:#f9fafb; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #eee;">
-                                <img id="d-img-preview" src=""
-                                    style="width:100%; height:100%; object-fit:contain; display:none;">
-                                <span id="d-img-placeholder" style="font-size:24px;">📸</span>
-                            </div>
+    <!-- MODAL (Moved to root for proper display) -->
+    <div id="submitModal" class="modal-overlay">
+        <div class="modal">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <h2 style="font-size: 22px; font-weight: 800; color: #111;">📢 Publicar Oferta</h2>
 
-                            <div style="flex:1;">
-                                <label
-                                    style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Título</label>
-                                <input type="text" id="d-title" class="form-input"
-                                    placeholder="Ej: PlayStation 5 Slim..." required style="margin-top:0;">
-                            </div>
-                        </div>
-
-                        <div style="display:flex; gap:10px;">
-                            <div class="form-group" style="flex:1;">
-                                <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Precio
-                                    ($)</label>
-                                <input type="number" id="d-price" class="form-input" step="0.01" placeholder="99.99"
-                                    required style="margin-top:0;">
-                            </div>
-                            <div class="form-group" style="flex:1;">
-                                <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Lista
-                                    ($)</label>
-                                <input type="number" id="d-official" class="form-input" step="0.01" placeholder="199.99"
-                                    style="margin-top:0;">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label
-                                style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Categoría</label>
-                            <select id="d-cat" class="form-input" style="margin-top:0;">
-                                <option value="Tecnología">💻 Tech</option>
-                                <option value="Hogar">🏠 Hogar</option>
-                                <option value="Moda">👟 Moda</option>
-                                <option value="Gamer">🎮 Gamers</option>
-                                <option value="Herramientas">🛠️ Herramientas</option>
-                                <option value="Otros">📦 Otros</option>
-                            </select>
-                        </div>
-
-                        <input type="hidden" id="d-img-url">
-                        <input type="hidden" id="d-store">
-
-                        <button type="submit" id="btn-submit"
-                            style="width:100%; background:var(--primary); color:white; border:none; padding:14px; border-radius:8px; font-weight:800; cursor:pointer; margin-top:10px; font-size:15px;">
-                            PUBLICAR AHORA 🚀
+            <form id="submit-form">
+                <!-- STEP 1: URL -->
+                <div class="form-group">
+                    <label
+                        style="font-weight:700; color:var(--primary); font-size: 14px; margin-bottom: 6px; display:block;">Paso
+                        1: Enlace de la Oferta</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="url" id="d-link" class="form-input" placeholder="https://amazon.com/..." required
+                            style="margin-top:0;">
+                        <button type="button" id="btn-analyze" onclick="analyzeLink()"
+                            style="background:var(--bg-main); border:1px solid var(--border); color:#555; padding:0 15px; border-radius:8px; cursor:pointer; font-size: 16px;">
+                            🔍
                         </button>
                     </div>
+                </div>
 
-                    <div id="d-msg" style="margin-top:15px; font-size:13px; text-align:center;"></div>
-                </form>
-            </div>
+                <!-- STEP 2: DETAILS (Hidden initially) -->
+                <div id="step-2" style="display:none; border-top:1px solid #eee; margin-top:20px; padding-top:20px;">
+                    <div style="display:flex; gap:15px; margin-bottom:15px;">
+                        <!-- Image Preview -->
+                        <div
+                            style="width:80px; height:80px; background:#f9fafb; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #eee;">
+                            <img id="d-img-preview" src=""
+                                style="width:100%; height:100%; object-fit:contain; display:none;">
+                            <span id="d-img-placeholder" style="font-size:24px;">📸</span>
+                        </div>
+
+                        <div style="flex:1;">
+                            <label
+                                style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Título</label>
+                            <input type="text" id="d-title" class="form-input" placeholder="Ej: PlayStation 5 Slim..."
+                                required style="margin-top:0;">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">Precio Oferta</label>
+                            <input type="number" id="d-price" class="form-input" required step="0.01">
+                        </div>
+                        <div style="flex:1;">
+                            <label style="font-size:12px;">Precio Normal</label>
+                            <input type="number" id="d-official" class="form-input" step="0.01">
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                        <div>
+                            <label style="font-size:12px;">Tienda</label>
+                            <select id="d-store" class="form-input">
+                                <option>Amazon</option>
+                                <option>eBay</option>
+                                <option>Walmart</option>
+                                <option>Best Buy</option>
+                                <option>Target</option>
+                                <option>Nike</option>
+                                <option>Adidas</option>
+                                <option>Otros</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:12px;">Categoría</label>
+                            <select id="d-cat" class="form-input">
+                                <option>Tecnología</option>
+                                <option>Gamer</option>
+                                <option>Moda</option>
+                                <option>Hogar</option>
+                                <option>Otros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <textarea id="d-desc" class="form-input" rows="2" placeholder="Descripción corta (opcional)"
+                        style="margin-top:10px;"></textarea>
+                    <input type="hidden" id="d-img-url">
+                </div>
+
+                <div id="d-msg" style="margin-top:15px; font-size:13px; font-weight:600; text-align:center;"></div>
+
+                <button type="submit" id="btn-submit"
+                    style="background:var(--primary); color:white; border:none; width:100%; padding:14px; border-radius:8px; font-weight:800; font-size:15px; margin-top:15px; cursor:pointer;">
+                    PUBLICAR OFERTA 🚀
+                </button>
+            </form>
         </div>
+    </div>
+    <div class="form-group" style="flex:1;">
+        <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Precio
+            ($)</label>
+        <input type="number" id="d-price" class="form-input" step="0.01" placeholder="99.99" required
+            style="margin-top:0;">
+    </div>
+    <div class="form-group" style="flex:1;">
+        <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Lista
+            ($)</label>
+        <input type="number" id="d-official" class="form-input" step="0.01" placeholder="199.99" style="margin-top:0;">
+    </div>
+    </div>
 
-        <footer>
-            <p>
-                <b>© 2026 +BARATO DEALS</b><br>
-                Rastreamos las mejores ofertas de USA para ti.<br><br>
-                <span style="opacity:0.6; font-size:11px;">
-                    Participamos en programas de afiliados. Al comprar a través de nuestros enlaces, podemos ganar una
-                    comisión.
-                </span>
-            </p>
-        </footer>
+    <div class="form-group">
+        <label style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Categoría</label>
+        <select id="d-cat" class="form-input" style="margin-top:0;">
+            <option value="Tecnología">💻 Tech</option>
+            <option value="Hogar">🏠 Hogar</option>
+            <option value="Moda">👟 Moda</option>
+            <option value="Gamer">🎮 Gamers</option>
+            <option value="Herramientas">🛠️ Herramientas</option>
+            <option value="Otros">📦 Otros</option>
+        </select>
+    </div>
 
-        <script>
-            let allDeals = [];
-            let editingDealId = null;
+    <input type="hidden" id="d-img-url">
+    <input type="hidden" id="d-store">
 
-            // AUTHENTICATION LOGIC (SECURE)
-            const password = localStorage.getItem('admin_password');
-            const isAdmin = !!password; // If password exists, assume admin mode locally
+    <button type="submit" id="btn-submit"
+        style="width:100%; background:var(--primary); color:white; border:none; padding:14px; border-radius:8px; font-weight:800; cursor:pointer; margin-top:10px; font-size:15px;">
+        PUBLICAR AHORA 🚀
+    </button>
+    </div>
 
-            async function init() {
-                try {
-                    // SKELETON DISPLAY IS DEFAULT
-                    const res = await fetch('/api/deals');
-                    allDeals = await res.json();
-                    render(allDeals);
-                    if (isAdmin) {
-                        document.body.classList.add('admin-mode');
-                        // Add Login Button if not logged in? No, admin page is hidden.
-                    }
-                } catch (e) {
-                    document.getElementById('grid').innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">⚠️ Error cargando ofertas</div>';
-                    console.error(e);
+    <div id="d-msg" style="margin-top:15px; font-size:13px; text-align:center;"></div>
+    </form>
+    </div>
+    </div>
+
+    <footer>
+        <p>
+            <b>© 2026 +BARATO DEALS</b><br>
+            Rastreamos las mejores ofertas de USA para ti.<br><br>
+            <span style="opacity:0.6; font-size:11px;">
+                Participamos en programas de afiliados. Al comprar a través de nuestros enlaces, podemos ganar una
+                comisión.
+            </span>
+        </p>
+    </footer>
+
+    <script>
+        let allDeals = [];
+        let editingDealId = null;
+
+        // AUTHENTICATION LOGIC (SECURE)
+        const password = localStorage.getItem('admin_password');
+        const isAdmin = !!password; // If password exists, assume admin mode locally
+
+        async function init() {
+            try {
+                // SKELETON DISPLAY IS DEFAULT
+                const res = await fetch('/api/deals');
+                allDeals = await res.json();
+                render(allDeals);
+                if (isAdmin) {
+                    document.body.classList.add('admin-mode');
+                    // Add Login Button if not logged in? No, admin page is hidden.
                 }
+            } catch (e) {
+                document.getElementById('grid').innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px;">⚠️ Error cargando ofertas</div>';
+                console.error(e);
             }
+        }
 
-            // Auto-run init
-            init();
+        // Auto-run init
+        init();
 
-            function render(deals) {
-                const grid = document.getElementById('grid');
-                if (deals.length === 0) {
-                    grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 60px; color: #777;">
+        function render(deals) {
+            const grid = document.getElementById('grid');
+            if (deals.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 60px; color: #777;">
                     <div style="font-size: 40px; margin-bottom: 10px;">📭</div>
                     No hay ofertas activas en este momento.
                 </div>`;
-                    return;
+                return;
+            }
+
+            grid.innerHTML = deals.map(deal => {
+                const discount = deal.price_official > 0
+                    ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
+                    : 0;
+
+                const isHistoric = deal.is_historic_low || (deal.title && /lowest|all time low/i.test(deal.title));
+
+                // Image Logic
+                let img = deal.image;
+                if ((!img || img.includes('default') || img.includes('self')) && (deal.tienda === 'Amazon' || deal.link?.includes('amazon'))) {
+                    const asinMatch = deal.link?.match(/\/([A-Z0-9]{10})(?:[/?]|$)/);
+                    if (asinMatch) img = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&Format=_SL350_&ASIN=${asinMatch[1]}&MarketPlace=US`;
                 }
+                img = img || 'https://placehold.co/400x400/ffffff/eeeeee?text=No+Image';
 
-                grid.innerHTML = deals.map(deal => {
-                    const discount = deal.price_official > 0
-                        ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
-                        : 0;
+                // Share URLs
+                const postUrl = window.location.origin + '/go/' + deal.id;
+                const txt = `🔥 ${deal.title} ($${deal.price_offer})`;
+                const wa = `https://wa.me/?text=${encodeURIComponent(txt + ' ' + postUrl)}`;
+                const tg = `https://t.me/share/url?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(txt)}`;
 
-                    const isHistoric = deal.is_historic_low || (deal.title && /lowest|all time low/i.test(deal.title));
+                // Style for "historic" card
+                const historicClass = isHistoric ? 'historic' : '';
+                const historicBadge = isHistoric ? '<div class="historic-badge">🏆 RÉCORD</div>' : '';
 
-                    // Image Logic
-                    let img = deal.image;
-                    if ((!img || img.includes('default') || img.includes('self')) && (deal.tienda === 'Amazon' || deal.link?.includes('amazon'))) {
-                        const asinMatch = deal.link?.match(/\/([A-Z0-9]{10})(?:[/?]|$)/);
-                        if (asinMatch) img = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&Format=_SL350_&ASIN=${asinMatch[1]}&MarketPlace=US`;
-                    }
-                    img = img || 'https://placehold.co/400x400/ffffff/eeeeee?text=No+Image';
-
-                    // Share URLs
-                    const postUrl = window.location.origin + '/go/' + deal.id;
-                    const txt = `🔥 ${deal.title} ($${deal.price_offer})`;
-                    const wa = `https://wa.me/?text=${encodeURIComponent(txt + ' ' + postUrl)}`;
-                    const tg = `https://t.me/share/url?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(txt)}`;
-
-                    // Style for "historic" card
-                    const historicClass = isHistoric ? 'historic' : '';
-                    const historicBadge = isHistoric ? '<div class="historic-badge">🏆 RÉCORD</div>' : '';
-
-                    // ADMIN button
-                    const adminBtn = isAdmin ? `<div style="margin-top:10px; display:flex; gap:5px;">
+                // ADMIN button
+                const adminBtn = isAdmin ? `<div style="margin-top:10px; display:flex; gap:5px;">
                         <button onclick="editDeal('${deal.id}')" style="flex:1; border:1px solid #3b82f6; background:white; color:#3b82f6; border-radius:4px; cursor:pointer;">Editar</button>
                         <button onclick="deleteDeal('${deal.id}')" style="flex:1; border:1px solid #ef4444; background:white; color:#ef4444; border-radius:4px; cursor:pointer;">Borrar</button>
                     </div>` : '';
 
-                    return `
+                return `
                 <article class="card ${historicClass}">
                     ${historicBadge}
                     
@@ -759,89 +819,89 @@
                     </div>
                 </article>
                 `;
-                }).join('');
-            }
+            }).join('');
+        }
 
-            // ... TimeAgo, Filter, Search Logic (remain same) ...
+        // ... TimeAgo, Filter, Search Logic (remain same) ...
 
-            // DELETE DEAL (Admin)
-            async function deleteDeal(id) {
-                if (!confirm('¿Seguro que quieres borrar esta oferta?')) return;
-                try {
-                    const res = await fetch('/api/delete-deal', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-admin-password': password // SEND PASSWORD
-                        },
-                        body: JSON.stringify({ id })
-                    });
-                    if (res.ok) init();
-                    else alert('Error: No autorizado');
-                } catch (e) { alert('Error borrando'); }
-            }
+        // DELETE DEAL (Admin)
+        async function deleteDeal(id) {
+            if (!confirm('¿Seguro que quieres borrar esta oferta?')) return;
+            try {
+                const res = await fetch('/api/delete-deal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-password': password // SEND PASSWORD
+                    },
+                    body: JSON.stringify({ id })
+                });
+                if (res.ok) init();
+                else alert('Error: No autorizado');
+            } catch (e) { alert('Error borrando'); }
+        }
 
-            // ... Analyze Link (remains same) ...
+        // ... Analyze Link (remains same) ...
 
-            // 2. SUBMIT FINAL (Create or Update)
-            document.getElementById('submit-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('btn-submit');
-                const msg = document.getElementById('d-msg');
+        // 2. SUBMIT FINAL (Create or Update)
+        document.getElementById('submit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            const msg = document.getElementById('d-msg');
 
-                btn.innerText = editingDealId ? 'GUARDANDO...' : 'PUBLICANDO...';
-                btn.disabled = true;
+            btn.innerText = editingDealId ? 'GUARDANDO...' : 'PUBLICANDO...';
+            btn.disabled = true;
 
-                const payload = {
-                    id: editingDealId, // If present, it's an update
-                    link: document.getElementById('d-link').value,
-                    title: document.getElementById('d-title').value,
-                    price: parseFloat(document.getElementById('d-price').value),
-                    price_official: parseFloat(document.getElementById('d-official').value || 0),
-                    image: document.getElementById('d-img-url').value,
-                    store: document.getElementById('d-store').value,
-                    category: document.getElementById('d-cat').value,
-                    description: document.getElementById('d-desc').value
-                };
+            const payload = {
+                id: editingDealId, // If present, it's an update
+                link: document.getElementById('d-link').value,
+                title: document.getElementById('d-title').value,
+                price: parseFloat(document.getElementById('d-price').value),
+                price_official: parseFloat(document.getElementById('d-official').value || 0),
+                image: document.getElementById('d-img-url').value,
+                store: document.getElementById('d-store').value,
+                category: document.getElementById('d-cat').value,
+                description: document.getElementById('d-desc').value
+            };
 
-                const endpoint = editingDealId ? '/api/update-deal' : '/api/submit-deal';
+            const endpoint = editingDealId ? '/api/update-deal' : '/api/submit-deal';
 
-                try {
-                    const res = await fetch(endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-admin-password': password // SEND PASSWORD
-                        },
-                        body: JSON.stringify(payload)
-                    });
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-password': password // SEND PASSWORD
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-                    const data = await res.json();
+                const data = await res.json();
 
-                    if (res.ok) {
-                        msg.style.color = '#4ade80';
-                        msg.innerHTML = editingDealId ? '✅ ¡Actualizado!' : '✅ ¡Publicado!';
-                        init();
-                        setTimeout(() => {
-                            closeModal();
-                            btn.disabled = false;
-                            msg.textContent = '';
-                        }, 1500);
-                    } else {
-                        throw new Error(data.error || 'Error al guardar');
-                    }
-                } catch (e) {
-                    msg.style.color = '#f87171';
-                    msg.textContent = '❌ ' + e.message;
-                    btn.disabled = false;
+                if (res.ok) {
+                    msg.style.color = '#4ade80';
+                    msg.innerHTML = editingDealId ? '✅ ¡Actualizado!' : '✅ ¡Publicado!';
+                    init();
+                    setTimeout(() => {
+                        closeModal();
+                        btn.disabled = false;
+                        msg.textContent = '';
+                    }, 1500);
+                } else {
+                    throw new Error(data.error || 'Error al guardar');
                 }
-            });
+            } catch (e) {
+                msg.style.color = '#f87171';
+                msg.textContent = '❌ ' + e.message;
+                btn.disabled = false;
+            }
+        });
 
-            // ... Modal logics ...
+        // ... Modal logics ...
 
-            init();
-            setInterval(init, 60000);
-        </script>
+        init();
+        setInterval(init, 60000);
+    </script>
 </body>
 
 </html>
