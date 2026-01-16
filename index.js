@@ -208,15 +208,55 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// --- SEEDER ENDPOINT (Para llenar DB vacía) ---
+// --- NUKE ENDPOINT (Borrar todo para corregir errores) ---
+app.post('/api/nuke', authMiddleware, (req, res) => {
+  try {
+    db.prepare("DELETE FROM published_deals").run();
+    res.json({ success: true, message: "💥 BASE DE DATOS LIMPIADA" });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- SEEDER ENDPOINT (Corregido con imágenes estables) ---
 app.post('/api/seed', authMiddleware, async (req, res) => {
   try {
     const Telegram = require('./src/notifiers/TelegramNotifier');
     const PROMOS = [
-      { title: "Apple iPhone 15 Pro Max", price: 999.00, official: 1199.00, link: "https://www.amazon.com/dp/B0CMZ7S85D", img: "https://m.media-amazon.com/images/I/81+E8pU1LWL._AC_SL1500_.jpg", cat: "Tecnología", desc: "🔥 Mínimo histórico Titanio." },
-      { title: "Sony PlayStation 5 Slim", price: 449.00, official: 499.99, link: "https://www.amazon.com/dp/B0CL5K56Z1", img: "https://m.media-amazon.com/images/I/41M7C7c+NML._SL500_.jpg", cat: "Gamer", desc: "🎮 La consola más buscada." },
-      { title: "Samsung 65-inch Crystal UHD 4K", price: 397.99, official: 479.99, link: "https://www.amazon.com/dp/B0BVMXW266", img: "https://m.media-amazon.com/images/I/91M-1Z-wNGL._AC_SL1500_.jpg", cat: "Hogar", desc: "📺 Cine en casa 4K." },
-      { title: "Ninja Air Fryer 4-Qt", price: 89.95, official: 129.99, link: "https://www.amazon.com/dp/B07FDJMC9Q", img: "https://m.media-amazon.com/images/I/71y+UGuJl5L._AC_SL1500_.jpg", cat: "Hogar", desc: "🍳 Cocina saludable." }
+      {
+        title: "Apple iPhone 15 Pro Max (Titanium)",
+        price: 999.00,
+        official: 1199.00,
+        link: "https://www.amazon.com/dp/B0CMZ7S85D",
+        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6552/6552358_sd.jpg",
+        cat: "Tecnología",
+        desc: "🔥 Mínimo histórico en el buque insignia de Apple."
+      },
+      {
+        title: "Sony PlayStation 5 Slim Console",
+        price: 449.00,
+        official: 499.99,
+        link: "https://www.amazon.com/dp/B0CL5K56Z1",
+        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6566/6566039_sd.jpg",
+        cat: "Gamer",
+        desc: "🎮 La consola más buscada, más ligera y potente."
+      },
+      {
+        title: "Samsung 65-inch Crystal UHD 4K Smart TV",
+        price: 397.99,
+        official: 479.99,
+        link: "https://www.amazon.com/dp/B0BVMXW266",
+        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6537/6537363_sd.jpg",
+        cat: "Hogar",
+        desc: "📺 Cine en casa 4K a precio de locura."
+      },
+      {
+        title: "Ninja Air Fryer 4-Qt (Negra)",
+        price: 89.95,
+        official: 129.99,
+        link: "https://www.amazon.com/dp/B07FDJMC9Q",
+        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6269/6269208_sd.jpg",
+        cat: "Hogar",
+        desc: "🍳 Cocina saludable con 75% menos grasa."
+      }
     ];
 
     let count = 0;
@@ -230,7 +270,7 @@ app.post('/api/seed', authMiddleware, async (req, res) => {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 500)
             `).run(uuid, p.title, p.price, p.official, p.link, p.img, 'Amazon', p.cat, p.desc);
 
-      // Notificar TG
+      // Notificar TG (Con imagen corregida)
       await Telegram.sendOffer({
         id: uuid, title: p.title, price_offer: p.price, price_official: p.official,
         link: p.link, image: p.img, tienda: 'Amazon', categoria: p.cat,
