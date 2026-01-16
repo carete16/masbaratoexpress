@@ -126,24 +126,28 @@ class DeepExplorerBot {
             if (buyNowLink) {
                 if (buyNowLink.startsWith('/')) buyNowLink = 'https://slickdeals.net' + buyNowLink;
 
-                // Intento de resolución rápida (u2)
+                // Intento de resolución profunda (u2 es el bypass más directo)
                 try {
                     const params = new URL(buyNowLink, 'https://slickdeals.net').searchParams;
-                    const u2 = params.get('u2');
+                    const u2 = params.get('u2') || params.get('url') || params.get('lno');
                     if (u2) result.finalUrl = decodeURIComponent(u2);
                 } catch (e) { }
 
-                // Si no hay u2 o no estamos seguros, intentamos GET/HEAD
+                // Si no se resolvió por parámetros, intentamos rastreo físico
                 if (result.finalUrl.includes('slickdeals.net')) {
                     try {
                         const shopRes = await axios.get(buyNowLink, {
-                            headers: { 'User-Agent': this.userAgent },
+                            headers: {
+                                'User-Agent': this.userAgent,
+                                'Referer': 'https://slickdeals.net/'
+                            },
                             maxRedirects: 10,
-                            timeout: 8000
+                            timeout: 10000
                         });
                         result.finalUrl = shopRes.request?.res?.responseUrl || shopRes.config?.url || buyNowLink;
                     } catch (e) {
                         logger.warn(`⚠️ Error resolviendo link físico: ${e.message}`);
+                        // Fallback: buscar cualquier URL externa en el cuerpo si falló el axios
                     }
                 }
             }

@@ -33,13 +33,23 @@ async function testMonetization() {
     console.log(`   Result: ${microcenterResult.substring(0, 80)}...`);
     console.log(`   ¿Usa Sovrn?: ${microcenterResult.includes('viglink.com') ? '✅ SÍ' : '❌ NO'}\n`);
 
-    // CASO 4: eBay (Vía Sovrn - Porque no pusimos ID directo)
+    // CASO 4: eBay (Vía Partner Network o Sovrn)
     const ebayLink = 'https://www.ebay.com/itm/Sony-WH-1000XM5/225588123456';
-    console.log('📦 CASO 4: eBay (Debe ser Sovrn)');
+    console.log('📦 CASO 4: eBay');
     console.log(`   Original: ${ebayLink}`);
     const ebayResult = await LinkTransformer.transform(ebayLink);
-    console.log(`   Result: ${ebayResult.substring(0, 80)}...`);
-    console.log(`   ¿Usa Sovrn?: ${ebayResult.includes('viglink.com') ? '✅ SÍ' : '❌ NO'}\n`);
+    console.log(`   Resultado: ${ebayResult.substring(0, 80)}...`);
+    console.log(`   ¿Monetizado?: ${ebayResult.includes('viglink.com') || ebayResult.includes('rover') ? '✅ SÍ' : '❌ NO'}\n`);
+
+    // CASO 5: SLICKDEALS BYPASS (CRÍTICO)
+    const slickdealsLink = 'https://slickdeals.net/f/17234567-laptop-dell-xps-13-999-at-dell?u2=https%3A%2F%2Fwww.dell.com%2Fen-us%2Fshop%2Fdell-laptops%2Fp%2F12345';
+    console.log('🔥 CASO 5: SLICKDEALS BYPASS (ELIMINACIÓN DE COMPETENCIA)');
+    console.log(`   Link Slickdeals: ${slickdealsLink}`);
+    const bypassResult = await LinkTransformer.transform(slickdealsLink);
+    console.log(`   Resultado Final (Hacia Tienda): ${bypassResult}`);
+    console.log(`   ¿Contiene Slickdeals?: ${bypassResult.includes('slickdeals.net') ? '❌ NO FUNCIONÓ' : '✅ BYPASS EXITOSO'}`);
+    console.log(`   ¿Va a la Tienda Real (Dell)?: ${bypassResult.includes('dell.com') ? '✅ SÍ' : '❌ NO'}`);
+    console.log(`   ¿Monetizado con Sovrn?: ${bypassResult.includes('viglink.com') ? '✅ SÍ (Comisión para ti)' : '❌ NO'}\n`);
 }
 
 testMonetization();
