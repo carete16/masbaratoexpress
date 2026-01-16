@@ -26,58 +26,60 @@ class LinkTransformer {
             if (url.includes('slickdeals.net')) {
                 logger.info(`🕵️ BYPASS SLICKDEALS INICIADO: ${url.substring(0, 80)}...`);
 
-                // Opción A: Extraer de u2 (Rápido)
-                if (url.includes('u2=')) {
-                    const u2 = new URL(url).searchParams.get('u2');
-                    if (u2) {
-                        url = decodeURIComponent(u2);
-                        logger.info(`✅ Bypass por u2: ${url}`);
-                    }
+                // Opción A: Extraer de parámetros codificados (u2, lno, gtm)
+                const urlParsed = new URL(url);
+                const target = urlParsed.searchParams.get('u2') || urlParsed.searchParams.get('lno') || urlParsed.searchParams.get('url');
+
+                if (target && target.includes('http')) {
+                    url = decodeURIComponent(target);
+                    logger.info(`✅ Bypass por Parámetro: ${url}`);
                 } else {
-                    // Opción B: Scraping de emergencia (Seguir el rastro)
+                    // Opción B: Scraping de emergencia
                     try {
                         const axios = require('axios');
-                        console.log(`[DEBUG] Solicitando página: ${url}`);
                         const res = await axios.get(url, {
-                            maxRedirects: 5,
+                            maxRedirects: 10,
                             timeout: 10000,
                             headers: {
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
                             }
                         });
 
-                        console.log(`[DEBUG] Respuesta recibida (${res.data.length} bytes)`);
-
-                        // 1. Intentar ver si terminó en una tienda conocida
+                        const html = res.data;
                         const finalUrl = res.request.res.responseUrl || res.config.url;
-                        console.log(`[DEBUG] URL Final despues de redirects: ${finalUrl}`);
 
                         if (finalUrl && !finalUrl.includes('slickdeals.net') && finalUrl.includes('http')) {
                             url = finalUrl;
-                            console.log(`✅ Bypass por Redireccion Final: ${url}`);
+                            logger.info(`✅ Bypass por Redireccion: ${url}`);
                         } else {
-                            // 2. Si sigue en Slickdeals, buscar un link retail en el HTML (Búsqueda agresiva)
-                            const html = res.data;
-                            // logger.info(`📄 HTML recibido: ${html.length} bytes`); // This line was removed as per instruction
-                            // Regex ampliado con más tiendas USA
-                            const storeRegex = /href="([^"]*?(?:amazon|walmart|ebay|target|bestbuy|walgreens|cvs|macys|kohls|homedepot|lowes|newegg|costco|bhphotovideo|gamestop|adidas|nike|puma|gap|oldnavy|apple)\.(?:com|net|org)[^"]*?)"/i;
-                            const retailMatch = html.match(storeRegex);
+                            // Buscar links externos en botones "Buy Now" o links de afiliados
+                            const cheerio = require('cheerio');
+                            const $ = cheerio.load(html);
 
-                            if (retailMatch) {
-                                url = retailMatch[1].replace(/&amp;/g, '&');
-                                if (url.startsWith('/')) url = 'https://slickdeals.net' + url;
-                                // Si este link interno a su vez tiene u2, lo limpiamos recursivamente
-                                if (url.includes('u2=')) {
-                                    url = decodeURIComponent(new URL(url).searchParams.get('u2'));
+                            // 1. Buscar en el botón principal de compra
+                            let checkoutLink = $('a.buyNow, a.button--primary, a.button--checkout').attr('data-href') ||
+                                $('a.buyNow, a.button--primary, a.button--checkout').attr('href');
+
+                            // 2. Si no, buscar cualquier link a tiendas conocidas
+                            if (!checkoutLink) {
+                                checkoutLink = $('a[href*="amazon.com"], a[href*="walmart.com"], a[href*="ebay.com"]').first().attr('href');
+                            }
+
+                            if (checkoutLink) {
+                                if (checkoutLink.startsWith('/')) checkoutLink = 'https://slickdeals.net' + checkoutLink;
+
+                                // Si este link intermedio tiene u2, lo extraemos
+                                if (checkoutLink.includes('u2=')) {
+                                    url = decodeURIComponent(new URL(checkoutLink, 'https://slickdeals.net').searchParams.get('u2'));
+                                } else {
+                                    url = checkoutLink;
                                 }
-                                console.log(`✅ Bypass por Scraping de HTML: ${url}`);
-                            } else {
-                                console.log(`[DEBUG] No se encontró ningún link retail en el HTML.`);
+                                logger.info(`✅ Bypass por Scraping Selector: ${url}`);
                             }
                         }
                     } catch (err) {
-                        console.log(`[DEBUG] Error en bypass: ${err.message}`);
-                        logger.warn(`⚠️ Error Bypass: ${err.message}`);
+                        logger.warn(`⚠️ Error Bypass Scraping: ${err.message}`);
                     }
                 }
             }
