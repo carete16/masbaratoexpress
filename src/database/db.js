@@ -29,9 +29,17 @@ try {
         tienda TEXT DEFAULT 'Amazon USA',
         categoria TEXT DEFAULT 'Tecnología',
         clicks INTEGER DEFAULT 0,
+        description TEXT,
+        coupon TEXT,
         posted_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+  // --- MIGRACIONES AUTOMÁTICAS (SAFE ADD COLUMN) ---
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN description TEXT"); } catch (e) { /* Columna ya y existe o error ignorables */ }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN coupon TEXT"); } catch (e) { /* Columna ya existe */ }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN is_historic_low BOOLEAN DEFAULT 0"); } catch (e) { /* Columna ya existe */ }
+
 } catch (error) {
   logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
   db = new Database(':memory:');
@@ -40,8 +48,8 @@ try {
 const saveDeal = (deal) => {
   try {
     const stmt = db.prepare(`
-      INSERT OR IGNORE INTO published_deals (id, link, title, price_official, price_offer, image, tienda, categoria)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO published_deals (id, link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       deal.id,
@@ -51,7 +59,10 @@ const saveDeal = (deal) => {
       deal.price_offer,
       deal.image,
       deal.tienda || 'Amazon USA',
-      deal.categoria || 'Tecnología'
+      deal.categoria || 'Tecnología',
+      deal.description || '',
+      deal.coupon || null,
+      deal.is_historic_low ? 1 : 0
     );
   } catch (e) {
     logger.error(`Error guardando: ${e.message}`);
