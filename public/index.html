@@ -27,24 +27,17 @@
     </script>
     <style>
         :root {
-            /* Palette Slickdeals Style */
             --bg-main: #f0f3f6;
-            /* Gris muy suave de fondo */
             --bg-white: #ffffff;
             --header-bg: #151515;
-            /* Header oscuro Slickdeals */
             --primary: #005eb8;
-            /* Azul Slickdeals para botones principales */
             --primary-hover: #004c94;
             --accent: #b91c1c;
-            /* Rojo para precios/fuego */
             --text-main: #333333;
             --text-muted: #666666;
             --border: #e1e4e8;
-            --shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
             --radius-card: 8px;
             --radius-btn: 20px;
-            /* Botones bien redondos */
         }
 
         * {
@@ -64,13 +57,11 @@
             min-height: 100vh;
         }
 
-        /* --- HEADER --- */
         header {
             position: sticky;
             top: 0;
             z-index: 1000;
             background: var(--header-bg);
-            /* Header oscuro */
             padding: 12px 5%;
             display: flex;
             align-items: center;
@@ -84,7 +75,6 @@
             font-size: 24px;
             color: white;
             text-decoration: none;
-            letter-spacing: -1px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -92,16 +82,13 @@
 
         .brand span {
             color: #fbbf24;
-            /* Dorado para destacar 'DEALS' en fondo oscuro */
         }
 
         .cta-telegram {
             background: #2ca5e0;
-            /* Telegram Blue */
             color: white;
             padding: 8px 20px;
             border-radius: 50px;
-            /* Redondo estilo cápsula */
             text-decoration: none;
             font-weight: 700;
             font-size: 14px;
@@ -116,7 +103,6 @@
             transform: translateY(-1px);
         }
 
-        /* --- HERO --- */
         .hero {
             background: white;
             padding: 30px 5% 40px;
@@ -130,7 +116,6 @@
             font-weight: 800;
             color: #111;
             margin-bottom: 10px;
-            letter-spacing: -0.5px;
         }
 
         .hero p {
@@ -138,13 +123,11 @@
             font-size: 15px;
             max-width: 600px;
             margin: 0 auto 20px;
-            line-height: 1.5;
         }
 
         .search-container {
             max-width: 700px;
             margin: 0 auto;
-            position: relative;
         }
 
         .search-input {
@@ -153,7 +136,6 @@
             border: 1px solid transparent;
             padding: 14px 50px 14px 20px;
             border-radius: 50px;
-            /* Buscador redondo */
             color: #333;
             font-size: 16px;
             outline: none;
@@ -166,17 +148,14 @@
             box-shadow: 0 0 0 4px rgba(0, 94, 184, 0.1);
         }
 
-        /* --- FILTERS (Categorías Redondas) --- */
         .filters {
             display: flex;
             gap: 12px;
             padding: 0 5%;
             overflow-x: auto;
             white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
             margin-top: -25px;
-            /* Superponer un poco */
             margin-bottom: 20px;
             padding-bottom: 10px;
         }
@@ -191,20 +170,11 @@
             color: var(--text-main);
             padding: 10px 24px;
             border-radius: 50px;
-            /* Botones cápsula redondos */
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             transition: 0.2s;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .filter-chip:hover {
-            border-color: var(--primary);
-            color: var(--primary);
         }
 
         .filter-chip.active {
@@ -214,7 +184,6 @@
             box-shadow: 0 4px 10px rgba(0, 94, 184, 0.3);
         }
 
-        /* --- GRID --- */
         .grid-container {
             padding: 0 5%;
             display: grid;
@@ -255,22 +224,6 @@
             letter-spacing: 1px;
         }
 
-        .copy-icon {
-            opacity: 0.6;
-        }
-
-        @media (max-width: 600px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-                padding: 0 16px;
-            }
-
-            .filters {
-                padding: 0 16px;
-            }
-        }
-
-        /* --- CARD (Estilo Slickdeals) --- */
         .card {
             background: white;
             border: 1px solid var(--border);
@@ -285,7 +238,6 @@
         .card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-            border-color: #ccc;
         }
 
         .img-wrapper {
@@ -305,7 +257,6 @@
             object-fit: contain;
         }
 
-        /* Etiqueta de descuento/fuego estilo SD */
         .discount-tag {
             position: absolute;
             bottom: 10px;
@@ -316,14 +267,6 @@
             font-size: 13px;
             padding: 4px 8px;
             border-radius: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .discount-tag::before {
-            content: '🔥';
-            font-size: 14px;
         }
 
         .card-content {
@@ -355,10 +298,6 @@
             flex: 1;
         }
 
-        .card-title:hover {
-            color: var(--primary);
-        }
-
         .prices {
             display: flex;
             align-items: baseline;
@@ -378,20 +317,17 @@
             text-decoration: line-through;
         }
 
-        /* Botón de compra AZUL VIBRANTE */
         .buy-btn {
             background: var(--primary);
             color: white;
             text-decoration: none;
             padding: 12px;
             border-radius: var(--radius-btn);
-            /* Redondo pero no cápsula total */
             text-align: center;
             font-weight: 700;
             font-size: 14px;
-            transition: 0.2s;
-            width: 100%;
             display: block;
+            transition: 0.2s;
         }
 
         .buy-btn:hover {
@@ -399,7 +335,6 @@
             box-shadow: 0 4px 12px rgba(0, 94, 184, 0.2);
         }
 
-        /* Share links subtiles */
         .share-row {
             display: flex;
             justify-content: center;
@@ -418,14 +353,6 @@
 
         .share-icon:hover {
             transform: scale(1.1);
-        }
-
-        .share-icon.wa:hover {
-            color: #25D366;
-        }
-
-        .share-icon.tg:hover {
-            color: #229ED9;
         }
 
         footer {
@@ -461,6 +388,8 @@
             max-width: 450px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             border: 1px solid #eee;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .form-input {
@@ -471,12 +400,6 @@
             border-radius: 8px;
             color: #333;
             margin-top: 5px;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
         }
 
         .close-modal {
@@ -517,44 +440,18 @@
     </div>
 
     <div class="filters">
-        <button class="filter-chip active" data-cat="all">Todas</button>
-        <button class="filter-chip" data-cat="Tecnología">Tecnología 💻</button>
-        <button class="filter-chip" data-cat="Gamer">Gamer 🎮</button>
-        <button class="filter-chip" data-cat="Moda">Moda 👟</button>
-        <button class="filter-chip" data-cat="Hogar">Hogar 🏠</button>
-    </div>
-
-    <div class="grid-container" id="grid">
-        <!-- Skeleton Loading State -->
-        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-muted);">
-            <div style="font-size: 30px; margin-bottom: 10px;">⚡</div>
-            Cargando ofertas...
-        </div>
-    </div>
-
-    <!-- Newsletter Widget -->
-    <div
-        style="margin: 0 5% 60px; background: white; border: 1px solid var(--border); padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-        <h3 style="margin-bottom: 8px; color: #111; font-size: 20px;">📩 Alertas de Errores de Precio</h3>
-        <p style="color: #666; font-size: 15px; margin-bottom: 24px;">Te avisamos solo cuando encontramos
-            algo realmente épico (descuentos > 70%).</p>
-        <form id="newsletter-form" style="display: flex; gap: 10px; max-width: 450px; margin: 0 auto;">
-            <input type="email" id="email" placeholder="Correo electrónico..." required class="form-input"
-                style="margin-top:0;">
-            <button type="submit"
-                style="background: var(--primary); color: white; border: none; padding: 0 24px; border-radius: 8px; font-weight: 700; cursor: pointer; white-space: nowrap;">
-                SUSCRIBIRME
-            </button>
-        </form>
-        <div id="msg" style="margin-top: 10px; font-size: 13px;"></div>
-    </div>
-
-    <!-- Filters w/ Icons -->
-    <div class="filters">
         <button class="filter-chip active" data-cat="all">🔥 Todo</button>
         <button class="filter-chip" data-cat="Tecnología">💻 Tech</button>
         <button class="filter-chip" data-cat="Gamer">🎮 Gamers</button>
         <button class="filter-chip" data-cat="Moda">👟 Moda</button>
+        <button class="filter-chip" data-cat="Hogar">🏠 Hogar</button>
+        <button class="filter-chip" data-cat="Herramientas">🛠️ Tools</button>
+    </div>
+
+    <div class="grid-container" id="grid">
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #666;">
+            ⚡ Cargando ofertas...
+        </div>
     </div>
 
     <footer>
@@ -568,7 +465,7 @@
         </p>
     </footer>
 
-    <!-- MODAL (Moved to root for proper display) -->
+    <!-- MODAL -->
     <div id="submitModal" class="modal-overlay">
         <div class="modal">
             <button class="close-modal" onclick="closeModal()">×</button>
@@ -579,33 +476,28 @@
                 <div class="form-group">
                     <label
                         style="font-weight:700; color:var(--primary); font-size: 14px; margin-bottom: 6px; display:block;">Paso
-                        1: Enlace de la Oferta</label>
+                        1: Enlace</label>
                     <div style="display:flex; gap:10px;">
                         <input type="url" id="d-link" class="form-input" placeholder="https://amazon.com/..." required
                             style="margin-top:0;">
                         <button type="button" id="btn-analyze" onclick="analyzeLink()"
-                            style="background:var(--bg-main); border:1px solid var(--border); color:#555; padding:0 15px; border-radius:8px; cursor:pointer; font-size: 16px;">
-                            🔍
-                        </button>
+                            style="background:var(--bg-main); border:1px solid var(--border); padding:0 15px; border-radius:8px; cursor:pointer;">🔍</button>
                     </div>
                 </div>
 
-                <!-- STEP 2: DETAILS (Hidden initially) -->
+                <!-- STEP 2: DETAILS -->
                 <div id="step-2" style="display:none; border-top:1px solid #eee; margin-top:20px; padding-top:20px;">
                     <div style="display:flex; gap:15px; margin-bottom:15px;">
-                        <!-- Image Preview -->
                         <div
                             style="width:80px; height:80px; background:#f9fafb; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #eee;">
                             <img id="d-img-preview" src=""
                                 style="width:100%; height:100%; object-fit:contain; display:none;">
                             <span id="d-img-placeholder" style="font-size:24px;">📸</span>
                         </div>
-
                         <div style="flex:1;">
                             <label
                                 style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Título</label>
-                            <input type="text" id="d-title" class="form-input" placeholder="Ej: PlayStation 5 Slim..."
-                                required style="margin-top:0;">
+                            <input type="text" id="d-title" class="form-input" required style="margin-top:0;">
                         </div>
                     </div>
 
@@ -641,6 +533,7 @@
                                 <option>Gamer</option>
                                 <option>Moda</option>
                                 <option>Hogar</option>
+                                <option>Herramientas</option>
                                 <option>Otros</option>
                             </select>
                         </div>
@@ -691,7 +584,7 @@
         function render(deals) {
             const grid = document.getElementById('grid');
             if (!deals || deals.length === 0) {
-                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:#777;">📭 No hay ofertas.</div>`;
+                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:#777;">📭 No hay ofertas activas.</div>`;
                 return;
             }
             grid.innerHTML = deals.map(deal => {
@@ -711,7 +604,7 @@
                         ${discount > 10 ? `<div class="discount-tag">-${discount}%</div>` : ''}
                     </div>
                     <div class="card-content">
-                        <div class="card-meta"><span>🛍️ ${deal.tienda}</span></div>
+                        <div class="card-meta"><span>🛍️ ${deal.tienda || 'Amazon'}</span></div>
                         <h3 class="card-title">${deal.title}</h3>
                         <div class="prices">
                             <span class="price-now">$${deal.price_offer}</span>
@@ -748,10 +641,18 @@
             document.getElementById('d-store').value = d.tienda;
             document.getElementById('d-cat').value = d.categoria;
             document.getElementById('d-desc').value = d.description || '';
-            document.getElementById('d-coupon').value = d.coupon || ''; // LOAD COUPON
+            document.getElementById('d-coupon').value = d.coupon || '';
 
             document.getElementById('step-2').style.display = 'block';
             document.getElementById('submitModal').style.display = 'flex';
+        }
+
+        async function deleteDeal(id) {
+            if (!confirm('¿Borrar?')) return;
+            try {
+                await fetch('/api/delete-deal', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-password': password }, body: JSON.stringify({ id }) });
+                init();
+            } catch (e) { alert('Error'); }
         }
 
         document.getElementById('submit-form').addEventListener('submit', async (e) => {
@@ -770,7 +671,7 @@
                 store: document.getElementById('d-store').value,
                 category: document.getElementById('d-cat').value,
                 description: document.getElementById('d-desc').value,
-                coupon: document.getElementById('d-coupon').value // SEND COUPON
+                coupon: document.getElementById('d-coupon').value
             };
 
             const endpoint = editingDealId ? '/api/update-deal' : '/api/submit-deal';
@@ -810,6 +711,24 @@
             } catch (e) { console.log(e); document.getElementById('step-2').style.display = 'block'; }
             document.getElementById('btn-analyze').innerText = '🔍';
         }
+
+        // Search Filter
+        document.getElementById('search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allDeals.filter(d => d.title.toLowerCase().includes(term));
+            render(filtered);
+        });
+
+        // Category Filter
+        document.querySelectorAll('.filter-chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const cat = btn.dataset.cat;
+                if (cat === 'all') render(allDeals);
+                else render(allDeals.filter(d => d.categoria === cat));
+            });
+        });
 
         // Loop
         setInterval(init, 60000);
