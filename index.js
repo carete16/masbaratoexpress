@@ -131,10 +131,19 @@ app.post('/api/submit-deal', authMiddleware, async (req, res) => {
     // 💰 MONETIZACIÓN FORZOSA AUTOMÁTICA 💰
     // Antes de guardar, transformamos el link para asegurar que lleve el código de afiliado.
     const originalLink = link;
-    link = await LinkTransformer.transform(link);
-    console.log(`[MONETIZACIÓN] Manual: ${originalLink} -> ${link}`);
+    try {
+      link = await LinkTransformer.transform(link);
+      console.log(`[MONETIZACIÓN] Manual: ${originalLink} -> ${link}`);
+    } catch (errTransform) {
+      console.error("Error transformando link:", errTransform);
+      link = null;
+    }
 
-    if (!link) return res.status(400).json({ error: 'Enlace no válido o no monetizable' });
+    // SAFETY NET: Si falla la monetización, usamos el link original (Admin manda)
+    if (!link) {
+      console.warn(`⚠️ Fallo monetización para ${originalLink}, guardando sin monetizar.`);
+      link = originalLink;
+    }
 
     const uuid = Math.random().toString(36).substring(2, 11);
     const stmt = db.prepare(`
@@ -158,7 +167,13 @@ app.post('/api/update-deal', authMiddleware, async (req, res) => {
     let { id, title, price, price_official, link, image, store, category, description, coupon } = req.body;
 
     // 💰 MONETIZACIÓN FORZOSA EN EDICIÓN TAMBIÉN 💰
-    link = await LinkTransformer.transform(link);
+    const originalLink = link;
+    try {
+      const mLink = await LinkTransformer.transform(link);
+      if (mLink) link = mLink;
+    } catch (e) {
+      console.warn("Fallo monetizando update, conservando original");
+    }
 
     const stmt = db.prepare(`
             UPDATE published_deals 
