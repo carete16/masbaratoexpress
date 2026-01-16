@@ -152,10 +152,11 @@ class DeepExplorerBot {
                     }
                 }
 
-                // Removed the fallback to uppercase domain part, as per instruction to simplify.
-                // if (result.store === 'Desconocida') {
-                //     result.store = domain.split('.')[0].toUpperCase();
-                // }
+                if (result.store === 'Oferta USA') {
+                    const parts = domain.split('.');
+                    const name = parts.length > 2 ? parts[1] : parts[0];
+                    result.store = name.charAt(0).toUpperCase() + name.slice(1);
+                }
             }
 
             logger.info(`✅ BOT 1 completado. Tienda: ${result.store}`);

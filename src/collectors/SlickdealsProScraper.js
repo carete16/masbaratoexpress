@@ -66,11 +66,12 @@ class SlickdealsProScraper {
 
         if (regMatch) price_official = parseFloat(regMatch[1]);
 
-        // Tienda
-        let tienda = 'Amazon';
+        // Tienda (Base)
+        let tienda = 'Analizando...';
         if (title.toLowerCase().includes('walmart')) tienda = 'Walmart';
         else if (title.toLowerCase().includes('ebay')) tienda = 'eBay';
         else if (title.toLowerCase().includes('best buy')) tienda = 'Best Buy';
+        else if (title.toLowerCase().includes('amazon')) tienda = 'Amazon';
 
         return {
             id: require('crypto').createHash('md5').update(link).digest('hex').substring(0, 10),

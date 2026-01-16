@@ -28,9 +28,11 @@ class CoreProcessor {
 
                 for (let deal of rawDeals) {
                     try {
-                        // Filtro: ¿Ya lo procesamos?
-                        const alreadySeen = db.isRecentlyPublished(deal.link);
+                        // Filtro: ¿Ya lo procesamos? (Check por Link y Título)
+                        const alreadySeen = db.isRecentlyPublished(deal.link, deal.title);
                         if (alreadySeen) continue;
+
+                        deal.original_link = deal.link; // Respaldar antes de transformar/monetizar
 
                         // --- 🤖 FASE BOT 1: EXPLORACIÓN PROFUNDA ---
                         logger.info(`🕵️ BOT 1 explorando: ${deal.title.substring(0, 40)}...`);

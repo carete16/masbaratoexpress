@@ -37,6 +37,8 @@ try {
     `);
 
   // --- MIGRACIONES AUTOMÁTICAS (SAFE ADD COLUMN) ---
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN original_link TEXT"); } catch (e) { }
+  try { db.exec("CREATE INDEX IF NOT EXISTS idx_original_link ON published_deals(original_link)"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN description TEXT"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN coupon TEXT"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN status TEXT DEFAULT 'published'"); } catch (e) { }
@@ -56,12 +58,13 @@ const saveDeal = (deal) => {
   try {
     const stmt = db.prepare(`
         INSERT OR IGNORE INTO published_deals 
-        (id, link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, link, original_link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
     return stmt.run(
       deal.id,
       deal.link,
+      deal.original_link || deal.link,
       deal.title,
       deal.price_official || 0,
       deal.price_offer || 0,
@@ -89,14 +92,14 @@ const registerClick = (dealId) => {
 
 const isRecentlyPublished = (link, title = '') => {
   try {
-    // Check by link (primary)
-    const byLink = db.prepare(`SELECT * FROM published_deals WHERE link = ? AND posted_at > datetime('now', '-168 hours')`);
-    if (byLink.get(link)) return true;
+    // Check by original link (primary)
+    const byOrig = db.prepare(`SELECT * FROM published_deals WHERE (original_link = ? OR link = ?) AND posted_at > datetime('now', '-168 hours')`);
+    if (byOrig.get(link, link)) return true;
 
-    // Check by title similarity (secondary - prevent same product with different link)
+    // Check by title (secondary)
     if (title) {
-      const cleanTitle = title.toLowerCase().trim().substring(0, 50); // First 50 chars
-      const byTitle = db.prepare(`SELECT * FROM published_deals WHERE LOWER(SUBSTR(title, 1, 50)) = ? AND posted_at > datetime('now', '-168 hours')`);
+      const cleanTitle = title.toLowerCase().trim().substring(0, 45);
+      const byTitle = db.prepare(`SELECT * FROM published_deals WHERE LOWER(SUBSTR(title, 1, 45)) = ? AND posted_at > datetime('now', '-168 hours')`);
       if (byTitle.get(cleanTitle)) return true;
     }
 
