@@ -46,6 +46,19 @@ class CoreProcessor {
                         deal.coupon = expedition.coupon || deal.coupon;
                         deal.tienda = expedition.store !== 'Desconocida' ? expedition.store : deal.tienda;
 
+                        // --- 🤖 FASE BOT 3: AUDITORÍA DE PRECIO ---
+                        const AuditorBot = require('./PriceAuditorBot');
+                        const audit = await AuditorBot.audit(deal);
+
+                        if (!audit.isGoodDeal) {
+                            logger.warn(`🛑 BOT 3 no certificó esta oferta. Descartando.`);
+                            continue;
+                        }
+
+                        // Añadir sellos de calidad
+                        deal.badge = audit.badge;
+                        deal.is_historic_low = audit.isHistoricLow;
+
                         // --- 🤖 FASE BOT 2: MONETIZACIÓN Y PUBLICACIÓN ---
                         logger.info(`💰 BOT 2 procesando monetización para: ${deal.tienda}`);
 

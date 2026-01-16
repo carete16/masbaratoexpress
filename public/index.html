@@ -501,6 +501,8 @@
                     ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
                     : 0;
 
+                const badgeHtml = deal.badge ? `<div class="status-badge" style="position:absolute; top:20px; left:20px; background:var(--primary); color:white; padding:6px 12px; border-radius:10px; font-weight:800; font-size:11px; z-index:10; box-shadow: 0 4px 10px rgba(37,99,235,0.3); border: 1px solid rgba(255,255,255,0.2);">${deal.badge}</div>` : '';
+
                 const adminControls = isAdmin ? `
                     <div class="admin-footer">
                         <button class="btn-adm btn-adm-edit" onclick="editDeal('${deal.id}')">EDITAR</button>
@@ -508,14 +510,22 @@
                     </div>
                 ` : '';
 
+                const couponHtml = deal.coupon ? `
+                    <div style="background:#f1f5f9; border:1px dashed #cbd5e1; padding:10px; border-radius:12px; margin-bottom:15px; text-align:center;">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-muted); display:block; text-transform:uppercase;">Cupón:</span>
+                        <code style="font-size:16px; color:var(--primary); font-weight:800; letter-spacing:1px;">${deal.coupon}</code>
+                    </div>
+                ` : '';
+
                 return `
                     <article class="deal-card">
                         <div class="image-container">
+                            ${badgeHtml}
                             ${discount > 0 ? `<div class="discount-badge">-${discount}%</div>` : ''}
                             <img src="${deal.image || 'https://placehold.co/600x400?text=Premium+Deal'}" alt="${deal.title}">
                         </div>
                         <div class="card-content">
-                            <span class="store-tag">${deal.tienda || 'Imported'}</span>
+                            <span class="store-tag">${deal.tienda || 'USA Offer'}</span>
                             <h3 class="deal-title">${deal.title}</h3>
                             
                             <div class="price-row">
@@ -531,7 +541,9 @@
                                 ` : ''}
                             </div>
 
-                            <a href="/go/${deal.id}" target="_blank" class="btn-view">VER PRODUCTO</a>
+                            ${couponHtml}
+
+                            <a href="/go/${deal.id}" target="_blank" class="btn-view">OBTENER OFERTA</a>
                             ${adminControls}
                         </div>
                     </article>
