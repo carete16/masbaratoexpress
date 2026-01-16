@@ -10,13 +10,65 @@ class CoreProcessor {
         this.minScore = 50;    // Filtro de validación social (Reddit Ups / Slickdeals Heat)
     }
 
+    // --- INICIO DEL BUCLE AUTOMÁTICO ---
+    async start() {
+        const SlickRSSCollector = require('../collectors/SlickRSSCollector');
+        const Telegram = require('../notifiers/TelegramNotifier');
+        const { db } = require('../database/db');
+
+        logger.info('🚀 CoreProcessor iniciado. Bucle de recolección activo (5 min).');
+
+        const runCycle = async () => {
+            try {
+                logger.info('🔄 Iniciando ciclo de recolección...');
+                const rawDeals = await SlickRSSCollector.getDeals();
+                const processedDeals = await this.processDeals(rawDeals);
+
+                for (const deal of processedDeals) {
+                    try {
+                        // ULITMO CHEQUEO DB
+                        const exists = db ? db.prepare('SELECT id FROM published_deals WHERE link = ? OR title = ?').get(deal.link, deal.title) : false;
+                        if (exists) continue;
+
+                        // GUARDAR Y PUBLICAR
+                        if (db) {
+                            const stmt = db.prepare(`
+                                INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, posted_at, score)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)
+                            `);
+                            stmt.run(deal.id, deal.title, deal.price_offer, deal.price_official || 0, deal.link, deal.image, deal.tienda, deal.categoria, deal.viralContent || '', deal.score);
+                        }
+
+                        await Telegram.sendDeal({
+                            ...deal,
+                            description: deal.viralContent
+                        });
+
+                        // Pequeña pausa para no floodear Telegram
+                        await new Promise(r => setTimeout(r, 3000));
+
+                    } catch (err) { logger.error(`Error publicando oferta ${deal.id}: ${err.message}`); }
+                }
+
+                logger.info('✅ Ciclo finalizado.');
+
+            } catch (error) {
+                logger.error(`❌ Error crítico en ciclo: ${error.message}`);
+            }
+        };
+
+        // Ejecutar inmediatamente y luego cada 5 minutos
+        runCycle();
+        setInterval(runCycle, 5 * 60 * 1000); // 5 min
+    }
+
     async processDeals(deals) {
         const validDeals = [];
 
         for (const deal of deals) {
             // 1. Detección implacable de Duplicados (Evitar repeticiones por link Y título)
             if (isRecentlyPublished(deal.link, deal.title)) {
-                logger.info(`⏭️ DUPLICADO DETECTADO: ${deal.title.substring(0, 50)}...`);
+                // logger.info(`⏭️ DUPLICADO DETECTADO: ${deal.title.substring(0, 50)}...`); 
                 continue;
             }
 
@@ -24,11 +76,30 @@ class CoreProcessor {
             deal.link = await LinkTransformer.transform(deal.link);
 
             // 🚨 FILTRO ANTI-COMPETENCIA: Validar que NO quede ningún link de Slickdeals
-            if (deal.link && deal.link.includes('slickdeals.net')) {
-                logger.warn(`⚠️ LINK DE SLICKDEALS DETECTADO Y BLOQUEADO: ${deal.title.substring(0, 50)}...`);
-                logger.warn(`   Link problemático: ${deal.link}`);
-                continue; // DESCARTAR esta oferta completamente
+            if (!deal.link || deal.link.includes('slickdeals.net')) {
+                logger.warn(`⚠️ LINK DESCARTADO (Slickdeals o Nulo): ${deal.title.substring(0, 40)}...`);
+                continue;
             }
+
+            // 💰💰 KILL SWITCH DE MONETIZACIÓN (FACTURACIÓN SEGURA) 💰💰
+            let isMonetized = false;
+            // A. Amazon
+            if (deal.link.includes('tag=masbaratodeal-20') || deal.link.includes(process.env.AMAZON_TAG)) isMonetized = true;
+            // B. Sovrn (VigLink)
+            else if (deal.link.includes('redirect.viglink.com')) isMonetized = true;
+            // C. eBay (Campaign ID)
+            else if (deal.link.includes('rover.ebay.com')) isMonetized = true; // LinkTransformer lo maneja
+            // D. AliExpress
+            else if (deal.link.includes('aff_short_key')) isMonetized = true;
+            // E. Walmart (si tuvieramos ID) - asumiendo Sovrn si no
+            else if (deal.link.includes('walmart') && deal.link.includes('viglink')) isMonetized = true;
+
+            if (!isMonetized) {
+                // logger.warn(`🛑 OFERTA DESCARTADA POR NO MONETIZABLE: ${deal.title}`);
+                // logger.warn(`   Link: ${deal.link}`);
+                continue; // ¡SE ACABÓ! NO PASARÁS.
+            }
+
 
             // 📢 CORRECCIÓN DE NOMBRE DE TIENDA 📢
             // Si el link final es de Amazon, Walmart, etc., actualizar el nombre de la tienda.
@@ -37,16 +108,10 @@ class CoreProcessor {
                 if (deal.link.includes('amazon')) deal.tienda = 'Amazon';
                 else if (deal.link.includes('walmart')) deal.tienda = 'Walmart';
                 else if (deal.link.includes('ebay')) deal.tienda = 'eBay';
-                else if (deal.link.includes('bestbuy')) deal.tienda = 'BestBuy';
+                else if (deal.link.includes('bestbuy')) deal.tienda = 'Best Buy';
                 else if (deal.link.includes('target')) deal.tienda = 'Target';
-                else if (deal.link.includes('newegg')) deal.tienda = 'Newegg';
-                else if (deal.link.includes('walgreens')) deal.tienda = 'Walgreens';
                 else if (deal.link.includes('nike')) deal.tienda = 'Nike';
-            }
-
-            // Si después de todo la tienda sigue diciendo "Slickdeals" (o variantes), lo ocultamos.
-            if (!deal.tienda || /slickdeals|slick/i.test(deal.tienda)) {
-                deal.tienda = 'Oferta Verificada';
+                else deal.tienda = 'Tienda USA';
             }
 
             // 3. Mejora Visual (Extraer imagen HD original)
@@ -75,16 +140,13 @@ class CoreProcessor {
             // - O es un producto con alta validación social (Score >= 50)
             // - O es un MÍNIMO HISTÓRICO (is_historic_low) -> Prioridad Absoluta
 
+            // Ajustamos Score minimo
             const isHistoricLow = deal.is_historic_low || false;
+            // Si es VIP (score > 100 por el collector), pasa directo
+            const isVip = (deal.score || 0) > 150;
 
-            // Si es mínimo histórico, somos más flexibles con el descuento (hasta 15% es bueno en marcas top)
-            const minDiscountAdjusted = isHistoricLow ? 15 : this.minDiscount;
-
-            const isLegendaryDeal = discount >= minDiscountAdjusted;
-            const isHighDemand = (deal.score || 0) >= this.minScore;
-
-            if (!isLegendaryDeal && !isHighDemand && !isHistoricLow) {
-                // Si no cumple ninguno de los tres criterios de elite, se descarta
+            // Si no tiene descuento grande, ni es VIP, ni histórico, ni score alto... chau
+            if (!isVip && !isHistoricLow && discount < 20 && deal.score < 50) {
                 continue;
             }
 
@@ -92,7 +154,7 @@ class CoreProcessor {
             // Pasamos el flag isHistoricLow para que la IA lo sepa
             const viralContent = await AIProcessor.rewriteViral({ ...deal, isHistoricLow }, discount || 0);
 
-            // 🚨 VALIDACIÓN FINAL: Asegurar que el contenido viral NO mencione Slickdeals
+            // 🚨 VALIDACIÓN FINAL CONTENIDO
             const cleanViralContent = viralContent
                 .replace(/slickdeals?/gi, '')
                 .replace(/\s{2,}/g, ' ')
@@ -100,8 +162,8 @@ class CoreProcessor {
 
             validDeals.push({ ...deal, viralContent: cleanViralContent });
 
-            const tagsInfo = isHistoricLow ? '[💎 HISTORIC LOW]' : `[Dcto: ${discount}%]`;
-            logger.info(`✅ OFERTA VALIDADA Y LIMPIA: ${deal.title} ${tagsInfo} [Score: ${deal.score}]`);
+            const tagsInfo = isHistoricLow ? '[💎 HISTORIC]' : (isVip ? '[🔥 VIP]' : '');
+            logger.info(`✅ OFERTA APROBADA ($$$): ${deal.title} ${tagsInfo}`);
         }
 
         return validDeals;

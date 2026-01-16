@@ -110,9 +110,18 @@ app.post('/api/analyze-deal', async (req, res) => {
 
 // --- ENDPOINTS PROTEGIDOS ---
 
-app.post('/api/submit-deal', authMiddleware, (req, res) => {
+app.post('/api/submit-deal', authMiddleware, async (req, res) => {
   try {
-    const { title, price, price_official, link, image, store, category, description } = req.body;
+    let { title, price, price_official, link, image, store, category, description } = req.body;
+
+    // 💰 MONETIZACIÓN FORZOSA AUTOMÁTICA 💰
+    // Antes de guardar, transformamos el link para asegurar que lleve el código de afiliado.
+    const originalLink = link;
+    link = await LinkTransformer.transform(link);
+    console.log(`[MONETIZACIÓN] Manual: ${originalLink} -> ${link}`);
+
+    if (!link) return res.status(400).json({ error: 'Enlace no válido o no monetizable' });
+
     const uuid = Math.random().toString(36).substring(2, 11);
     const stmt = db.prepare(`
             INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, posted_at, score)
@@ -130,9 +139,13 @@ app.post('/api/submit-deal', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/update-deal', authMiddleware, (req, res) => {
+app.post('/api/update-deal', authMiddleware, async (req, res) => {
   try {
-    const { id, title, price, price_official, link, image, store, category, description } = req.body;
+    let { id, title, price, price_official, link, image, store, category, description } = req.body;
+
+    // 💰 MONETIZACIÓN FORZOSA EN EDICIÓN TAMBIÉN 💰
+    link = await LinkTransformer.transform(link);
+
     const stmt = db.prepare(`
             UPDATE published_deals 
             SET title=?, price_offer=?, price_official=?, link=?, image=?, tienda=?, categoria=?, description=?
