@@ -27,20 +27,31 @@ class DeepExplorerBot {
 
         try {
             // 1. CARGAR PÁGINA INTERNA DE SLICKDEALS
-            const response = await axios.get(initialUrl, {
-                headers: {
-                    'User-Agent': this.userAgent,
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-                },
-                timeout: 12000,
-                maxRedirects: 5
-            });
+            let response;
+            try {
+                response = await axios.get(initialUrl, {
+                    headers: { 'User-Agent': this.userAgent },
+                    timeout: 12000
+                });
+            } catch (e) {
+                if (e.response && (e.response.status === 403 || e.response.status === 429)) {
+                    logger.info(`🛡️ Slickdeals bloqueó acceso directo. Activando Bypass via Google Proxy...`);
+                    const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(initialUrl)}`;
+                    response = await axios.get(proxyUrl, {
+                        headers: { 'User-Agent': this.userAgent },
+                        timeout: 15000
+                    });
+                } else { throw e; }
+            }
 
             const html = response.data;
             const $ = cheerio.load(html);
 
             // A. EXTRACCIÓN DE PRECIOS (PARIDAD TOTAL)
-            const priceText = $('.dealPrice').first().text().trim() || $('.itemPrice').first().text().trim() || $('[data-bhw="Price"]').text().trim();
+            const priceText = $('.dealPrice').first().text().trim() ||
+                $('.itemPrice').first().text().trim() ||
+                $('[data-bhw="Price"]').text().trim() ||
+                $('.item-price').first().text().trim(); // Fallback selector
             if (priceText) {
                 // Capturar el primer precio que aparezca (el de oferta)
                 const match = priceText.match(/\$(\d+(?:\.\d{2})?)/);

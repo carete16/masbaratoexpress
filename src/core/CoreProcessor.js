@@ -65,7 +65,10 @@ class CoreProcessor {
 
                         // 5. BOT 4: PUBLICACIÓN Y MONETIZACIÓN
                         const monetizedLink = await LinkTransformer.transform(deal.link);
-                        if (!monetizedLink) continue;
+                        if (!monetizedLink || monetizedLink.includes('slickdeals.net')) {
+                            logger.warn(`🚫 BLOQUEO: Link de competencia detectado. No se publicará: ${deal.title}`);
+                            continue;
+                        }
                         deal.link = monetizedLink;
 
                         // 6. LIMPIEZA ANTI-COMPETENCIA (RESGUARDO FINAL)
