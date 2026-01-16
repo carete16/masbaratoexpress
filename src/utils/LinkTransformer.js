@@ -59,8 +59,16 @@ class LinkTransformer {
 
             // 🚨 LIMPIEZA DE URL (Remover trackers antes de monetizar)
             try {
+                // Caso especial Amazon: Si es review, convertir a producto directo
+                if (url.includes('amazon.com') && (url.includes('/product-reviews/') || url.includes('/reviews/'))) {
+                    const asinMatch = url.match(/\/([A-Z0-0]{10})/);
+                    if (asinMatch) {
+                        url = `https://www.amazon.com/dp/${asinMatch[1]}`;
+                    }
+                }
+
                 const urlObj = new URL(url);
-                const trackers = ['tag', 'ascsubtag', 'clickid', 'affid', 'u2', 'lno', 'utm_source', 'utm_medium', 'ref', 'ref_'];
+                const trackers = ['tag', 'ascsubtag', 'clickid', 'affid', 'u2', 'lno', 'utm_source', 'utm_medium', 'ref', 'ref_', 'th', 'psc'];
                 trackers.forEach(t => urlObj.searchParams.delete(t));
                 url = urlObj.toString();
             } catch (e) { }

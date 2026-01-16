@@ -501,14 +501,12 @@
                     ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
                     : 0;
 
-                const badgeHtml = deal.badge ? `<div class="status-badge" style="position:absolute; top:20px; left:20px; background:var(--primary); color:white; padding:6px 12px; border-radius:10px; font-weight:800; font-size:11px; z-index:10; box-shadow: 0 4px 10px rgba(37,99,235,0.3); border: 1px solid rgba(255,255,255,0.2);">${deal.badge}</div>` : '';
+                const discountBadge = discount > 0 ? `
+                    <div class="discount-badge" style="position:absolute; top:20px; right:20px; background:#ef4444; color:white; padding:8px 12px; border-radius:12px; font-weight:900; font-size:14px; z-index:10; box-shadow:0 4px 12px rgba(239,68,68,0.3);">
+                        -${discount}%
+                    </div>` : '';
 
-                const adminControls = isAdmin ? `
-                    <div class="admin-footer">
-                        <button class="btn-adm btn-adm-edit" onclick="editDeal('${deal.id}')">EDITAR</button>
-                        <button class="btn-adm btn-adm-del" onclick="deleteDeal('${deal.id}')">BORRAR</button>
-                    </div>
-                ` : '';
+                const badgeHtml = deal.badge ? `<div class="status-badge" style="position:absolute; top:20px; left:20px; background:var(--primary); color:white; padding:6px 12px; border-radius:10px; font-weight:800; font-size:11px; z-index:10; box-shadow: 0 4px 10px rgba(37,99,235,0.3); border: 1px solid rgba(255,255,255,0.2);">${deal.badge}</div>` : '';
 
                 const couponHtml = deal.coupon ? `
                     <div style="background:#f1f5f9; border:1px dashed #cbd5e1; padding:10px; border-radius:12px; margin-bottom:15px; text-align:center;">
@@ -521,40 +519,39 @@
                     <article class="deal-card" id="deal-${deal.id}">
                         <div class="image-container">
                             ${badgeHtml}
-                            ${discount > 5 ? `<div class="discount-badge" style="background:#ef4444; font-weight:900;">-${discount}%</div>` : ''}
+                            ${discountBadge}
                             <img src="${deal.image || 'https://placehold.co/600x400?text=Premium+Deal'}" alt="${deal.title}">
                         </div>
                         <div class="card-content">
-                            <h3 class="deal-title" style="min-height: 44px; margin-bottom: 8px; font-size: 15px; line-height: 1.4;">${deal.title}</h3>
+                            <h3 class="deal-title" style="min-height: 44px; margin-bottom: 8px; font-size: 15px; line-height: 1.4; color:#0f172a;">${deal.title}</h3>
                             
-                            <div class="price-row" style="margin-bottom: 4px; display: flex; align-items: baseline; gap: 8px;">
-                                <span class="price-offer" style="font-size: 22px; font-weight: 800; color: #1e293b;">$${deal.price_offer.toLocaleString()}</span>
-                                ${deal.price_official > deal.price_offer ? `<span class="price-original" style="text-decoration: line-through; color: #94a3b8; font-size: 15px; font-weight: 500;">$${deal.price_official.toLocaleString()}</span>` : ''}
+                            <div class="price-row" style="margin-bottom: 4px; display: flex; align-items: baseline; gap: 10px;">
+                                <span class="price-offer" style="font-size: 24px; font-weight: 800; color: #1e293b;">$${deal.price_offer.toLocaleString()}</span>
+                                ${deal.price_official > deal.price_offer ? `<span class="price-original" style="text-decoration: line-through; color: #94a3b8; font-size: 16px; font-weight: 500;">$${deal.price_official.toLocaleString()}</span>` : ''}
                             </div>
 
                             <div style="margin-bottom: 12px;">
-                                <span class="store-tag" style="font-weight: 500; color: #64748b; font-size: 12px;">${deal.tienda || 'Oferta USA'}</span>
+                                <span class="store-tag" style="font-weight: 600; color: #64748b; font-size: 12px; text-transform:uppercase; letter-spacing:0.5px;">${deal.tienda || 'Oferta USA'}</span>
                             </div>
 
                             ${couponHtml}
 
-                            <!-- BARRA SOCIAL ESTILO SLICKDEALS -->
-                            <div class="social-bar" style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid #f1f5f9; margin-bottom: 15px;">
-                                <div style="display: flex; gap: 15px; align-items: center;">
-                                    <button onclick="voteUp('${deal.id}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:5px; color:#64748b; font-weight:600; font-size:13px; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">
-                                        <span style="font-size:18px;">👍</span> <span id="votes-${deal.id}">${deal.votes_up || 0}</span>
+                            <!-- BARRA SOCIAL MEJORADA -->
+                            <div class="social-bar" style="display: flex; align-items: center; justify-content: space-between; padding-top: 15px; border-top: 1px solid #f1f5f9; margin-bottom: 15px;">
+                                <div style="display: flex; gap: 20px; align-items: center;">
+                                    <button onclick="voteUp('${deal.id}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:6px; color:#475569; font-weight:700; font-size:14px; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#475569'">
+                                        <span style="font-size:20px;">👍</span> <span id="votes-${deal.id}">${deal.votes_up || 0}</span>
                                     </button>
-                                    <div style="display:flex; align-items:center; gap:5px; color:#64748b; font-size:13px;">
-                                        <span style="font-size:18px;">💬</span> <span>${deal.comment_count || 0}</span>
+                                    <div style="display:flex; align-items:center; gap:6px; color:#475569; font-weight:700; font-size:14px;">
+                                        <span style="font-size:20px;">💬</span> <span>${deal.comment_count || 0}</span>
                                     </div>
                                 </div>
-                                <button style="background:none; border:none; cursor:pointer; color:#64748b; font-size:16px;" title="Compartir">
-                                    <span style="transform: scaleX(-1); display: inline-block;">↩️</span>
-                                </button>
+                                <div style="color:#94a3b8; font-size:12px; font-weight:500;">
+                                    ${new Date(deal.posted_at).toLocaleDateString()}
+                                </div>
                             </div>
 
-                            <a href="/go/${deal.id}" target="_blank" class="btn-view" style="width:100%; border-radius:8px; font-weight:700;">OBTENER OFERTA</a>
-                            ${adminControls}
+                            <a href="/go/${deal.id}" target="_blank" class="btn-primary" style="width:100%; border-radius:12px; font-weight:800; text-align:center; padding:14px; text-decoration:none; display:block;">OBTENER OFERTA</a>
                         </div>
                     </article>
                 `;
