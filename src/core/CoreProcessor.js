@@ -7,8 +7,8 @@ const AIProcessor = require('./AIProcessor');
 
 class CoreProcessor {
     constructor() {
-        this.minDiscount = 15; // MODO LANZAMIENTO: Más permisivo
-        this.minScore = 15;    // MODO LANZAMIENTO
+        this.minDiscount = 0; // MODO CLON: Todo pasa
+        this.minScore = 0;    // SI está en Slickdeals, es bueno.
     }
 
 
@@ -164,9 +164,10 @@ class CoreProcessor {
             // RELAJADO PARA LANZAMIENTO:
             // Si tiene descuento decente (>=15%) O Score mínimo (>=10), pasa.
             // Si es VIP o Histórico, pasa siempre.
-            if (!isVip && !isHistoricLow && discount < 15 && deal.score < 10) {
-                continue;
-            }
+            // MODO CLON: FILTROS DESACTIVADOS
+            // if (!isVip && !isHistoricLow && discount < 15 && deal.score < 10) {
+            //    continue;
+            // }
 
             // 6. Formatear con Copywriting de Alto Impacto (IA)
             // Pasamos el flag isHistoricLow para que la IA lo sepa
