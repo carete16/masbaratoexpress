@@ -57,7 +57,7 @@ class TelegramNotifier {
             const channelId = this.channels[deal.categoria] || this.channels['default'];
             let photoBuffer = null;
 
-            if (deal.image) {
+            if (deal.image && !deal.image.includes('.svg') && !deal.image.includes('placehold.co')) {
                 photoBuffer = await this.downloadImage(deal.image);
             }
 
@@ -67,20 +67,26 @@ class TelegramNotifier {
                 finalCaption += `\n\n🎟️ <b>CUPÓN:</b> <code>${deal.coupon}</code>`;
             }
 
-            if (photoBuffer) {
-                // ENVIAR COMO FOTO GRANDE
-                await this.bot.telegram.sendPhoto(channelId, { source: photoBuffer }, {
-                    caption: finalCaption,
-                    parse_mode: 'HTML'
-                });
-                logger.info(`Foto GRANDE enviada para: ${deal.title}`);
-            } else {
-                // Fallback a texto si no hay imagen
-                await this.bot.telegram.sendMessage(channelId, finalCaption, {
-                    parse_mode: 'HTML',
-                    disable_web_page_preview: false
-                });
-                logger.info(`Texto enviado (sin imagen) para: ${deal.title}`);
+            try {
+                if (photoBuffer && photoBuffer.length > 500) {
+                    // ENVIAR COMO FOTO GRANDE
+                    await this.bot.telegram.sendPhoto(channelId, { source: photoBuffer }, {
+                        caption: finalCaption,
+                        parse_mode: 'HTML'
+                    });
+                    logger.info(`📸 Foto enviada con éxito: ${deal.title}`);
+                } else {
+                    // Fallback a texto si no hay imagen
+                    await this.bot.telegram.sendMessage(channelId, finalCaption, {
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: false
+                    });
+                    logger.info(`📝 Texto enviado (sin imagen): ${deal.title}`);
+                }
+            } catch (tgErr) {
+                logger.error(`⚠️ Fallo Telegram (Reintentando solo texto): ${tgErr.message}`);
+                // Último intento: solo texto sin nada más
+                await this.bot.telegram.sendMessage(channelId, finalCaption, { parse_mode: 'HTML' });
             }
 
             // Guardar en DB con metadatos completos para la web

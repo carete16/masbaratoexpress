@@ -46,6 +46,11 @@ class CoreProcessor {
                         deal.coupon = expedition.coupon || deal.coupon;
                         deal.tienda = expedition.store !== 'Desconocida' ? expedition.store : deal.tienda;
 
+                        // IMAGEN: Priorizar la de alta calidad encontrada por el bot
+                        if (expedition.image && !expedition.image.includes('placehold.co')) {
+                            deal.image = expedition.image;
+                        }
+
                         // --- 🤖 FASE BOT 3: AUDITORÍA DE PRECIO ---
                         const AuditorBot = require('./PriceAuditorBot');
                         const audit = await AuditorBot.audit(deal);
@@ -60,7 +65,7 @@ class CoreProcessor {
                         deal.is_historic_low = audit.isHistoricLow;
 
                         // --- 🤖 FASE BOT 2: MONETIZACIÓN Y PUBLICACIÓN ---
-                        logger.info(`💰 BOT 2 procesando monetización para: ${deal.tienda}`);
+                        logger.info(`💰 BOT 2 procesando monetización para: ${deal.tienda} (${deal.price_offer}$)`);
 
                         // A. Monetización Real
                         const monetizedLink = await LinkTransformer.transform(deal.link);

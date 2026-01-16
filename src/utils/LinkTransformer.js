@@ -61,9 +61,16 @@ class LinkTransformer {
                             let checkoutLink = $('a.buyNow, a.button--primary, a.button--checkout').attr('data-href') ||
                                 $('a.buyNow, a.button--primary, a.button--checkout').attr('href');
 
-                            // 2. Si no, buscar cualquier link a tiendas conocidas
+                            // 3. ÚLTIMO RECURSO: Escanear todo el HTML por links a tiendas conocidas
                             if (!checkoutLink) {
-                                checkoutLink = $('a[href*="amazon.com"], a[href*="walmart.com"], a[href*="ebay.com"]').first().attr('href');
+                                const storePatterns = ['amazon.com', 'walmart.com', 'ebay.com', 'target.com', 'bestbuy.com', 'homedepot.com'];
+                                for (const pattern of storePatterns) {
+                                    const found = $(`a[href*="${pattern}"]`).first().attr('href');
+                                    if (found) {
+                                        checkoutLink = found;
+                                        break;
+                                    }
+                                }
                             }
 
                             if (checkoutLink) {
@@ -75,7 +82,7 @@ class LinkTransformer {
                                 } else {
                                     url = checkoutLink;
                                 }
-                                logger.info(`✅ Bypass por Scraping Selector: ${url}`);
+                                logger.info(`✅ Bypass por Scraping Profundo: ${url}`);
                             }
                         }
                     } catch (err) {

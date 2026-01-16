@@ -20,77 +20,109 @@ class DeepExplorerBot {
             coupon: null,
             isExpired: false,
             verifiedPrice: null,
-            store: 'Desconocida'
+            store: 'Desconocida',
+            image: null
         };
 
         try {
-            // 1. CARGAR PÁGINA INTERNA DE SLICKDEALS (Para cupones y validación)
+            // 1. CARGAR PÁGINA INTERNA DE SLICKDEALS
             const response = await axios.get(initialUrl, {
-                headers: { 'User-Agent': this.userAgent },
-                timeout: 10000,
-                maxRedirects: 10
+                headers: {
+                    'User-Agent': this.userAgent,
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+                },
+                timeout: 12000,
+                maxRedirects: 5
             });
 
-            const $ = cheerio.load(response.data);
+            const html = response.data;
+            const $ = cheerio.load(html);
 
-            // A. DETECTAR CUPÓN (Búsqueda profunda en detalles y notas)
+            // A. DETECTAR IMAGEN DE ALTA CALIDAD (Prioridad sobre RSS)
+            result.image = $('.itemImage img, .mainImage img, .imageContainer img').attr('src') ||
+                $('.imageCanvas img').attr('src') ||
+                $('meta[property="og:image"]').attr('content');
+
+            if (result.image && result.image.startsWith('//')) result.image = 'https:' + result.image;
+
+            // B. DETECTAR CUPÓN
             result.coupon = $('.couponCode, .promoCode, [data-bhw="CouponCode"]').first().text().trim() ||
                 $('.itemPriceLine:contains("Code")').text().match(/Code\s*([A-Z0-9]+)/i)?.[1] ||
-                $('.communityNotesBox:contains("Code")').text().match(/code:\s*([A-Z0-9]+)/i)?.[1];
+                $('.communityNotesBox:contains("Code")').text().match(/code:\s*([A-Z0-9]+)/i)?.[1] ||
+                $('button[data-clipboard-text]').attr('data-clipboard-text');
 
-            // B. VERIFICAR SI ESTÁ EXPIRADA
-            const expiredSignals = $('.expired, .dealExpired, :contains("Deal is Expired")').length > 0;
+            // C. VERIFICAR SI ESTÁ EXPIRADA
+            const expiredSignals = $('.expired, .dealExpired, :contains("Deal is Expired")').length > 0 ||
+                $('.dealTitle .status').text().toLowerCase().includes('expired');
             if (expiredSignals) {
-                logger.warn(`⚠️ Oferta detectada como EXPIRADA en Slickdeals.`);
+                logger.warn(`⚠️ Oferta detectada como EXPIRADA.`);
                 result.isExpired = true;
                 return result;
             }
 
-            // C. LLEGAR A LA TIENDA REAL (Seguir el botón "Buy Now")
-            let buyNowLink = $('a.buyNow, a.button--primary, a.button--checkout').attr('data-href') ||
-                $('a.buyNow, a.button--primary, a.button--checkout').attr('href');
+            // D. BÚSQUEDA AGRESIVA DEL LINK DE COMPRA
+            // 1. Botones estándar
+            let buyNowLink = $('a.buyNow, a.button--primary, a.button--checkout, a[data-bhw="BuyNowButton"]').attr('data-href') ||
+                $('a.buyNow, a.button--primary, a.button--checkout, a[data-bhw="BuyNowButton"]').attr('href');
 
+            // 2. Si no hay, buscar en JSON-LD (Slickdeals suele ponerlo ahí)
+            if (!buyNowLink) {
+                const scripts = $('script[type="application/ld+json"]');
+                scripts.each((i, el) => {
+                    try {
+                        const json = JSON.parse($(el).html());
+                        if (json.url && !json.url.includes('slickdeals.net')) buyNowLink = json.url;
+                        if (json.offers && json.offers.url) buyNowLink = json.offers.url;
+                    } catch (e) { }
+                });
+            }
+
+            // E. SEGUIR EL RASTRO HASTA LA TIENDA REAL
             if (buyNowLink) {
                 if (buyNowLink.startsWith('/')) buyNowLink = 'https://slickdeals.net' + buyNowLink;
 
-                // Seguir la redirección hasta la tienda final
-                logger.debug(`Seguindo botón de compra: ${buyNowLink}`);
-                const shopRes = await axios.head(buyNowLink, {
-                    headers: { 'User-Agent': this.userAgent },
-                    maxRedirects: 15,
-                    timeout: 10000,
-                    validateStatus: (status) => status < 400
-                }).catch(e => {
-                    // Si HEAD falla (algunas tiendas lo bloquean), intentar GET ligero
-                    return axios.get(buyNowLink, {
+                try {
+                    const shopRes = await axios.get(buyNowLink, {
                         headers: { 'User-Agent': this.userAgent },
-                        maxRedirects: 10,
+                        maxRedirects: 12,
                         timeout: 10000
                     });
-                });
 
-                result.finalUrl = shopRes.request?.res?.responseUrl || shopRes.config?.url || buyNowLink;
+                    result.finalUrl = shopRes.request?.res?.responseUrl || shopRes.config?.url || buyNowLink;
+                } catch (e) {
+                    result.finalUrl = buyNowLink;
+                }
 
-                // Limpiar trackers de Slickdeals que queden en la URL final
+                // Limpieza Critica de u2 y otros trackers
                 if (result.finalUrl.includes('u2=')) {
-                    const u2 = new URL(result.finalUrl).searchParams.get('u2');
-                    if (u2) result.finalUrl = decodeURIComponent(u2);
+                    result.finalUrl = decodeURIComponent(new URL(result.finalUrl, 'https://slickdeals.net').searchParams.get('u2'));
+                }
+                if (result.finalUrl.includes('lno=')) {
+                    result.finalUrl = decodeURIComponent(new URL(result.finalUrl, 'https://slickdeals.net').searchParams.get('url') || result.finalUrl);
                 }
             }
 
-            // D. DETECTAR TIENDA REAL
-            if (result.finalUrl.includes('amazon.com')) result.store = 'Amazon';
-            else if (result.finalUrl.includes('walmart.com')) result.store = 'Walmart';
-            else if (result.finalUrl.includes('ebay.com')) result.store = 'eBay';
-            else if (result.finalUrl.includes('target.com')) result.store = 'Target';
-            else if (result.finalUrl.includes('bestbuy.com')) result.store = 'Best Buy';
+            // F. DETECTAR TIENDA POR DOMINIO
+            const domainMatch = result.finalUrl.match(/https?:\/\/(?:www\.)?([^/]+)/);
+            if (domainMatch) {
+                const domain = domainMatch[1].toLowerCase();
+                if (domain.includes('amazon')) result.store = 'Amazon';
+                else if (domain.includes('walmart')) result.store = 'Walmart';
+                else if (domain.includes('ebay')) result.store = 'eBay';
+                else if (domain.includes('target')) result.store = 'Target';
+                else if (domain.includes('bestbuy')) result.store = 'Best Buy';
+                else if (domain.includes('academy')) result.store = 'Academy Sports';
+                else if (domain.includes('adidas')) result.store = 'Adidas';
+                else if (domain.includes('nike')) result.store = 'Nike';
+                else result.store = domain.split('.')[0].toUpperCase();
+            }
 
-            logger.info(`✅ BOT 1 completado. Tienda: ${result.store} | Cupón: ${result.coupon || 'Ninguno'}`);
+            logger.info(`✅ BOT 1 completado. Tienda: ${result.store} | Cupon: ${result.coupon || 'No'}`);
             return result;
 
         } catch (error) {
-            logger.error(`❌ BOT 1 falló en exploración profunda: ${error.message}`);
-            return result; // Devolver lo que tengamos hasta el fallo
+            logger.error(`❌ BOT 1 Error Profundo: ${error.message}`);
+            return result;
         }
     }
 }
