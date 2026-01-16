@@ -442,8 +442,8 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Wildcard para SPA (Debe ser la última ruta)
-app.get('*', (req, res) => {
+// Ruta raíz explícita para asegurar carga
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
