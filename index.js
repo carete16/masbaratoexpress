@@ -260,21 +260,30 @@ app.post('/api/seed', authMiddleware, async (req, res) => {
     ];
 
     let count = 0;
+    const LinkTransformer = require('./src/utils/LinkTransformer');
+
     for (const p of PROMOS) {
       const exists = db.prepare('SELECT id FROM published_deals WHERE link = ?').get(p.link);
       if (exists) continue;
+
+      // MONETIZAR EL ENLACE
+      const monetizedLink = await LinkTransformer.transform(p.link);
+      if (!monetizedLink) {
+        console.log(`⚠️  No se pudo monetizar: ${p.title}`);
+        continue;
+      }
 
       const uuid = Math.random().toString(36).substring(2, 11);
       db.prepare(`
                 INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, posted_at, score)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 500)
-            `).run(uuid, p.title, p.price, p.official, p.link, p.img, 'Amazon', p.cat, p.desc);
+            `).run(uuid, p.title, p.price, p.official, monetizedLink, p.img, 'Amazon', p.cat, p.desc);
 
-      // Notificar TG (Con imagen corregida)
+      // Notificar TG (Con link monetizado)
       await Telegram.sendOffer({
         id: uuid, title: p.title, price_offer: p.price, price_official: p.official,
-        link: p.link, image: p.img, tienda: 'Amazon', categoria: p.cat,
-        viralContent: `<b>🔥 ${p.title}</b>\n💰 $${p.price} <s>$${p.official}</s>\n${p.desc}\n👉 <a href="${p.link}">VER OFERTA</a>`
+        link: monetizedLink, image: p.img, tienda: 'Amazon', categoria: p.cat,
+        viralContent: `<b>🔥 ${p.title}</b>\n💰 $${p.price} <s>$${p.official}</s>\n${p.desc}\n👉 <a href="${monetizedLink}">VER OFERTA</a>`
       });
       count++;
       await new Promise(r => setTimeout(r, 2000));
