@@ -19,77 +19,88 @@ class LinkTransformer {
     async transform(url) {
         if (!url) return url;
 
-        const originalUrl = url; // Guardar para logging
+        let currentUrl = url;
+        logger.info(`🚀 INICIANDO HYPER-BYPASS PARA: ${url.substring(0, 50)}...`);
 
         try {
-            // 1. "DESMANTELAR" Slickdeals: Obtener la tienda real
-            if (url.includes('slickdeals.net')) {
-                logger.info(`🕵️ BYPASS INICIADO: ${url.substring(0, 60)}...`);
+            // 1. RECURSIVE BYPASS (Seguir el rastro hasta el final)
+            let iterations = 0;
+            const maxIterations = 5;
 
-                // A. Parámetros directos (u2 es el más común para externos)
-                try {
-                    const urlParsed = new URL(url);
-                    let target = urlParsed.searchParams.get('u2') ||
-                        urlParsed.searchParams.get('url') ||
-                        urlParsed.searchParams.get('lno') ||
-                        urlParsed.searchParams.get('mpre'); // eBay style
+            while (iterations < maxIterations) {
+                const urlObj = new URL(currentUrl);
 
-                    if (target && target.includes('http')) {
-                        url = decodeURIComponent(target);
-                        logger.info(`✅ Bypass por Parámetro: ${url.substring(0, 50)}...`);
+                // A. Extraer de parámetros comunes de redes de afiliados
+                const affiliateParams = ['u2', 'url', 'mpre', 'u', 'link', 'dest', 'target', 'lno', 'v', 'out'];
+                let foundParam = false;
+
+                for (const param of affiliateParams) {
+                    const val = urlObj.searchParams.get(param);
+                    if (val && val.startsWith('http')) {
+                        currentUrl = decodeURIComponent(val);
+                        foundParam = true;
+                        break;
                     }
-                } catch (e) { }
+                }
 
-                // B. Si sigue siendo Slickdeals, intentamos resolver redirección física
-                if (url.includes('slickdeals.net')) {
+                if (!foundParam && (currentUrl.includes('slickdeals.net') || currentUrl.includes('redirect.viglink.com') || currentUrl.includes('tkqlhce.com'))) {
+                    // B. Resolución física por HEAD/GET si el parámetro no funciona
                     try {
                         const axios = require('axios');
-                        const res = await axios.get(url, {
-                            maxRedirects: 10,
-                            timeout: 8000,
+                        const res = await axios.head(currentUrl, {
+                            maxRedirects: 5,
+                            timeout: 5000,
                             headers: { 'User-Agent': 'Mozilla/5.0' }
                         });
-                        const finalUrl = res.request?.res?.responseUrl || res.config?.url;
-                        if (finalUrl && !finalUrl.includes('slickdeals.net')) {
-                            url = finalUrl;
+                        const resolved = res.request?.res?.responseUrl || res.config?.url;
+                        if (resolved && resolved !== currentUrl) {
+                            currentUrl = resolved;
+                            foundParam = true;
                         }
-                    } catch (e) { }
+                    } catch (e) { break; }
                 }
+
+                if (!foundParam) break;
+                iterations++;
             }
 
-            // 🚨 LIMPIEZA DE URL (Remover trackers antes de monetizar)
+            // 🚨 LIMPIEZA QUIRÚRGICA (Remover CUALQUIER tracker conocido)
             try {
                 // Caso especial Amazon: Si es review, convertir a producto directo
-                if (url.includes('amazon.com') && (url.includes('/product-reviews/') || url.includes('/reviews/'))) {
-                    const asinMatch = url.match(/\/([A-Z0-0]{10})/);
-                    if (asinMatch) {
-                        url = `https://www.amazon.com/dp/${asinMatch[1]}`;
-                    }
+                if (currentUrl.includes('amazon.com') && (currentUrl.includes('/product-reviews/') || currentUrl.includes('/reviews/'))) {
+                    const asinMatch = currentUrl.match(/\/([A-Z0-0]{10})/);
+                    if (asinMatch) currentUrl = `https://www.amazon.com/dp/${asinMatch[1]}`;
                 }
 
-                const urlObj = new URL(url);
-                const trackers = ['tag', 'ascsubtag', 'clickid', 'affid', 'u2', 'lno', 'utm_source', 'utm_medium', 'ref', 'ref_', 'th', 'psc'];
-                trackers.forEach(t => urlObj.searchParams.delete(t));
-                url = urlObj.toString();
+                const finalUrlObj = new URL(currentUrl);
+                // Lista masiva de parámetros basura de marketing y afiliados
+                const junkParams = [
+                    'tag', 'ascsubtag', 'clickid', 'affid', 'u2', 'lno', 'utm_source', 'utm_medium',
+                    'ref', 'ref_', 'th', 'psc', 'smid', 'camp', 'creative', 'linkCode', 'linkId',
+                    'originalSub3', 'subId1', 'subid', 'sourceid', 'veh', 'aff_id'
+                ];
+                junkParams.forEach(p => finalUrlObj.searchParams.delete(p));
+                currentUrl = finalUrlObj.toString().replace(/\?$/, '');
             } catch (e) { }
 
-            // 2. MONETIZACIÓN SEGÚN TIENDA
-            if (url.includes('amazon.com')) {
-                const u = new URL(url);
+            // 2. RE-MONETIZACIÓN (Tus códigos)
+            if (currentUrl.includes('amazon.com')) {
+                const u = new URL(currentUrl);
                 u.searchParams.set('tag', this.tags.amazon);
                 return u.toString();
-            } else if (url.includes('ebay.com')) {
-                return `https://www.ebay.com/rover/1/${this.tags.ebay}/1?mpre=${encodeURIComponent(url)}`;
-            } else if (url.includes('walmart.com')) {
-                return `https://goto.walmart.com/c/2003851/565706/9383?veh=aff&sourceid=imp_000011112222333344&u=${encodeURIComponent(url)}`;
+            } else if (currentUrl.includes('ebay.com')) {
+                return `https://www.ebay.com/rover/1/${this.tags.ebay}/1?mpre=${encodeURIComponent(currentUrl)}`;
+            } else if (currentUrl.includes('walmart.com')) {
+                // Si tienes un ID real de Walmart, ponlo aquí
+                return `https://goto.walmart.com/c/2003851/565706/9383?u=${encodeURIComponent(currentUrl)}`;
             }
 
-            // Monetización Universal (Resto de tiendas)
-            return `${this.tags.sovrn_prefix}${encodeURIComponent(url)}`;
+            // Monetización Universal (Sovrn/Viglink propio)
+            return `${this.tags.sovrn_prefix}${encodeURIComponent(currentUrl)}`;
 
         } catch (e) {
-            logger.error(`Error en LinkTransformer: ${e.message}`);
-            return url;
+            logger.error(`Error en Hyper-Bypass: ${e.message}`);
+            return currentUrl;
         }
     }
 }

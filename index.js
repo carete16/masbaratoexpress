@@ -174,19 +174,28 @@ app.get('/api/force-collect', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- SISTEMA DE INTERACCIÓN (Votos) ---
+// --- SISTEMA DE COMUNIDAD (Hilos al estilo Slickdeals) ---
 app.post('/api/vote-up/:id', (req, res) => {
-  const { id } = req.params;
   try {
-    db.prepare('UPDATE published_deals SET votes_up = votes_up + 1, score = score + 5 WHERE id = ?').run(id);
+    const { voteUp } = require('./src/database/db');
+    voteUp(req.params.id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/vote-down/:id', (req, res) => {
-  const { id } = req.params;
+app.get('/api/comments/:dealId', (req, res) => {
   try {
-    db.prepare('UPDATE published_deals SET votes_down = votes_down + 1, score = score - 3 WHERE id = ?').run(id);
+    const { getComments } = require('./src/database/db');
+    const comments = getComments(req.params.dealId);
+    res.json(comments);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/comments', (req, res) => {
+  try {
+    const { dealId, author, text } = req.body;
+    const { addComment } = require('./src/database/db');
+    addComment(dealId, author, text);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

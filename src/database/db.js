@@ -49,10 +49,36 @@ try {
   try { db.exec("ALTER TABLE published_deals ADD COLUMN votes_down INTEGER DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN comment_count INTEGER DEFAULT 0"); } catch (e) { }
 
+  // --- TABLA DE COMENTARIOS ---
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      deal_id TEXT,
+      author TEXT,
+      text TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(deal_id) REFERENCES published_deals(id)
+    )
+  `);
+
 } catch (error) {
   logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
   db = new Database(':memory:');
 }
+
+const voteUp = (id) => {
+  return db.prepare('UPDATE published_deals SET votes_up = votes_up + 1, score = score + 5 WHERE id = ?').run(id);
+};
+
+const addComment = (dealId, author, text) => {
+  const stmt = db.prepare('INSERT INTO comments (deal_id, author, text) VALUES (?, ?, ?)');
+  stmt.run(dealId, author || 'Anónimo', text);
+  db.prepare('UPDATE published_deals SET comment_count = comment_count + 1 WHERE id = ?').run(dealId);
+};
+
+const getComments = (dealId) => {
+  return db.prepare('SELECT * FROM comments WHERE deal_id = ? ORDER BY created_at ASC').all(dealId);
+};
 
 const saveDeal = (deal) => {
   try {
@@ -109,4 +135,4 @@ const isRecentlyPublished = (link, title = '') => {
   }
 };
 
-module.exports = { db, saveDeal, isRecentlyPublished, registerClick };
+module.exports = { db, saveDeal, isRecentlyPublished, registerClick, voteUp, addComment, getComments };

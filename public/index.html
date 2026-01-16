@@ -542,9 +542,9 @@
                                     <button onclick="voteUp('${deal.id}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:6px; color:#475569; font-weight:700; font-size:14px; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#475569'">
                                         <span style="font-size:20px;">👍</span> <span id="votes-${deal.id}">${deal.votes_up || 0}</span>
                                     </button>
-                                    <div style="display:flex; align-items:center; gap:6px; color:#475569; font-weight:700; font-size:14px;">
+                                    <button onclick="openComments('${deal.id}', '${deal.title.replace(/'/g, "\\'")}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:6px; color:#475569; font-weight:700; font-size:14px; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#475569'">
                                         <span style="font-size:20px;">💬</span> <span>${deal.comment_count || 0}</span>
-                                    </div>
+                                    </button>
                                 </div>
                                 <div style="color:#94a3b8; font-size:12px; font-weight:500;">
                                     ${new Date(deal.posted_at).toLocaleDateString()}
@@ -569,6 +569,24 @@
                     el.closest('button').disabled = true;
                 }
             } catch (e) { }
+        }
+
+        async function openComments(id, title) {
+            // Simple modal al estilo Slickdeals
+            const author = prompt("Tu nombre:", "Ahorrador");
+            const text = prompt(`Discutiendo: ${title}\n\nEscribe tu comentario:`);
+
+            if (author && text) {
+                const res = await fetch('/api/comments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dealId: id, author, text })
+                });
+                if (res.ok) {
+                    alert("¡Comentario publicado! El sistema de hilos lo mostrará pronto.");
+                    init();
+                }
+            }
         }
 
         // Filtros dinámicos
