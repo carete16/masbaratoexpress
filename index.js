@@ -196,6 +196,26 @@ app.post('/api/delete-deal', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// --- REDIRECT ENDPOINT (Monetización) ---
+app.get('/go/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const deal = db.prepare('SELECT link FROM published_deals WHERE id = ?').get(id);
+
+    if (!deal) {
+      return res.status(404).send('Oferta no encontrada');
+    }
+
+    // Registrar click para analytics
+    db.prepare('UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?').run(id);
+
+    // Redirigir al link monetizado
+    res.redirect(302, deal.link);
+  } catch (e) {
+    res.status(500).send('Error al procesar la redirección');
+  }
+});
+
 // --- LOGIN ENDPOINT ---
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
@@ -226,7 +246,7 @@ app.post('/api/seed', authMiddleware, async (req, res) => {
         price: 89.00,
         official: 129.00,
         link: "https://www.amazon.com/dp/B07PXGQC1Q",
-        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/AirPods_with_Charging_Case.png/640px-AirPods_with_Charging_Case.png",
+        img: "https://m.media-amazon.com/images/I/61CVih3UpdL._AC_SL1500_.jpg",
         cat: "Tecnología",
         desc: "🎧 Los auriculares más vendidos del mundo. Conexión mágica con iPhone."
       },
