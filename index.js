@@ -33,8 +33,6 @@ app.get('/api/deals', (req, res) => {
     // Solo últimas 100 ofertas PUBLICADAS de la última semana
     const deals = db.prepare(`
             SELECT * FROM published_deals 
-            WHERE status = 'published' 
-            AND posted_at > datetime('now', '-7 days') 
             ORDER BY posted_at DESC 
             LIMIT 100
         `).all();
@@ -157,6 +155,22 @@ app.post('/api/analyze-deal', async (req, res) => {
     }
 
     res.json({ success: true, title, price, store, img, link });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- DIAGNÓSTICO Y CONTROL ---
+app.get('/api/force-collect', async (req, res) => {
+  try {
+    const ProScraper = require('./src/collectors/SlickdealsProScraper');
+    const raw = await ProScraper.getFrontpageDeals();
+    res.json({
+      status: "Bot triggered",
+      found_in_surface: raw.length,
+      note: "El procesamiento profundo (Doble Bot) se ejecuta en segundo plano."
+    });
+    // Disparar ciclo sin esperar
+    const CoreProcessor = require('./src/core/CoreProcessor');
+    CoreProcessor.start();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

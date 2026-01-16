@@ -40,6 +40,7 @@ try {
   try { db.exec("ALTER TABLE published_deals ADD COLUMN description TEXT"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN coupon TEXT"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN status TEXT DEFAULT 'published'"); } catch (e) { }
+  try { db.exec("UPDATE published_deals SET status = 'published' WHERE status IS NULL"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN is_historic_low BOOLEAN DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN score INTEGER DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN votes_up INTEGER DEFAULT 0"); } catch (e) { }
@@ -54,22 +55,24 @@ try {
 const saveDeal = (deal) => {
   try {
     const stmt = db.prepare(`
-        INSERT OR IGNORE INTO published_deals (id, link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT OR IGNORE INTO published_deals 
+        (id, link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
     return stmt.run(
       deal.id,
       deal.link,
       deal.title,
-      deal.price_official,
-      deal.price_offer,
+      deal.price_official || 0,
+      deal.price_offer || 0,
       deal.image,
-      deal.tienda || 'Amazon USA',
-      deal.categoria || 'Tecnología',
+      deal.tienda || 'Oferta USA',
+      deal.categoria || 'Oferta',
       deal.description || '',
       deal.coupon || null,
-      deal.is_historic_low ? 1 : 0,
-      deal.score || 0
+      (deal.is_historic_low || deal.badge === 'Mínimo Histórico') ? 1 : 0,
+      deal.score || 0,
+      'published'
     );
   } catch (e) {
     logger.error(`Error guardando: ${e.message}`);

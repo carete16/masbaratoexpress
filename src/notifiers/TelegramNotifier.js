@@ -99,7 +99,10 @@ class TelegramNotifier {
                 image: deal.image,
                 tienda: deal.tienda,
                 categoria: deal.categoria,
-                coupon: deal.coupon
+                coupon: deal.coupon,
+                badge: deal.badge,
+                score: deal.score,
+                is_historic_low: deal.is_historic_low
             });
 
             return true;
