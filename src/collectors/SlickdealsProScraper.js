@@ -59,56 +59,48 @@ class SlickdealsProScraper {
     extractDealData($, elem) {
         const $elem = $(elem);
 
-        // Título
+        // Título limpio
         let title = $elem.find('.dealTitle, .itemTitle a').first().text().trim();
         if (!title) return null;
+        title = title.replace(/\[.*?\]/g, '').replace(/slickdeals/gi, '').trim();
 
-        // Limpiar título de Slickdeals y tags
-        title = title.replace(/\[.*?\]/g, '').trim();
-
-        // Link
+        // Enlace
         let link = $elem.find('a[data-href]').attr('data-href') ||
             $elem.find('.dealTitle a, .itemTitle a').attr('href');
 
-        if (link && link.startsWith('/')) {
-            link = this.baseUrl + link;
-        }
-
+        if (link && link.startsWith('/')) link = this.baseUrl + link;
         if (!link) return null;
 
-        // Imagen (Búsqueda agresiva de alta resolución)
+        // IMAGÉN: Búsqueda multinivel (Garantía de calidad)
         const image = $elem.find('img.dealImage, img.itemImage').attr('src') ||
+            $elem.find('img').first().attr('data-proxy-image') ||
             $elem.find('img').first().attr('data-src') ||
             $elem.find('img').first().attr('data-original') ||
-            $elem.find('img').first().attr('src');
+            'https://placehold.co/600x400?text=Premium+Deal';
 
-        // PRECIOS: Lógica Profesional
+        // PRECIOS
         const priceText = $elem.find('.itemPrice, .dealPrice').text().trim();
         const price = this.extractPrice(priceText);
 
-        // Precio original (tachado en Slickdeals)
         const listPriceText = $elem.find('.oldPrice, .itemOriginalPrice, .strike').text().trim();
         let originalPrice = this.extractPrice(listPriceText);
-
-        // Si no hay precio original, intentar buscarlo en subtítulos o descriptores
         if (!originalPrice || originalPrice <= price) {
-            const descPriceMatch = $elem.find('.itemPriceLine').text().match(/Reg\.\s*\$?([\d,.]+)/i);
-            if (descPriceMatch) originalPrice = this.extractPrice(descPriceMatch[1]);
+            const extraMatch = $elem.find('.itemPriceLine').text().match(/Reg\.\s*\$?([\d,.]+)/i);
+            if (extraMatch) originalPrice = this.extractPrice(extraMatch[1]);
         }
-
-        // Si sigue sin haber, NO inventar el 17%. Poner 0 y el sistema ya calculará que no hay descuento visible.
         if (!originalPrice || originalPrice <= price) originalPrice = 0;
 
-        // Tienda
-        const store = $elem.find('.itemStore, .dealStore').text().trim() || 'Amazon';
+        // CUPÓN (Súper valor añadido)
+        const coupon = $elem.find('.couponCode, .promoCode, [data-bhw="CouponCode"]').text().trim() || null;
 
-        // Score/Votos
-        const scoreText = $elem.find('.voteCount, .itemScore').text().trim();
-        const score = parseInt(scoreText.replace(/[^\d]/g, '')) || 0;
+        // Tienda y Score
+        const store = $elem.find('.itemStore, .dealStore').text().trim() || 'Amazon';
+        const scoreText = $elem.find('.voteCount, .itemScore, .count').first().text().trim();
+        const score = parseInt(scoreText.replace(/[^\d]/g, '')) || 25; // Default 25 si es nueva
 
         return {
             id: this.generateId(link),
-            title: this.cleanTitle(title),
+            title: title,
             link: link,
             image: image,
             price_offer: price,
@@ -116,7 +108,7 @@ class SlickdealsProScraper {
             tienda: store,
             categoria: this.mapCategory(title + ' ' + store),
             score: score,
-            coupon: null,
+            coupon: coupon,
             description: title,
             pubDate: new Date().toISOString()
         };
