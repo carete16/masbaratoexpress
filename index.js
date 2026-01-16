@@ -160,6 +160,23 @@ app.post('/api/analyze-deal', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// --- SISTEMA DE INTERACCIÓN (Votos) ---
+app.post('/api/vote-up/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    db.prepare('UPDATE published_deals SET votes_up = votes_up + 1, score = score + 5 WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/vote-down/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    db.prepare('UPDATE published_deals SET votes_down = votes_down + 1, score = score - 3 WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // --- ENDPOINTS PROTEGIDOS ---
 
 app.post('/api/submit-deal', authMiddleware, async (req, res) => {
