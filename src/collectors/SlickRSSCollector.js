@@ -101,15 +101,27 @@ class SlickRSSCollector {
                 cleanTitle = cleanTitle.replace(/\s+-\s+$/, ''); // Quitar guión final
 
                 // Si es VIP, le ponemos la marca al principio para que venda más
-                if (isVip && !cleanTitle.toUpperCase().startsWith(brandFound.toUpperCase())) {
-                    cleanTitle = `[${brandFound.toUpperCase()}] ${cleanTitle}`;
+                // --- 3. CAZADOR DE CUPONES (COUPON HUNTER) 🎟️ ---
+                let couponCode = null;
+                // Combinamos contenido para buscar
+                const fullText = (item.content || '') + ' ' + (item.contentSnippet || '') + ' ' + title;
+
+                // Patrones comunes: "code ABC", "coupon ABC", "clip coupon", "apply code"
+                // Regex busca palabras clave seguidas de un código alfanumérico (mayúsculas y números, 5-15 caracteres)
+                const couponMatch = fullText.match(/(?:code|coupon|promo)\s*:?\s*([A-Z0-9]{5,15})/i);
+
+                if (couponMatch) {
+                    couponCode = couponMatch[1].toUpperCase();
+                    // Evitar falsos positivos comunes
+                    if (['AMAZON', 'SLICK', 'DEALS', 'PRIME', 'COUPON', 'SHIPPING'].includes(couponCode)) couponCode = null;
                 }
 
                 // Score final
                 let score = 100;
                 if (isVip) score += 200; // Prioridad total a marcas conocidas
-                if (isAllTimeLow) score += 100;
-                if (offerPrice > 0 && offerPrice < 20) score += 50; // Productos baratos vuelan
+                if (isAllTimeLow) score += 50;
+                if (couponCode) score += 50; // ¡Los cupones suben el interés!
+                if (offerPrice > 0 && offerPrice < 20) score += 50;
 
                 deals.push({
                     id: `sd_${item.guid || Math.random().toString(36).substr(2, 9)}`,
@@ -120,6 +132,7 @@ class SlickRSSCollector {
                     image: imageUrl,
                     tienda: realTienda,
                     categoria: categoria,
+                    coupon: couponCode, // Nuevo campo
                     score: score,
                     is_historic_low: isAllTimeLow
                 });

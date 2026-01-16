@@ -27,12 +27,14 @@ DATOS:
 - Precio Hoy: $${deal.price_offer}
 - Descuento Directo: ${discount}%
 - Tienda: ${deal.tienda}
+${deal.coupon ? `- CUPÓN: ${deal.coupon} (MUY IMPORTANTE)` : ''}
 ${isHistoric ? '- CONTEXTO: ¡ES EL PRECIO MÁS BAJO DE LA HISTORIA (ALL TIME LOW)! 🔥💎' : '- Contexto: Buen descuento verificado.'}
 
 ESTRATEGIA DE MENSAJE:
 1. Tono: Urgente pero profesional. "Alguien se equivocó con este precio".
 2. ${isHistoric ? 'DESTACA EN NEGRITA QUE ES MÍNIMO HISTÓRICO.' : 'Destaca el ahorro.'}
-3. Usa emojis estratégicos (🔥, 💎, 🚨, 📉).
+3. ${deal.coupon ? 'MENCIONA EL CUPÓN CLARAMENTE PARA QUE EL USUARIO LO COPIE.' : ''}
+4. Usa emojis estratégicos (🔥, 💎, 🚨, 📉).
 
 SALIDA (Formato HTML estricto):
 ${isHistoric ? '🚨 <b>¡MÍNIMO HISTÓRICO DETECTADO!</b>' : '🚀 <b>¡[TITULO EXPLOSIVO]!</b>'}
@@ -43,6 +45,8 @@ ${isHistoric ? '🚨 <b>¡MÍNIMO HISTÓRICO DETECTADO!</b>' : '🚀 <b>¡[TITUL
 💰 <b>Antes:</b> <del>$${deal.price_official}</del>
 🔥 <b>PÁGALO POR SOLO:</b> $${deal.price_offer}
 📉 <b>AHORRO:</b> ${discount}% ${isHistoric ? '(¡PRECIO JAMÁS VISTO!)' : ''}
+
+${deal.coupon ? `🎟️ <b>USA EL CUPÓN:</b> <code>${deal.coupon}</code> (Toca para copiar)` : ''}
 
 ⭐ <i>${isHistoric ? '💎 Oportunidad Única Verificada (ATL)' : 'Oportunidad Verificada por el equipo +BARATO'}</i>
 ━━━━━━━━━━━━━━━━━━
@@ -62,7 +66,12 @@ ${isHistoric ? '🚨 <b>¡MÍNIMO HISTÓRICO DETECTADO!</b>' : '🚀 <b>¡[TITUL
                 headers: { 'Authorization': `Bearer ${this.apiKey}` }
             });
 
-            return response.data.choices[0].message.content;
+            const content = response.data.choices[0].message.content;
+            // Fallback de seguridad por si la IA alucina y olvida el cupón
+            if (deal.coupon && !content.includes(deal.coupon)) {
+                return content.replace('━━━━━━━━━━━━━━━━━━', `🎟️ <b>CUPÓN EXTRA:</b> <code>${deal.coupon}</code>\n━━━━━━━━━━━━━━━━━━`);
+            }
+            return content;
         } catch (error) {
             logger.error(`Error en IAProcessor: ${error.message}`);
             return this.fallbackRewrite(deal, discount);
