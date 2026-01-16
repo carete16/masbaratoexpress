@@ -69,33 +69,56 @@ app.post('/api/analyze-deal', async (req, res) => {
     else if (/ebay/i.test(link)) store = 'eBay';
     else if (/walmart/i.test(link)) store = 'Walmart';
     else if (/bestbuy/i.test(link)) store = 'Best Buy';
-    else if (/target/i.test(link)) store = 'Target';
-    else if (/nike/i.test(link)) store = 'Nike';
-
-    // Scraping simple
-    const response = await axios.get(link, {
-      timeout: 5000,
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
-    }).catch(() => null);
 
     let title = "";
     let img = "";
     let price = "";
 
-    if (response) {
-      const html = response.data;
-      const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/i);
-      if (ogTitle) title = ogTitle[1];
-
-      const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/i);
-      if (ogImage) img = ogImage[1];
-
-      // Intentar extraer precio (muy básico)
-      const priceMatch = html.match(/\$[\d,]+\.\d{2}/);
-      if (priceMatch) price = parseFloat(priceMatch[0].replace('$', '').replace(',', ''));
+    // --- ESTRATEGIA AMAZON (Anti-Bloqueo) ---
+    const amazonAsinMatch = link.match(/\/([A-Z0-9]{10})(?:[/?]|$)/i);
+    if (store === 'Amazon' && amazonAsinMatch) {
+      const asin = amazonAsinMatch[1];
+      // Usar imagen oficial de API de Widgets (100% fiable)
+      img = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&Format=_SL500_&ASIN=${asin}&MarketPlace=US`;
+      title = `Producto Amazon (ASIN: ${asin})`; // Fallback title
     }
 
-    res.json({ success: true, title, price, store, img, link: monetizedLink || link });
+    // Scraping Genérico (o para obtener título real de Amazon si deja)
+    try {
+      const response = await axios.get(link, {
+        timeout: 4000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+        }
+      });
+
+      if (response && response.data) {
+        const html = response.data;
+
+        // Título
+        const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/i);
+        if (ogTitle) title = ogTitle[1].replace('Amazon.com: ', '').substring(0, 100);
+        else {
+          const titleTag = html.match(/<title>([^<]*)<\/title>/i);
+          if (titleTag) title = titleTag[1].replace('Amazon.com: ', '').substring(0, 100);
+        }
+
+        // Imagen (Si no tenemos la de Amazon Widget)
+        if (!img) {
+          const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/i);
+          if (ogImage) img = ogImage[1];
+        }
+
+        // Precio
+        const priceMatch = html.match(/(\$[\d,]+\.\d{2})/);
+        if (priceMatch) price = parseFloat(priceMatch[1].replace('$', '').replace(',', ''));
+      }
+    } catch (e) {
+      console.log("Scraping simple falló (normal en Amazon), usando datos base.");
+    }
+
+    res.json({ success: true, title, price, store, img, link });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
