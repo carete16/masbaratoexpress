@@ -40,17 +40,30 @@ class DeepExplorerBot {
             const $ = cheerio.load(html);
 
             // A. EXTRACCIÓN DE PRECIOS (PARIDAD TOTAL)
-            const priceText = $('.dealPrice').text().trim() || $('.itemPrice').text().trim();
+            const priceText = $('.dealPrice').first().text().trim() || $('.itemPrice').first().text().trim() || $('[data-bhw="Price"]').text().trim();
             if (priceText) {
                 const match = priceText.match(/\$(\d+(?:\.\d{2})?)/);
                 if (match) result.price_offer = parseFloat(match[1]);
             }
 
-            // PRECIO ORIGINAL (MSRP / List Price)
-            const originalPriceText = $('.listPrice, .oldPrice, .regPrice').text().trim();
+            // PRECIO ORIGINAL (MSRP / List Price / Reg Price)
+            // Slickdeals usa clases variadas: .listPrice, .oldPrice, .regPrice, .msrp
+            const originalPriceText = $('.listPrice').first().text().trim() ||
+                $('.oldPrice').first().text().trim() ||
+                $('.regPrice').first().text().trim() ||
+                $('.strike').first().text().trim() ||
+                $('.itemPrice.reg').text().trim();
+
             if (originalPriceText) {
                 const match = originalPriceText.match(/\$(\d+(?:\.\d{2})?)/);
                 if (match) result.price_official = parseFloat(match[1]);
+            }
+
+            // Si aún no tenemos precio oficial, buscar en el texto descriptivo
+            if (!result.price_official) {
+                const text = $('.itemDetails, .description').text();
+                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List)\s*:\s*\$(\d+(?:\.\d{2})?)/i);
+                if (regMatch) result.price_official = parseFloat(regMatch[1]);
             }
 
             // B. DETECTAR IMAGEN DE ALTA CALIDAD

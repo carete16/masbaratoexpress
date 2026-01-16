@@ -61,8 +61,9 @@ class SlickdealsProScraper {
         const priceMatch = title.match(/\$(\d+(?:\.\d{2})?)/);
         if (priceMatch) price_offer = parseFloat(priceMatch[1]);
 
-        const regMatch = title.match(/Reg\.\s*\$(\d+(?:\.\d{2})?)/i) ||
-            title.match(/Was\s*\$(\d+(?:\.\d{2})?)/i);
+        const regMatch = title.match(/(?:Reg\.|Was|MSRP|List|List Price)\s*\$(\d+(?:\.\d{2})?)/i) ||
+            title.match(/\$(\d+(?:\.\d{2})?)\s*(?:Reg\.|Was|MSRP|List)/i);
+
         if (regMatch) price_official = parseFloat(regMatch[1]);
 
         // Tienda
