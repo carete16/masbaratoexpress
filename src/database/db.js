@@ -39,6 +39,7 @@ try {
   try { db.exec("ALTER TABLE published_deals ADD COLUMN description TEXT"); } catch (e) { /* Columna ya y existe o error ignorables */ }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN coupon TEXT"); } catch (e) { /* Columna ya existe */ }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN is_historic_low BOOLEAN DEFAULT 0"); } catch (e) { /* Columna ya existe */ }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN score INTEGER DEFAULT 0"); } catch (e) { /* Columna ya existe */ }
 
 } catch (error) {
   logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
@@ -48,9 +49,9 @@ try {
 const saveDeal = (deal) => {
   try {
     const stmt = db.prepare(`
-      INSERT OR IGNORE INTO published_deals (id, link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+        INSERT OR IGNORE INTO published_deals (id, link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
     return stmt.run(
       deal.id,
       deal.link,
@@ -62,7 +63,8 @@ const saveDeal = (deal) => {
       deal.categoria || 'Tecnología',
       deal.description || '',
       deal.coupon || null,
-      deal.is_historic_low ? 1 : 0
+      deal.is_historic_low ? 1 : 0,
+      deal.score || 0
     );
   } catch (e) {
     logger.error(`Error guardando: ${e.message}`);
