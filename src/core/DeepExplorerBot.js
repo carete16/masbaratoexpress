@@ -102,22 +102,41 @@ class DeepExplorerBot {
                 }
             }
 
-            // F. DETECTAR TIENDA POR DOMINIO
+            // F. DETECTAR TIENDA POR DOMINIO (Mapeo Pro)
             const domainMatch = result.finalUrl.match(/https?:\/\/(?:www\.)?([^/]+)/);
             if (domainMatch) {
                 const domain = domainMatch[1].toLowerCase();
-                if (domain.includes('amazon')) result.store = 'Amazon';
-                else if (domain.includes('walmart')) result.store = 'Walmart';
-                else if (domain.includes('ebay')) result.store = 'eBay';
-                else if (domain.includes('target')) result.store = 'Target';
-                else if (domain.includes('bestbuy')) result.store = 'Best Buy';
-                else if (domain.includes('academy')) result.store = 'Academy Sports';
-                else if (domain.includes('adidas')) result.store = 'Adidas';
-                else if (domain.includes('nike')) result.store = 'Nike';
-                else result.store = domain.split('.')[0].toUpperCase();
+                const storeMap = {
+                    'amazon': 'Amazon',
+                    'walmart': 'Walmart',
+                    'ebay': 'eBay',
+                    'target': 'Target',
+                    'bestbuy': 'Best Buy',
+                    'academy': 'Academy Sports',
+                    'adidas': 'Adidas',
+                    'nike': 'Nike',
+                    'puma': 'Puma',
+                    'kohls': 'Kohls',
+                    'macys': 'Macys',
+                    'homedepot': 'Home Depot',
+                    'lowes': 'Lowes',
+                    'newegg': 'Newegg',
+                    'costco': 'Costco'
+                };
+
+                for (const [key, value] of Object.entries(storeMap)) {
+                    if (domain.includes(key)) {
+                        result.store = value;
+                        break;
+                    }
+                }
+
+                if (result.store === 'Desconocida') {
+                    result.store = domain.split('.')[0].toUpperCase();
+                }
             }
 
-            logger.info(`✅ BOT 1 completado. Tienda: ${result.store} | Cupon: ${result.coupon || 'No'}`);
+            logger.info(`✅ BOT 1 completado. Tienda: ${result.store}`);
             return result;
 
         } catch (error) {

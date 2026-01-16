@@ -44,7 +44,7 @@ class CoreProcessor {
                         // Actualizar datos con la verdad de la tienda real
                         deal.link = expedition.finalUrl;
                         deal.coupon = expedition.coupon || deal.coupon;
-                        deal.tienda = expedition.store !== 'Desconocida' ? expedition.store : deal.tienda;
+                        deal.tienda = (expedition.store && expedition.store !== 'Desconocida') ? expedition.store : deal.tienda;
 
                         // IMAGEN: Priorizar la de alta calidad encontrada por el bot
                         if (expedition.image && !expedition.image.includes('placehold.co')) {
