@@ -151,7 +151,12 @@ app.post('/api/delete-deal', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 4. RUTA MAESTRA (Frontend)
+// 4. RUTAS DEL FRONTEND
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Wildcard para SPA (Debe ser la última ruta)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
