@@ -53,18 +53,29 @@ class SlickdealsProScraper {
             if (imgMatch) image = imgMatch[1];
         }
 
-        // Precios: Intentar extraer del título si no están en campos extra
-        // Formato común: "Product Name $99 (Reg $150)"
+        // Precios: Extracción de alta fidelidad (Patrones Slickdeals)
         let price_offer = 0;
         let price_official = 0;
 
-        const priceMatch = title.match(/\$(\d+(?:\.\d{2})?)/);
-        if (priceMatch) price_offer = parseFloat(priceMatch[1]);
+        // Patrón 1: "$Oferta $Original" (Muy común en Frontpage)
+        const doublePriceMatch = title.match(/\$(\d+(?:\.\d{2})?)\s+\$(\d+(?:\.\d{2})?)/);
+        if (doublePriceMatch) {
+            price_offer = parseFloat(doublePriceMatch[1]);
+            price_official = parseFloat(doublePriceMatch[2]);
+        } else {
+            // Patrón 2: "$Oferta (Reg. $Original)"
+            const priceMatch = title.match(/\$(\d+(?:\.\d{2})?)/);
+            if (priceMatch) price_offer = parseFloat(priceMatch[1]);
 
-        const regMatch = title.match(/(?:Reg\.|Was|MSRP|List|List Price)\s*\$(\d+(?:\.\d{2})?)/i) ||
-            title.match(/\$(\d+(?:\.\d{2})?)\s*(?:Reg\.|Was|MSRP|List)/i);
+            const regMatch = title.match(/(?:Reg\.|Was|MSRP|List|List Price)\s*\$(\d+(?:\.\d{2})?)/i) ||
+                title.match(/\$(\d+(?:\.\d{2})?)\s*(?:Reg\.|Was|MSRP|List)/i);
+            if (regMatch) price_official = parseFloat(regMatch[1]);
+        }
 
-        if (regMatch) price_official = parseFloat(regMatch[1]);
+        // Si el precio oficial es menor al de oferta, probablemente están invertidos
+        if (price_official > 0 && price_official < price_offer) {
+            [price_offer, price_official] = [price_official, price_offer];
+        }
 
         // Tienda (Base - Reconocimiento ampliado)
         let tienda = 'Analizando...';

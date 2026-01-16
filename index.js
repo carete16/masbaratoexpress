@@ -67,8 +67,8 @@ app.post('/api/public-submit', async (req, res) => {
 
     // 🔔 NOTIFICACIÓN PERSONALIZADA AL ADMIN
     try {
-      const Telegram = require('./src/notifiers/TelegramNotifier');
-      await Telegram.sendAdminModerationAlert(req.body);
+      const Bot4 = require('./src/core/Bot4_Publisher');
+      await Bot4.sendAdminModerationAlert(req.body);
     } catch (e) { console.error("Error enviando alerta admin:", e); }
 
     console.log(`📩 Nueva oferta colaborativa pendiente de inspección: ${title}`);
@@ -161,11 +161,11 @@ app.post('/api/analyze-deal', async (req, res) => {
 // --- DIAGNÓSTICO Y CONTROL ---
 app.get('/api/force-collect', async (req, res) => {
   try {
-    const ProScraper = require('./src/collectors/SlickdealsProScraper');
-    const raw = await ProScraper.getFrontpageDeals();
+    const Bot1 = require('./src/core/Bot1_Scraper');
+    const rawDeals = await Bot1.getFrontpageDeals();
     res.json({
       status: "Bot triggered",
-      found_in_surface: raw.length,
+      found_in_surface: rawDeals.length,
       note: "El procesamiento profundo (Doble Bot) se ejecuta en segundo plano."
     });
     // Disparar ciclo sin esperar
@@ -223,8 +223,8 @@ app.post('/api/submit-deal', authMiddleware, async (req, res) => {
 
     // Notificar al canal Telegram
     try {
-      const Telegram = require('./src/notifiers/TelegramNotifier');
-      Telegram.sendManualDeal({ title, price_offer: price, price_official, link, image, description, coupon });
+      const Bot4 = require('./src/core/Bot4_Publisher');
+      Bot4.sendManualDeal({ title, price_offer: price, price_official, link, image, description, coupon });
     } catch (e) { console.error("Error notificando TG:", e); }
 
     res.json({ success: true });
@@ -275,8 +275,8 @@ app.post('/api/approve-deal', authMiddleware, async (req, res) => {
 
     // NOTIFICAR A TELEGRAM
     try {
-      const Telegram = require('./src/notifiers/TelegramNotifier');
-      await Telegram.sendDeal({ ...deal, link: finalLink });
+      const Bot4 = require('./src/core/Bot4_Publisher');
+      await Bot4.sendOffer({ ...deal, link: finalLink });
     } catch (e) { console.error("Error TG:", e); }
 
     res.json({ success: true });
