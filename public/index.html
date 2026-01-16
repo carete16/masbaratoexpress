@@ -3,413 +3,425 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <!-- SEO Meta Tags -->
-    <title>+BARATO DEALS | Las Mejores Ofertas de USA Verificadas</title>
-    <meta name="description"
-        content="🔥 Descubre descuentos verificados de hasta 90% en Amazon, eBay y Walmart. Rastreamos mínimos históricos en tiempo real para ti.">
-    <meta name="theme-color" content="#0f0f12">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
-
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3BYYXE88GW"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-3BYYXE88GW');
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>+BARATO DEALS | Premium USA Offers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --bg-main: #f0f3f6;
-            --bg-white: #ffffff;
-            --header-bg: #151515;
-            --primary: #005eb8;
-            --primary-hover: #004c94;
-            --accent: #b91c1c;
-            --text-main: #333333;
-            --text-muted: #666666;
-            --border: #e1e4e8;
-            --radius-card: 8px;
-            --radius-btn: 20px;
+            --primary: #2563eb;
+            --primary-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --glass: rgba(255, 255, 255, 0.85);
+            --radius: 24px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Outfit', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
         body {
-            background-color: var(--bg-main);
+            background-color: var(--bg);
             color: var(--text-main);
             overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Nav Glassmorphism Premium */
         header {
-            position: sticky;
+            position: fixed;
             top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
-            background: var(--header-bg);
-            padding: 12px 5%;
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            height: 80px;
             display: flex;
             align-items: center;
+            padding: 0 5%;
+        }
+
+        .nav-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
             justify-content: space-between;
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .brand {
-            font-weight: 900;
-            font-size: 24px;
-            color: white;
-            text-decoration: none;
-            display: flex;
             align-items: center;
-            gap: 8px;
         }
 
-        .brand span {
-            color: #fbbf24;
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
         }
 
-        .cta-telegram {
-            background: #2ca5e0;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 50px;
-            text-decoration: none;
+        .nav-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: 14px;
             font-weight: 700;
             font-size: 14px;
-            transition: 0.2s;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            border: none;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
         }
 
-        .cta-telegram:hover {
-            filter: brightness(1.1);
-            transform: translateY(-1px);
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
         }
 
-        .hero {
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -8px rgba(37, 99, 235, 0.4);
+            filter: brightness(1.05);
+        }
+
+        .btn-outline {
             background: white;
-            padding: 30px 5% 40px;
+            border: 1.5px solid #e2e8f0;
+            color: var(--text-main);
+        }
+
+        /* Hero Moderno */
+        .hero {
+            padding: 180px 5% 80px;
+            background: radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 20% 100%, rgba(124, 58, 237, 0.05) 0%, transparent 40%);
             text-align: center;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 20px;
         }
 
         .hero h1 {
-            font-size: 32px;
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
             font-weight: 800;
-            color: #111;
-            margin-bottom: 10px;
+            letter-spacing: -0.05em;
+            margin-bottom: 24px;
+            color: #020617;
+            line-height: 1.1;
         }
 
         .hero p {
             color: var(--text-muted);
-            font-size: 15px;
-            max-width: 600px;
-            margin: 0 auto 20px;
+            font-size: 1.2rem;
+            max-width: 650px;
+            margin: 0 auto 50px;
+            font-weight: 500;
         }
 
-        .search-container {
-            max-width: 700px;
+        /* Search Ultra-Clean */
+        .search-wrapper {
+            max-width: 750px;
             margin: 0 auto;
+            position: relative;
         }
 
         .search-input {
             width: 100%;
-            background: #f0f3f6;
-            border: 1px solid transparent;
-            padding: 14px 50px 14px 20px;
-            border-radius: 50px;
-            color: #333;
-            font-size: 16px;
+            padding: 24px 35px;
+            padding-left: 35px;
+            border-radius: 24px;
+            border: 1px solid #e2e8f0;
+            font-size: 17px;
+            font-weight: 500;
             outline: none;
-            transition: 0.2s;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         .search-input:focus {
-            background: white;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(0, 94, 184, 0.1);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
         }
 
-        .filters {
+        .categories-chips {
             display: flex;
+            justify-content: center;
             gap: 12px;
-            padding: 0 5%;
-            overflow-x: auto;
-            white-space: nowrap;
-            scrollbar-width: none;
-            margin-top: -25px;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
+            margin-top: 35px;
+            flex-wrap: wrap;
         }
 
-        .filters::-webkit-scrollbar {
-            display: none;
-        }
-
-        .filter-chip {
+        .chip {
+            padding: 10px 22px;
+            border-radius: 100px;
             background: white;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 10px 24px;
-            border-radius: 50px;
+            border: 1px solid #e2e8f0;
             font-size: 14px;
             font-weight: 700;
+            color: var(--text-muted);
             cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
         }
 
-        .filter-chip.active {
-            background: var(--primary);
+        .chip:hover,
+        .chip.active {
+            background: #020617;
             color: white;
-            border-color: var(--primary);
-            box-shadow: 0 4px 10px rgba(0, 94, 184, 0.3);
+            border-color: #020617;
+            transform: scale(1.05);
         }
 
-        .grid-container {
-            padding: 0 5%;
+        /* Luxury Deals Grid */
+        main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 60px 5% 120px;
+        }
+
+        .deals-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 60px;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 35px;
         }
 
-        /* Coupon Styles */
-        .coupon-container {
-            margin: 10px 0;
-            padding: 8px;
-            background: #fffbeb;
-            border: 2px dashed #fbbf24;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .coupon-container:hover {
-            background: #fef3c7;
-            transform: scale(1.02);
-        }
-
-        .coupon-label {
-            color: #d97706;
-            font-weight: 600;
-        }
-
-        .coupon-code {
-            font-family: monospace;
-            font-weight: bold;
-            color: #1e293b;
-            letter-spacing: 1px;
-        }
-
-        .card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-card);
+        .deal-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
             overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .deal-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.12);
+        }
+
+        .image-container {
             position: relative;
+            width: 100%;
+            padding-top: 80%;
+            background: #fff;
+            overflow: hidden;
+            border-bottom: 1px solid #f8fafc;
         }
 
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .img-wrapper {
-            height: 200px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            background: white;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .img-wrapper img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .discount-tag {
+        .image-container img {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background: #ffebeb;
-            color: #d92d20;
-            font-weight: 700;
-            font-size: 13px;
-            padding: 4px 8px;
-            border-radius: 4px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            height: 85%;
+            object-fit: contain;
+            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .deal-card:hover img {
+            transform: translate(-50%, -55%) scale(1.08);
+        }
+
+        .discount-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #020617;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 14px;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .card-content {
-            padding: 16px;
+            padding: 28px;
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
-            flex: 1;
         }
 
-        .card-meta {
-            display: flex;
-            justify-content: space-between;
+        .store-tag {
             font-size: 12px;
-            color: #888;
-            margin-bottom: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary);
+            letter-spacing: 0.1em;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .deal-title {
+            font-size: 19px;
+            font-weight: 700;
+            color: #020617;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+            height: 54px;
+            letter-spacing: -0.01em;
+        }
+
+        .price-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
+            margin-bottom: 25px;
+        }
+
+        .price-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-offer {
+            font-size: 28px;
+            font-weight: 900;
+            color: #020617;
+            letter-spacing: -1px;
+        }
+
+        .price-original {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: line-through;
             font-weight: 500;
         }
 
-        .card-title {
-            font-size: 16px;
-            font-weight: 700;
-            line-height: 1.4;
-            color: #111;
-            margin-bottom: 8px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            flex: 1;
-        }
-
-        .prices {
+        .score-box {
             display: flex;
-            align-items: baseline;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .price-now {
-            font-size: 22px;
-            font-weight: 800;
-            color: #333;
-        }
-
-        .price-old {
+            align-items: center;
+            gap: 5px;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 10px;
             font-size: 13px;
-            color: #999;
-            text-decoration: line-through;
-        }
-
-        .buy-btn {
-            background: var(--primary);
-            color: white;
-            text-decoration: none;
-            padding: 12px;
-            border-radius: var(--radius-btn);
-            text-align: center;
             font-weight: 700;
-            font-size: 14px;
+            color: #475569;
+        }
+
+        .btn-view {
             display: block;
-            transition: 0.2s;
-        }
-
-        .buy-btn:hover {
-            background: var(--primary-hover);
-            box-shadow: 0 4px 12px rgba(0, 94, 184, 0.2);
-        }
-
-        .share-row {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 12px;
-            border-top: 1px solid #f0f0f0;
-            padding-top: 10px;
-        }
-
-        .share-icon {
-            font-size: 20px;
-            color: #ccc;
+            width: 100%;
+            padding: 16px;
+            background: var(--primary-gradient);
+            color: white;
+            text-align: center;
+            border-radius: 16px;
+            font-weight: 800;
             text-decoration: none;
-            transition: 0.2s;
+            transition: all 0.3s;
+            border: none;
+            font-size: 15px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
-        .share-icon:hover {
-            transform: scale(1.1);
+        .btn-view:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        /* Admin Experience */
+        .admin-footer {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-adm {
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-adm-edit:hover {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-color: #7dd3fc;
+        }
+
+        .btn-adm-del:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-color: #fecaca;
         }
 
         footer {
-            margin-top: auto;
-            padding: 40px 5%;
-            border-top: 1px solid var(--border);
+            padding: 80px 5% 40px;
+            background: #ffffff;
+            border-top: 1px solid #f1f5f9;
             text-align: center;
-            background: white;
-            font-size: 13px;
-            color: #888;
         }
 
-        /* Modal Styles */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(2px);
+        footer .logo-bottom {
+            font-size: 20px;
+            font-weight: 800;
+            color: #020617;
+            margin-bottom: 20px;
         }
 
-        .modal {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-            border: 1px solid #eee;
-            max-height: 90vh;
-            overflow-y: auto;
+        footer p {
+            color: var(--text-muted);
+            font-size: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
         }
 
-        .form-input {
-            width: 100%;
-            background: #f9fafb;
-            border: 1px solid #ddd;
-            padding: 12px;
-            border-radius: 8px;
-            color: #333;
-            margin-top: 5px;
-        }
+        @media (max-width: 768px) {
+            header {
+                height: 75px;
+            }
 
-        .close-modal {
-            float: right;
-            border: none;
-            background: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
+            .hero {
+                padding-top: 130px;
+            }
+
+            .deals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-actions {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
         }
     </style>
 </head>
@@ -417,158 +429,49 @@
 <body>
 
     <header>
-        <a href="/" class="brand">
-            +BARATO <span>DEALS</span>
-        </a>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <!-- BOTÓN OCULTO POR DEFECTO PARA SEGURIDAD -->
-            <button id="btn-upload" onclick="openModal()" class="cta-telegram"
-                style="background: transparent; border: 1px solid var(--border); cursor: pointer; display: none;">
-                ➕ Subir
-            </button>
-            <a href="https://t.me/Masbarato_deals" target="_blank" class="cta-telegram">
-                🚀 Únete
-            </a>
+        <div class="nav-container">
+            <div class="logo">+Barato Deals</div>
+            <div class="nav-actions">
+                <button id="btn-upload" class="btn btn-outline" style="display: none;"
+                    onclick="location.href='/admin'">Panel Admin</button>
+                <a href="https://t.me/Masbarato_deals" target="_blank" class="btn btn-primary">Recibir Alertas</a>
+            </div>
         </div>
     </header>
 
-    <div class="hero">
-        <h1>Las Mejores Ofertas<br>Verificadas de USA</h1>
-        <p>Rastreamos Amazon, eBay y Walmart en tiempo real para encontrar errores de precio y liquidaciones.</p>
-        <div class="search-container">
+    <section class="hero">
+        <h1>Lo Último de USA, <br>Antes que Nadie.</h1>
+        <p>Curamos las liquidaciones más agresivas de la red usando tecnología de monitoreo en tiempo real.</p>
+
+        <div class="search-wrapper">
             <input type="text" id="search" class="search-input"
-                placeholder="🔍  Buscar (ej: iPhone, Laptop, Zapatillas)...">
+                placeholder="¿Qué estás buscando? (Laptop, Nike, TV...)">
+            <div class="categories-chips">
+                <div class="chip active" data-cat="all">Todo</div>
+                <div class="chip" data-cat="Tecnología">Tecnología</div>
+                <div class="chip" data-cat="Gamer">Gamer</div>
+                <div class="chip" data-cat="Moda">Moda</div>
+                <div class="chip" data-cat="Hogar">Hogar</div>
+                <div class="chip" data-cat="Tools">Herramientas</div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <div class="filters">
-        <button class="filter-chip active" data-cat="all">🔥 Todo</button>
-        <button class="filter-chip" data-cat="Tecnología">💻 Tech</button>
-        <button class="filter-chip" data-cat="Gamer">🎮 Gamers</button>
-        <button class="filter-chip" data-cat="Moda">👟 Moda</button>
-        <button class="filter-chip" data-cat="Hogar">🏠 Hogar</button>
-        <button class="filter-chip" data-cat="Herramientas">🛠️ Tools</button>
-    </div>
-
-    <div class="grid-container" id="grid">
-        <div style="grid-column: 1/-1; text-align: center; padding: 60px; color: #666;">
-            ⚡ Cargando ofertas...
+    <main>
+        <div id="grid" class="deals-grid">
+            <!-- Dinámico -->
         </div>
-    </div>
+    </main>
 
     <footer>
-        <p>
-            <b>© 2026 +BARATO DEALS</b><br>
-            Rastreamos las mejores ofertas de USA para ti.<br><br>
-            <span style="opacity:0.6; font-size:11px;">
-                Participamos en programas de afiliados. Al comprar a través de nuestros enlaces, podemos ganar una
-                comisión.
-            </span>
-        </p>
+        <div class="logo-bottom">+BARATO DEALS</div>
+        <p>Expertos en rastreo de ofertas premium. Participamos en programas de afiliados para mantener este servicio
+            gratuito. Al comprar a través de nuestros enlaces, apoyas el proyecto.</p>
     </footer>
-
-    <!-- MODAL -->
-    <div id="submitModal" class="modal-overlay">
-        <div class="modal">
-            <button class="close-modal" onclick="closeModal()">×</button>
-            <h2 style="font-size: 22px; font-weight: 800; color: #111;">📢 Publicar Oferta</h2>
-
-            <form id="submit-form">
-                <!-- STEP 1: URL -->
-                <div class="form-group">
-                    <label
-                        style="font-weight:700; color:var(--primary); font-size: 14px; margin-bottom: 6px; display:block;">Paso
-                        1: Enlace</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="url" id="d-link" class="form-input" placeholder="https://amazon.com/..." required
-                            style="margin-top:0;">
-                        <button type="button" id="btn-analyze" onclick="analyzeLink()"
-                            style="background:var(--bg-main); border:1px solid var(--border); padding:0 15px; border-radius:8px; cursor:pointer;">🔍</button>
-                    </div>
-                </div>
-
-                <!-- STEP 2: DETAILS -->
-                <div id="step-2" style="display:none; border-top:1px solid #eee; margin-top:20px; padding-top:20px;">
-                    <div style="display:flex; gap:15px; margin-bottom:15px;">
-                        <div
-                            style="width:80px; height:80px; background:#f9fafb; border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid #eee;">
-                            <img id="d-img-preview" src=""
-                                style="width:100%; height:100%; object-fit:contain; display:none;">
-                            <span id="d-img-placeholder" style="font-size:24px;">📸</span>
-                        </div>
-                        <div style="flex:1;">
-                            <label
-                                style="font-weight:600; font-size:13px; margin-bottom:4px; display:block;">Título</label>
-                            <input type="text" id="d-title" class="form-input" required style="margin-top:0;">
-                        </div>
-                    </div>
-
-                    <div style="display:flex; gap:10px;">
-                        <div style="flex:1;">
-                            <label style="font-size:12px;">Precio Oferta</label>
-                            <input type="number" id="d-price" class="form-input" required step="0.01">
-                        </div>
-                        <div style="flex:1;">
-                            <label style="font-size:12px;">Precio Normal</label>
-                            <input type="number" id="d-official" class="form-input" step="0.01">
-                        </div>
-                    </div>
-
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                        <div>
-                            <label style="font-size:12px;">Tienda</label>
-                            <select id="d-store" class="form-input">
-                                <option>Amazon</option>
-                                <option>eBay</option>
-                                <option>Walmart</option>
-                                <option>Best Buy</option>
-                                <option>Target</option>
-                                <option>Nike</option>
-                                <option>Adidas</option>
-                                <option>Otros</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="font-size:12px;">Categoría</label>
-                            <select id="d-cat" class="form-input">
-                                <option>Tecnología</option>
-                                <option>Gamer</option>
-                                <option>Moda</option>
-                                <option>Hogar</option>
-                                <option>Herramientas</option>
-                                <option>Otros</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <textarea id="d-desc" class="form-input" rows="2" placeholder="Descripción corta (opcional)"
-                        style="margin-top:10px;"></textarea>
-
-                    <!-- Campo Cupón -->
-                    <div style="margin-top:10px;">
-                        <label style="font-size:12px; font-weight:600;">Código de Cupón (Opcional)</label>
-                        <input type="text" id="d-coupon" class="form-input" placeholder="Ej: SAVE20"
-                            style="margin-top:4px; font-family:monospace; letter-spacing:1px; color:#d97706;">
-                    </div>
-
-                    <input type="hidden" id="d-img-url">
-                </div>
-
-                <div id="d-msg" style="margin-top:15px; font-size:13px; font-weight:600; text-align:center;"></div>
-
-                <button type="submit" id="btn-submit"
-                    style="background:var(--primary); color:white; border:none; width:100%; padding:14px; border-radius:8px; font-weight:800; font-size:15px; margin-top:15px; cursor:pointer;">
-                    PUBLICAR OFERTA 🚀
-                </button>
-            </form>
-        </div>
-    </div>
 
     <script>
         let allDeals = [];
-        let editingDealId = null;
-        const password = localStorage.getItem('admin_password');
-        const isAdmin = !!password;
+        const isAdmin = localStorage.getItem('admin_password') === 'Masbarato2026';
 
         async function init() {
             try {
@@ -576,177 +479,99 @@
                 allDeals = await res.json();
                 render(allDeals);
 
-                // MOSTRAR BOTÓN DE SUBIR SÓLO SI ES ADMIN
                 if (isAdmin) {
-                    document.body.classList.add('admin-mode');
-                    const uploadBtn = document.getElementById('btn-upload');
-                    if (uploadBtn) uploadBtn.style.display = 'flex';
+                    const ub = document.getElementById('btn-upload');
+                    if (ub) ub.style.display = 'flex';
                 }
             } catch (e) {
                 console.error(e);
-                document.getElementById('grid').innerHTML = '<div style="padding:40px; text-align:center;">⚠️ Error cargando ofertas</div>';
             }
         }
-        init();
 
         function render(deals) {
             const grid = document.getElementById('grid');
             if (!deals || deals.length === 0) {
-                grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:60px; color:#777;">📭 No hay ofertas activas.</div>`;
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:100px; color:#94a3b8; font-weight:600;">📭 No hay ofertas activas en esta categoría.</div>';
                 return;
             }
-            grid.innerHTML = deals.map(deal => {
-                const discount = deal.price_official > 0 ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100) : 0;
-                let img = deal.image || 'https://placehold.co/400x400?text=No+Image';
 
-                // Admin Controls logic (already checks isAdmin)
-                const adminBtn = isAdmin ? `<div style="margin-top:10px; display:flex; gap:5px;">
-                    <button onclick="editDeal('${deal.id}')" style="flex:1; border:1px solid #3b82f6; background:#fff; color:#3b82f6; border-radius:4px; cursor:pointer; padding:5px;">Editar</button>
-                    <button onclick="deleteDeal('${deal.id}')" style="flex:1; border:1px solid #ef4444; background:#fff; color:#ef4444; border-radius:4px; cursor:pointer; padding:5px;">Borrar</button>
-                </div>` : '';
+            grid.innerHTML = deals.map(deal => {
+                const discount = (deal.price_official > deal.price_offer)
+                    ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
+                    : 0;
+
+                const adminControls = isAdmin ? `
+                    <div class="admin-footer">
+                        <button class="btn-adm btn-adm-edit" onclick="editDeal('${deal.id}')">EDITAR</button>
+                        <button class="btn-adm btn-adm-del" onclick="deleteDeal('${deal.id}')">BORRAR</button>
+                    </div>
+                ` : '';
 
                 return `
-                <article class="card">
-                    <div class="img-wrapper">
-                        <img src="${img}" loading="lazy" onerror="this.src='https://placehold.co/400?text=Error'">
-                        ${discount > 10 ? `<div class="discount-tag">-${discount}%</div>` : ''}
-                    </div>
-                    <div class="card-content">
-                        <div class="card-meta"><span>🛍️ ${deal.tienda || 'Amazon'}</span></div>
-                        <h3 class="card-title">${deal.title}</h3>
-                        <div class="prices">
-                            <span class="price-now">$${deal.price_offer}</span>
-                            ${deal.price_official ? `<span class="price-old">$${deal.price_official}</span>` : ''}
+                    <article class="deal-card">
+                        <div class="image-container">
+                            ${discount > 0 ? `<div class="discount-badge">-${discount}%</div>` : ''}
+                            <img src="${deal.image || 'https://placehold.co/600x400?text=Premium+Deal'}" alt="${deal.title}">
                         </div>
-                        ${deal.coupon ? `<div class="coupon-container" onclick="navigator.clipboard.writeText('${deal.coupon}'); alert('Copiado!'); event.stopPropagation();">
-                            <span class="coupon-code">🎟️ ${deal.coupon}</span>
-                        </div>` : ''}
-                        <a href="/go/${deal.id}" target="_blank" class="buy-btn">VER OFERTA ↗</a>
-                        ${adminBtn}
-                    </div>
-                </article>`;
+                        <div class="card-content">
+                            <span class="store-tag">${deal.tienda || 'Imported'}</span>
+                            <h3 class="deal-title">${deal.title}</h3>
+                            
+                            <div class="price-row">
+                                <div class="price-box">
+                                    <span class="price-offer">$${deal.price_offer.toLocaleString()}</span>
+                                    ${deal.price_official > 0 ? `<span class="price-original">$${deal.price_official.toLocaleString()}</span>` : ''}
+                                </div>
+                                ${deal.score > 0 ? `
+                                    <div class="score-box">
+                                        <span>🔥</span>
+                                        <span>${deal.score}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <a href="/go/${deal.id}" target="_blank" class="btn-view">VER PRODUCTO</a>
+                            ${adminControls}
+                        </div>
+                    </article>
+                `;
             }).join('');
         }
 
-        // --- FORM LOGIC ---
-        function openModal() {
-            editingDealId = null;
-            document.getElementById('submit-form').reset();
-            document.getElementById('step-2').style.display = 'none';
-            document.getElementById('submitModal').style.display = 'flex';
-        }
-        function closeModal() { document.getElementById('submitModal').style.display = 'none'; }
-
-        function editDeal(id) {
-            const d = allDeals.find(x => x.id === id);
-            if (!d) return;
-            editingDealId = id;
-            document.getElementById('d-link').value = d.link;
-            document.getElementById('d-title').value = d.title;
-            document.getElementById('d-price').value = d.price_offer;
-            document.getElementById('d-official').value = d.price_official;
-            document.getElementById('d-img-url').value = d.image;
-            document.getElementById('d-store').value = d.tienda;
-            document.getElementById('d-cat').value = d.categoria;
-            document.getElementById('d-desc').value = d.description || '';
-            document.getElementById('d-coupon').value = d.coupon || '';
-
-            document.getElementById('step-2').style.display = 'block';
-            document.getElementById('submitModal').style.display = 'flex';
-        }
-
-        async function deleteDeal(id) {
-            if (!confirm('¿Borrar?')) return;
-            try {
-                await fetch('/api/delete-deal', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-password': password }, body: JSON.stringify({ id }) });
-                init();
-            } catch (e) { alert('Error'); }
-        }
-
-        document.getElementById('submit-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = true;
-            btn.innerText = 'GUARDANDO...';
-
-            const payload = {
-                id: editingDealId,
-                link: document.getElementById('d-link').value,
-                title: document.getElementById('d-title').value,
-                price: parseFloat(document.getElementById('d-price').value),
-                price_official: parseFloat(document.getElementById('d-official').value || 0),
-                image: document.getElementById('d-img-url').value,
-                store: document.getElementById('d-store').value,
-                category: document.getElementById('d-cat').value,
-                description: document.getElementById('d-desc').value,
-                coupon: document.getElementById('d-coupon').value
-            };
-
-            const endpoint = editingDealId ? '/api/update-deal' : '/api/submit-deal';
-            try {
-                const res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
-                    body: JSON.stringify(payload)
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    init();
-                    closeModal();
-                } else {
-                    const errMsg = data.error || 'Error desconocido';
-                    alert('❌ Error: ' + errMsg);
-                    if (errMsg.includes('Acceso denegado') || res.status === 403) {
-                        window.location.href = '/admin'; // REDIRIGIR A LOGIN
-                    }
-                }
-            } catch (err) { alert('❌ Error: ' + err.message); }
-            btn.disabled = false;
-            btn.innerText = 'PUBLICAR OFERTA 🚀';
-        });
-
-        // Analyze Link
-        async function analyzeLink() {
-            const url = document.getElementById('d-link').value;
-            if (!url) return;
-            document.getElementById('btn-analyze').innerText = '⏳';
-            try {
-                const res = await fetch('/api/analyze-deal', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
-                const data = await res.json();
-                document.getElementById('d-title').value = data.title || '';
-                document.getElementById('d-price').value = data.price || '';
-                document.getElementById('d-official').value = data.original_price || '';
-                document.getElementById('d-img-url').value = data.image || '';
-                document.getElementById('d-store').value = data.store || 'Otros';
-                document.getElementById('d-img-preview').src = data.image;
-                document.getElementById('d-img-preview').style.display = 'block';
-                document.getElementById('step-2').style.display = 'block';
-            } catch (e) { console.log(e); document.getElementById('step-2').style.display = 'block'; }
-            document.getElementById('btn-analyze').innerText = '🔍';
-        }
-
-        // Search Filter
+        // Filtros dinámicos
         document.getElementById('search').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = allDeals.filter(d => d.title.toLowerCase().includes(term));
             render(filtered);
         });
 
-        // Category Filter
-        document.querySelectorAll('.filter-chip').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const cat = btn.dataset.cat;
-                if (cat === 'all') render(allDeals);
-                else render(allDeals.filter(d => d.categoria === cat));
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                const cat = chip.dataset.cat;
+                const filtered = cat === 'all' ? allDeals : allDeals.filter(d => d.categoria === cat);
+                render(filtered);
             });
         });
 
-        // Loop
-        setInterval(init, 60000);
+        async function deleteDeal(id) {
+            if (!confirm('¿Eliminar de forma permanente?')) return;
+            const pass = localStorage.getItem('admin_password');
+            await fetch('/api/delete-deal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-password': pass },
+                body: JSON.stringify({ id })
+            });
+            init();
+        }
+
+        function editDeal(id) {
+            localStorage.setItem('edit_id', id);
+            location.href = '/admin';
+        }
+
+        init();
     </script>
 </body>
 
