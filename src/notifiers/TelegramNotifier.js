@@ -93,6 +93,7 @@ class TelegramNotifier {
             saveDeal({
                 id: deal.id || deal.link,
                 link: deal.link,
+                original_link: deal.original_link || deal.link,
                 title: deal.title,
                 price_official: deal.price_official,
                 price_offer: deal.price_offer,

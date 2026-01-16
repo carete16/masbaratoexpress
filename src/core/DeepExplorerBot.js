@@ -46,25 +46,32 @@ class DeepExplorerBot {
                 if (match) result.price_offer = parseFloat(match[1]);
             }
 
-            // PRECIO ORIGINAL (MSRP / List Price / Reg Price)
-            // Slickdeals usa clases variadas: .listPrice, .oldPrice, .regPrice, .msrp
+            // PRECIO ORIGINAL (MSRP / List Price / Reg Price / Was)
+            // Agregando selectores específicos de tiendas USA
             const originalPriceText = $('.listPrice').first().text().trim() ||
                 $('.oldPrice').first().text().trim() ||
                 $('.regPrice').first().text().trim() ||
                 $('.strike').first().text().trim() ||
-                $('.itemPrice.reg').text().trim();
+                $('.strikethrough').first().text().trim() ||
+                $('.itemPrice.reg').text().trim() ||
+                $('.price--msrp').text().trim() ||
+                $('.price--was').text().trim();
 
             if (originalPriceText) {
                 const match = originalPriceText.match(/\$(\d+(?:\.\d{2})?)/);
                 if (match) result.price_official = parseFloat(match[1]);
             }
 
-            // Si aún no tenemos precio oficial, buscar en el texto descriptivo
-            if (!result.price_official) {
-                const text = $('.itemDetails, .description').text();
-                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List)\s*:\s*\$(\d+(?:\.\d{2})?)/i);
+            // Si aún no tenemos precio oficial, buscar en el texto descriptivo (Reg., MSRP, Was)
+            if (!result.price_official || result.price_official <= result.price_offer) {
+                const text = $('.itemDetails, .description, .dealTitle').text();
+                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List|Original)\s*:\s*\$(\d+(?:\.\d{2})?)/i) ||
+                    text.match(/\$(\d+(?:\.\d{2})?)\s*(?:Reg\.|Was|MSRP|List|Original)/i);
                 if (regMatch) result.price_official = parseFloat(regMatch[1]);
             }
+
+            // Garantizar que si el precio oficial es menor o igual al de oferta, se anule para no mostrar errores visuales
+            if (result.price_official <= result.price_offer) result.price_official = 0;
 
             // B. DETECTAR IMAGEN DE ALTA CALIDAD
             result.image = $('.itemImage img, .mainImage img, .imageContainer img').attr('src') ||

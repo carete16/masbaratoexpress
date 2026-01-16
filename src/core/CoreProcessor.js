@@ -18,7 +18,10 @@ class CoreProcessor {
         logger.info('🤖 BOT 1: Explorador de Profundidad (Validación y Cupones)');
         logger.info('🤖 BOT 2: Publicador Monetizado (Telegram + Web)');
 
+        let isRunning = false;
         const runCycle = async () => {
+            if (isRunning) return;
+            isRunning = true;
             logger.info('\n--- 🤖 INICIANDO CICLO DE TRABAJO (Doble Bot) ---');
 
             try {
@@ -119,9 +122,11 @@ class CoreProcessor {
                 }
 
                 logger.info('--- ✅ CICLO COMPLETADO. BOTS EN STANDBY. ---');
+                isRunning = false;
 
             } catch (error) {
                 logger.error(`❌ Error en ciclo: ${error.message}`);
+                isRunning = false;
             }
         };
 
