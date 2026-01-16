@@ -476,7 +476,7 @@
 
         async function init() {
             try {
-                const res = await fetch('/api/deals');
+                const res = await fetch(`/api/deals?v=${Date.now()}`);
                 allDeals = await res.json();
                 render(allDeals);
 

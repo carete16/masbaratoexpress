@@ -73,8 +73,16 @@ class DeepExplorerBot {
             }
 
             // E. SEGUIR EL RASTRO HASTA LA TIENDA REAL
-            let buyNowLink = $('a.buyNow, a.button--primary, a.button--checkout').attr('data-href') ||
-                $('a.buyNow, a.button--primary, a.button--checkout').attr('href');
+            let buyNowLinks = $('a.buyNow, a.button--primary, a.button--checkout, a[data-bhw="BuyNowButton"]');
+            let buyNowLink = null;
+
+            for (let i = 0; i < buyNowLinks.length; i++) {
+                let href = $(buyNowLinks[i]).attr('data-href') || $(buyNowLinks[i]).attr('href');
+                if (href && !href.includes('product-reviews') && !href.includes('/reviews/')) {
+                    buyNowLink = href;
+                    break;
+                }
+            }
 
             // 2. Si no hay, buscar en JSON-LD (Slickdeals suele ponerlo ahí)
             if (!buyNowLink) {

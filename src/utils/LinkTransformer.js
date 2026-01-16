@@ -64,12 +64,18 @@ class LinkTransformer {
                             // 3. ÚLTIMO RECURSO: Escanear todo el HTML por links a tiendas conocidas
                             if (!checkoutLink) {
                                 const storePatterns = ['amazon.com', 'walmart.com', 'ebay.com', 'target.com', 'bestbuy.com', 'homedepot.com'];
+                                const ignorePatterns = ['product-reviews', 'customer-reviews', '/reviews/', 'twitter.com', 'facebook.com'];
+
                                 for (const pattern of storePatterns) {
-                                    const found = $(`a[href*="${pattern}"]`).first().attr('href');
-                                    if (found) {
-                                        checkoutLink = found;
-                                        break;
+                                    const links = $(`a[href*="${pattern}"]`);
+                                    for (let i = 0; i < links.length; i++) {
+                                        const href = $(links[i]).attr('href');
+                                        if (href && !ignorePatterns.some(ip => href.includes(ip))) {
+                                            checkoutLink = href;
+                                            break;
+                                        }
                                     }
+                                    if (checkoutLink) break;
                                 }
                             }
 
