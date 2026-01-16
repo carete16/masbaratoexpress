@@ -6,22 +6,26 @@ const AIProcessor = require('./AIProcessor');
 
 class CoreProcessor {
     constructor() {
-        this.minDiscount = 30; // Solo lo que de verdad vale la pena (Standard de Marketing)
-        this.minScore = 50;    // Filtro de validación social (Reddit Ups / Slickdeals Heat)
+        this.minDiscount = 15; // MODO LANZAMIENTO: Más permisivo
+        this.minScore = 15;    // MODO LANZAMIENTO
     }
+
+
 
     // --- INICIO DEL BUCLE AUTOMÁTICO ---
     async start() {
-        const SlickRSSCollector = require('../collectors/SlickRSSCollector');
+        // USAMOS EL MÓDULO GLOBAL (Slickdeals + TechBargains + BensBargains)
+        const GlobalCollector = require('../collectors/GlobalDealsCollector');
         const Telegram = require('../notifiers/TelegramNotifier');
         const { db } = require('../database/db');
 
-        logger.info('🚀 CoreProcessor iniciado. Bucle de recolección activo (5 min).');
+        logger.info('🚀 CoreProcessor RECARGADO. Escuchando múltiples fuentes (5 min).');
 
         const runCycle = async () => {
             try {
-                logger.info('🔄 Iniciando ciclo de recolección...');
-                const rawDeals = await SlickRSSCollector.getDeals();
+                logger.info('🔄 Iniciando ciclo de recolección GLOBAL...');
+                // Obtener deals de TODAS las fuentes
+                const rawDeals = await GlobalCollector.getDeals();
                 const processedDeals = await this.processDeals(rawDeals);
 
                 for (const deal of processedDeals) {
@@ -145,8 +149,10 @@ class CoreProcessor {
             // Si es VIP (score > 100 por el collector), pasa directo
             const isVip = (deal.score || 0) > 150;
 
-            // Si no tiene descuento grande, ni es VIP, ni histórico, ni score alto... chau
-            if (!isVip && !isHistoricLow && discount < 20 && deal.score < 50) {
+            // RELAJADO PARA LANZAMIENTO:
+            // Si tiene descuento decente (>=15%) O Score mínimo (>=10), pasa.
+            // Si es VIP o Histórico, pasa siempre.
+            if (!isVip && !isHistoricLow && discount < 15 && deal.score < 10) {
                 continue;
             }
 
