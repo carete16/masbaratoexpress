@@ -223,6 +223,42 @@
             margin-bottom: 60px;
         }
 
+        /* Coupon Styles */
+        .coupon-container {
+            margin: 10px 0;
+            padding: 8px;
+            background: #fffbeb;
+            border: 2px dashed #fbbf24;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .coupon-container:hover {
+            background: #fef3c7;
+            transform: scale(1.02);
+        }
+
+        .coupon-label {
+            color: #d97706;
+            font-weight: 600;
+        }
+
+        .coupon-code {
+            font-family: monospace;
+            font-weight: bold;
+            color: #1e293b;
+            letter-spacing: 1px;
+        }
+
+        .copy-icon {
+            opacity: 0.6;
+        }
+
         @media (max-width: 600px) {
             .grid-container {
                 grid-template-columns: 1fr;
@@ -703,6 +739,13 @@
                             <span class="price-now">$${deal.price_offer}</span>
                             ${deal.price_official > 0 ? `<span class="price-old">$${deal.price_official}</span>` : ''}
                         </div>
+
+                        ${deal.coupon ? `
+                        <div class="coupon-container" onclick="navigator.clipboard.writeText('${deal.coupon}'); alert('¡Cupón ${deal.coupon} copiado!');" title="Haz clic para copiar">
+                            <span class="coupon-label">🎟️ CUPÓN:</span>
+                            <span class="coupon-code">${deal.coupon}</span>
+                            <span class="copy-icon">📋</span>
+                        </div>` : ''}
                         
                         <a href="/go/${deal.id}" target="_blank" class="buy-btn">
                             VER OFERTA ↗
