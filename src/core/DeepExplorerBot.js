@@ -99,22 +99,25 @@ class DeepExplorerBot {
             if (buyNowLink) {
                 if (buyNowLink.startsWith('/')) buyNowLink = 'https://slickdeals.net' + buyNowLink;
 
+                // Intento de resolución rápida (u2)
                 try {
-                    const shopRes = await axios.get(buyNowLink, {
-                        headers: { 'User-Agent': this.userAgent },
-                        maxRedirects: 15,
-                        timeout: 10000
-                    });
+                    const params = new URL(buyNowLink, 'https://slickdeals.net').searchParams;
+                    const u2 = params.get('u2');
+                    if (u2) result.finalUrl = decodeURIComponent(u2);
+                } catch (e) { }
 
-                    result.finalUrl = shopRes.request?.res?.responseUrl || shopRes.config?.url || buyNowLink;
-                } catch (e) { result.finalUrl = buyNowLink; }
-
-                // Limpieza Critica
-                if (result.finalUrl.includes('u2=')) {
-                    result.finalUrl = decodeURIComponent(new URL(result.finalUrl, 'https://slickdeals.net').searchParams.get('u2'));
-                }
-                if (result.finalUrl.includes('lno=')) {
-                    result.finalUrl = decodeURIComponent(new URL(result.finalUrl, 'https://slickdeals.net').searchParams.get('url') || result.finalUrl);
+                // Si no hay u2 o no estamos seguros, intentamos GET/HEAD
+                if (result.finalUrl.includes('slickdeals.net')) {
+                    try {
+                        const shopRes = await axios.get(buyNowLink, {
+                            headers: { 'User-Agent': this.userAgent },
+                            maxRedirects: 10,
+                            timeout: 8000
+                        });
+                        result.finalUrl = shopRes.request?.res?.responseUrl || shopRes.config?.url || buyNowLink;
+                    } catch (e) {
+                        logger.warn(`⚠️ Error resolviendo link físico: ${e.message}`);
+                    }
                 }
             }
 

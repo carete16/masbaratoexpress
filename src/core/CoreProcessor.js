@@ -73,10 +73,15 @@ class CoreProcessor {
 
                         // A. Monetización Real
                         const monetizedLink = await LinkTransformer.transform(deal.link);
-                        if (!monetizedLink || monetizedLink.includes('slickdeals.net')) {
-                            logger.error(`❌ Fallo de monetización para ${deal.title}. Link sigue siendo Slickdeals.`);
+                        if (!monetizedLink) {
+                            logger.error(`❌ Fallo crítico de monetización para ${deal.title}.`);
                             continue;
                         }
+
+                        if (monetizedLink.includes('slickdeals.net')) {
+                            logger.warn(`⚠️ Link aún contiene Slickdeals: ${monetizedLink.substring(0, 40)}... Se publicará con bypass parcial.`);
+                        }
+
                         deal.link = monetizedLink;
 
                         // B. Control de Calidad
