@@ -44,7 +44,11 @@ class CoreProcessor {
                         // Actualizar datos con la verdad de la tienda real
                         deal.link = expedition.finalUrl;
                         deal.coupon = expedition.coupon || deal.coupon;
-                        deal.tienda = (expedition.store && expedition.store !== 'Desconocida') ? expedition.store : deal.tienda;
+                        deal.tienda = (expedition.store && expedition.store !== 'Oferta USA') ? expedition.store : deal.tienda;
+
+                        // PRECIOS: Actualizar con lo verificado por el Bot 1
+                        if (expedition.price_offer) deal.price_offer = expedition.price_offer;
+                        if (expedition.price_official) deal.price_official = expedition.price_official;
 
                         // IMAGEN: Priorizar la de alta calidad encontrada por el bot
                         if (expedition.image && !expedition.image.includes('placehold.co')) {
