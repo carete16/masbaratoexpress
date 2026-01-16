@@ -222,40 +222,40 @@ app.post('/api/seed', authMiddleware, async (req, res) => {
     const Telegram = require('./src/notifiers/TelegramNotifier');
     const PROMOS = [
       {
-        title: "Apple iPhone 15 Pro Max (Titanium)",
-        price: 999.00,
-        official: 1199.00,
-        link: "https://www.amazon.com/dp/B0CMZ7S85D",
-        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6552/6552358_sd.jpg",
+        title: "Apple AirPods (2nd Generation)",
+        price: 89.00,
+        official: 129.00,
+        link: "https://www.amazon.com/dp/B07PXGQC1Q",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/AirPods_with_Charging_Case.png/640px-AirPods_with_Charging_Case.png",
         cat: "Tecnología",
-        desc: "🔥 Mínimo histórico en el buque insignia de Apple."
+        desc: "🎧 Los auriculares más vendidos del mundo. Conexión mágica con iPhone."
       },
       {
-        title: "Sony PlayStation 5 Slim Console",
-        price: 449.00,
-        official: 499.99,
-        link: "https://www.amazon.com/dp/B0CL5K56Z1",
-        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6566/6566039_sd.jpg",
-        cat: "Gamer",
-        desc: "🎮 La consola más buscada, más ligera y potente."
+        title: "Amazon Fire TV Stick 4K Streaming Device",
+        price: 29.99,
+        official: 49.99,
+        link: "https://www.amazon.com/dp/B08XVYZ1Y5",
+        img: "https://m.media-amazon.com/images/I/51DrsMrHkCL._AC_SL1000_.jpg",
+        cat: "Tecnología",
+        desc: "📺 Convierte tu TV en Smart TV. Cine en casa con Dolby Vision."
       },
       {
-        title: "Samsung 65-inch Crystal UHD 4K Smart TV",
-        price: 397.99,
-        official: 479.99,
-        link: "https://www.amazon.com/dp/B0BVMXW266",
-        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6537/6537363_sd.jpg",
+        title: "Crocs Unisex-Adult Classic Clogs",
+        price: 34.99,
+        official: 49.99,
+        link: "https://www.amazon.com/dp/B0014C2N16",
+        img: "https://m.media-amazon.com/images/I/61N-Fqvj2LL._AC_SY695_.jpg",
+        cat: "Moda",
+        desc: "👟 Comodidad total. El calzado #1 en ventas de Amazon."
+      },
+      {
+        title: "Stanley Quencher H2.0 FlowState Tumbler 40oz",
+        price: 45.00,
+        official: 55.00,
+        link: "https://www.amazon.com/dp/B0C1TB6M74",
+        img: "https://m.media-amazon.com/images/I/61D6C5pL+JL._AC_SL1500_.jpg",
         cat: "Hogar",
-        desc: "📺 Cine en casa 4K a precio de locura."
-      },
-      {
-        title: "Ninja Air Fryer 4-Qt (Negra)",
-        price: 89.95,
-        official: 129.99,
-        link: "https://www.amazon.com/dp/B07FDJMC9Q",
-        img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6269/6269208_sd.jpg",
-        cat: "Hogar",
-        desc: "🍳 Cocina saludable con 75% menos grasa."
+        desc: "🥤 El vaso viral de TikTok. Mantiene el hielo por 2 días."
       }
     ];
 
