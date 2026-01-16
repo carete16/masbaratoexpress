@@ -420,8 +420,9 @@
             +BARATO <span>DEALS</span>
         </a>
         <div style="display:flex; gap:10px; align-items:center;">
-            <button onclick="openModal()" class="cta-telegram"
-                style="background: transparent; border: 1px solid var(--border); cursor: pointer;">
+            <!-- BOTÓN OCULTO POR DEFECTO PARA SEGURIDAD -->
+            <button id="btn-upload" onclick="openModal()" class="cta-telegram"
+                style="background: transparent; border: 1px solid var(--border); cursor: pointer; display: none;">
                 ➕ Subir
             </button>
             <a href="https://t.me/Masbarato_deals" target="_blank" class="cta-telegram">
@@ -573,7 +574,13 @@
                 const res = await fetch('/api/deals');
                 allDeals = await res.json();
                 render(allDeals);
-                if (isAdmin) document.body.classList.add('admin-mode');
+
+                // MOSTRAR BOTÓN DE SUBIR SÓLO SI ES ADMIN
+                if (isAdmin) {
+                    document.body.classList.add('admin-mode');
+                    const uploadBtn = document.getElementById('btn-upload');
+                    if (uploadBtn) uploadBtn.style.display = 'flex';
+                }
             } catch (e) {
                 console.error(e);
                 document.getElementById('grid').innerHTML = '<div style="padding:40px; text-align:center;">⚠️ Error cargando ofertas</div>';
@@ -591,7 +598,7 @@
                 const discount = deal.price_official > 0 ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100) : 0;
                 let img = deal.image || 'https://placehold.co/400x400?text=No+Image';
 
-                // Admin Controls
+                // Admin Controls logic (already checks isAdmin)
                 const adminBtn = isAdmin ? `<div style="margin-top:10px; display:flex; gap:5px;">
                     <button onclick="editDeal('${deal.id}')" style="flex:1; border:1px solid #3b82f6; background:#fff; color:#3b82f6; border-radius:4px; cursor:pointer; padding:5px;">Editar</button>
                     <button onclick="deleteDeal('${deal.id}')" style="flex:1; border:1px solid #ef4444; background:#fff; color:#ef4444; border-radius:4px; cursor:pointer; padding:5px;">Borrar</button>
@@ -681,13 +688,20 @@
                     headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
                     body: JSON.stringify(payload)
                 });
+
+                const data = await res.json();
+
                 if (res.ok) {
                     init();
                     closeModal();
                 } else {
-                    alert('Error guardando');
+                    const errMsg = data.error || 'Error desconocido';
+                    alert('❌ Error: ' + errMsg);
+                    if (errMsg.includes('Acceso denegado') || res.status === 403) {
+                        window.location.href = '/admin'; // REDIRIGIR A LOGIN
+                    }
                 }
-            } catch (err) { alert('Error: ' + err.message); }
+            } catch (err) { alert('❌ Error: ' + err.message); }
             btn.disabled = false;
             btn.innerText = 'PUBLICAR OFERTA 🚀';
         });
