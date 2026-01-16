@@ -61,16 +61,22 @@ class TelegramNotifier {
                 photoBuffer = await this.downloadImage(deal.image);
             }
 
+            // FORMATO VIRAL CON CUPÓN
+            let finalCaption = deal.viralContent;
+            if (deal.coupon) {
+                finalCaption += `\n\n🎟️ <b>CUPÓN:</b> <code>${deal.coupon}</code>`;
+            }
+
             if (photoBuffer) {
-                // ENVIAR COMO FOTO GRANDE (User request: mayor tamaño)
+                // ENVIAR COMO FOTO GRANDE
                 await this.bot.telegram.sendPhoto(channelId, { source: photoBuffer }, {
-                    caption: deal.viralContent,
+                    caption: finalCaption,
                     parse_mode: 'HTML'
                 });
                 logger.info(`Foto GRANDE enviada para: ${deal.title}`);
             } else {
                 // Fallback a texto si no hay imagen
-                await this.bot.telegram.sendMessage(channelId, deal.viralContent, {
+                await this.bot.telegram.sendMessage(channelId, finalCaption, {
                     parse_mode: 'HTML',
                     disable_web_page_preview: false
                 });
@@ -86,13 +92,49 @@ class TelegramNotifier {
                 price_offer: deal.price_offer,
                 image: deal.image,
                 tienda: deal.tienda,
-                categoria: deal.categoria
+                categoria: deal.categoria,
+                coupon: deal.coupon
             });
 
             return true;
         } catch (error) {
             logger.error(`Error enviando a Telegram (${deal.title}): ${error.message}`);
             return false;
+        }
+    }
+
+    /**
+     * Envía una alerta al administrador sobre una nueva oferta pendiente de revisión
+     */
+    async sendAdminModerationAlert(deal) {
+        try {
+            const adminId = process.env.TELEGRAM_ADMIN_ID || process.env.TELEGRAM_CHANNEL_ID;
+            if (!adminId) return;
+
+            const message = `
+🔔 <b>NUEVA OFERTA PARA REVISAR</b>
+
+📌 <b>Producto:</b> ${deal.title}
+💰 <b>Precio:</b> $${deal.price}
+🏪 <b>Tienda:</b> ${deal.store}
+🗣️ <b>Enviado por:</b> Colaborador Web
+
+<pre>Inspección requerida para validar veracidad y monetización.</pre>
+
+👉 <a href="https://masbaratodeals.onrender.com/admin">Abrir Panel de Moderación</a>
+            `;
+
+            await this.bot.telegram.sendMessage(adminId, message, {
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🔍 Revisar en Panel Admin', url: 'https://masbaratodeals.onrender.com/admin' }]
+                    ]
+                }
+            });
+            logger.info(`Notificación de moderación enviada para: ${deal.title}`);
+        } catch (error) {
+            logger.error(`Error enviando alerta de moderación: ${error.message}`);
         }
     }
 }

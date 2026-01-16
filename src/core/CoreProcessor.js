@@ -1,90 +1,99 @@
 const logger = require('../utils/logger');
-const { saveDeal, isRecentlyPublished } = require('../database/db');
+const db = require('../database/db');
 
 class CoreProcessor {
     constructor() {
-        this.interval = 5 * 60 * 1000; // 5 minutos
+        this.interval = 10 * 60 * 1000; // 10 minutos para dar tiempo a la exploración profunda
     }
 
-    // --- INICIO DEL SISTEMA DE CLONACIÓN ---
     async start() {
         const ProScraper = require('../collectors/SlickdealsProScraper');
         const QA = require('../utils/QualityAssurance');
         const Telegram = require('../notifiers/TelegramNotifier');
         const AIProcessor = require('./AIProcessor');
         const LinkTransformer = require('../utils/LinkTransformer');
+        const ExplorerBot = require('./DeepExplorerBot');
 
-        logger.info('🚀 SISTEMA DE CLONACIÓN PERFECTA ACTIVADO. Monitorizando Slickdeals (5 min).');
+        logger.info('🚀 ARQUITECTURA DE DOBLE BOT ACTIVADA.');
+        logger.info('🤖 BOT 1: Explorador de Profundidad (Validación y Cupones)');
+        logger.info('🤖 BOT 2: Publicador Monetizado (Telegram + Web)');
 
         const runCycle = async () => {
+            logger.info('\n--- 🤖 INICIANDO CICLO DE TRABAJO (Doble Bot) ---');
+
             try {
-                logger.info('🔄 CICLO DE EXTRACCIÓN INICIADO...');
-
-                // 1. Obtener ofertas del Scraper Profesional (Exactitud Slickdeals)
+                // 1. RECOLECCIÓN INICIAL (Bot de Superficie)
                 const rawDeals = await ProScraper.getFrontpageDeals();
-                logger.info(`📥 Recibidas ${rawDeals.length} ofertas base.`);
+                logger.info(`🔍 Encontradas ${rawDeals.length} ofertas en la superficie.`);
 
-                for (const rawDeal of rawDeals) {
+                for (let deal of rawDeals) {
                     try {
-                        // 2. Filtro preliminar: ¿Ya la tenemos?
-                        if (isRecentlyPublished(rawDeal.link, rawDeal.title)) continue;
+                        // Filtro: ¿Ya lo procesamos?
+                        const alreadySeen = db.isRecentlyPublished(deal.link);
+                        if (alreadySeen) continue;
 
-                        // 3. Transformación y Monetización Crítica
-                        let deal = { ...rawDeal };
-                        deal.link = await LinkTransformer.transform(deal.link);
+                        // --- 🤖 FASE BOT 1: EXPLORACIÓN PROFUNDA ---
+                        logger.info(`🕵️ BOT 1 explorando: ${deal.title.substring(0, 40)}...`);
+                        const expedition = await ExplorerBot.explore(deal.link);
 
-                        // 4. Validación de Calidad (QA System)
-                        const qaResult = await QA.validateOffer(deal);
-                        if (!qaResult.passed) {
-                            // logger.warn(`🛑 RECHAZADA por QA: ${deal.title}`);
+                        if (expedition.isExpired) {
+                            logger.warn(`❌ Oferta expirada detectada por BOT 1. Ignorando.`);
                             continue;
                         }
 
-                        // Actualizar deal con mejoras de QA (si las hay)
-                        deal = qaResult.deal;
+                        // Actualizar datos con la verdad de la tienda real
+                        deal.link = expedition.finalUrl;
+                        deal.coupon = expedition.coupon || deal.coupon;
+                        deal.tienda = expedition.store !== 'Desconocida' ? expedition.store : deal.tienda;
 
-                        // 5. Inteligencia Artificial (Copywriting Impactante)
-                        const discount = deal.discount || 0;
-                        const isHistoricLow = deal.is_historic_low || false;
+                        // --- 🤖 FASE BOT 2: MONETIZACIÓN Y PUBLICACIÓN ---
+                        logger.info(`💰 BOT 2 procesando monetización para: ${deal.tienda}`);
 
+                        // A. Monetización Real
+                        const monetizedLink = await LinkTransformer.transform(deal.link);
+                        if (!monetizedLink || monetizedLink.includes('slickdeals.net')) {
+                            logger.error(`❌ Fallo de monetización para ${deal.title}. Link sigue siendo Slickdeals.`);
+                            continue;
+                        }
+                        deal.link = monetizedLink;
+
+                        // B. Control de Calidad
+                        const qaReport = await QA.validateOffer(deal);
+                        if (!qaReport.passed) {
+                            logger.warn(`⚠️ QA Rechazó publicación: ${qaReport.report}`);
+                            continue;
+                        }
+
+                        // C. IA Viral Branding
                         try {
-                            const viralContent = await AIProcessor.rewriteViral({ ...deal, isHistoricLow }, discount);
-                            deal.viralContent = viralContent
-                                .replace(/slickdeals?/gi, '')
-                                .replace(/\s{2,}/g, ' ')
-                                .trim();
-                        } catch (aiErr) {
-                            deal.viralContent = deal.title; // Fallback
+                            const aiResult = await AIProcessor.generateViralContent(deal);
+                            deal.viralContent = aiResult.content;
+                        } catch (e) {
+                            deal.viralContent = deal.title;
                         }
 
-                        // 6. PERSISTENCIA Y PUBLICACIÓN
-                        const saved = saveDeal(deal);
-                        if (saved && saved.changes > 0) {
-                            logger.info(`✅ PUBLICANDO: ${deal.title} [-$${(deal.price_official - deal.price_offer).toFixed(2)}]`);
+                        // D. Disparo Final a Canales
+                        const success = await Telegram.sendOffer(deal);
 
-                            // Telegram Notification
-                            await Telegram.sendDeal({
-                                ...deal,
-                                description: deal.viralContent
-                            });
-
-                            // Pausa para evitar rate-limits
-                            await new Promise(r => setTimeout(r, 4000));
+                        if (success) {
+                            logger.info(`✅ [BOTS OK] Oferta publicada con éxito: ${deal.title}`);
+                            // Pausa táctica entre publicaciones
+                            await new Promise(r => setTimeout(r, 5000));
                         }
 
-                    } catch (dealErr) {
-                        logger.error(`Error procesando deal ${rawDeal.id}: ${dealErr.message}`);
+                    } catch (innerError) {
+                        logger.error(`Error procesando oferta: ${innerError.message}`);
                     }
                 }
 
-                logger.info('🏁 CICLO COMPLETADO. Esperando 5 minutos...');
+                logger.info('--- ✅ CICLO COMPLETADO. BOTS EN STANDBY. ---');
 
             } catch (error) {
-                logger.error(`❌ ERROR CRÍTICO EN CICLO: ${error.message}`);
+                logger.error(`❌ Error en ciclo: ${error.message}`);
             }
         };
 
-        // Ejecutar inmediatamente y luego por intervalo
+        // Iniciar
         runCycle();
         setInterval(runCycle, this.interval);
     }

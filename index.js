@@ -67,6 +67,12 @@ app.post('/api/public-submit', async (req, res) => {
     `);
     stmt.run(uuid, title, price, price_official || 0, link, image, store, category, description || '', 10);
 
+    // 🔔 NOTIFICACIÓN PERSONALIZADA AL ADMIN
+    try {
+      const Telegram = require('./src/notifiers/TelegramNotifier');
+      await Telegram.sendAdminModerationAlert(req.body);
+    } catch (e) { console.error("Error enviando alerta admin:", e); }
+
     console.log(`📩 Nueva oferta colaborativa pendiente de inspección: ${title}`);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
