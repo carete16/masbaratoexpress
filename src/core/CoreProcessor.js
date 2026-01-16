@@ -2,6 +2,7 @@ const { isRecentlyPublished } = require('../database/db');
 const logger = require('../utils/logger');
 const LinkTransformer = require('../utils/LinkTransformer');
 const VisualScraper = require('../utils/VisualScraper');
+const OfferValidator = require('../utils/OfferValidator');
 const AIProcessor = require('./AIProcessor');
 
 class CoreProcessor {
@@ -118,8 +119,19 @@ class CoreProcessor {
                 else deal.tienda = 'Tienda USA';
             }
 
-            // 3. Mejora Visual (Extraer imagen HD original)
-            deal.image = await VisualScraper.getHighResImage(deal.link, deal.image);
+            // 🛡️ VALIDACIÓN PROFESIONAL DE ENLACE Y METADATOS 🛡️
+            const validation = await OfferValidator.validate(deal.link);
+            if (!validation) {
+                logger.warn(`🛑 Calidad Insuficiente: ${deal.title.substring(0, 30)}... (Link roto o sin img)`);
+                continue;
+            }
+
+            // Actualizar con la verdad de la fuente
+            if (validation.realImage) deal.image = validation.realImage;
+            // Opcional: deal.title = validation.realTitle; (A veces el título OG es mejor)
+
+            // 3. Mejora Visual (Si la validación ya nos dio imagen buena, esto es redundante pero seguro)
+            // deal.image = await VisualScraper.getHighResImage(deal.link, deal.image);
 
             // 4. Limpieza de Título (Eliminar palabras prohibidas + Referencias a competencia)
             deal.title = deal.title
