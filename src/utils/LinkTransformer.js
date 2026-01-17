@@ -111,10 +111,11 @@ class LinkTransformer {
             }
 
             // FALLBACK UNIVERSAL (La Red de Seguridad Definitiva)
-            // Si no detectamos tienda, mandamos a Amazon Search (que tiene de todo)
-            // Esto asegura 100% que el link NO SEA Slickdeals.
-            logger.info(`⚠️ Tienda desconocida. Aplicando Fallback Amazon para: ${deal.title}`);
-            return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${this.tags.amazon}`;
+            // USUARIO RECHAZÓ "SMART SEARCH". PREFIERE EL LINK ORIGINAL A UNA BÚSQUEDA.
+            // Si la extracción falló, devolvemos el link original envuelto en Sovrn para intentar monetizar
+            // el tráfico de todas formas, pero preservando el destino exacto.
+            logger.info(`⚠️ Extracción fallida. Retornando link original monetizado para: ${deal.title}`);
+            return `${this.tags.sovrn_prefix}${encodeURIComponent(currentUrl)}`;
         }
 
         // 4. ÚLTIMO RECURSO: Sovrn Wrapper
