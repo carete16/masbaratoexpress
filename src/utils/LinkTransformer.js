@@ -11,7 +11,7 @@ class LinkTransformer {
             amazon: process.env.AMAZON_TAG || 'masbaratodeal-20',
             ebay: process.env.EBAY_CAMPAIGN_ID || '',
             walmart: process.env.WALMART_ID || '',
-            // Clave REAL de Sovrn hardcodeada para asegurar monetización inmediata en Render
+            // Clave REAL de Sovrn hardcodeada
             sovrn_prefix: 'https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u='
         };
     }
@@ -24,26 +24,25 @@ class LinkTransformer {
         // 1. INTENTO DE LIMPIEZA PROFUNDA (EXTRACCIÓN DE PARÁMETROS)
         try {
             if (currentUrl.includes('slickdeals.net') || currentUrl.includes('viglink') || currentUrl.includes('cj.com')) {
-                // Decodificación recursiva de hasta 3 niveles
                 let temp = currentUrl;
                 for (let i = 0; i < 3; i++) {
                     try {
                         const uObj = new URL(temp.startsWith('/') ? 'https://slickdeals.net' + temp : temp);
-                        const next = uObj.searchParams.get('u2') || uObj.searchParams.get('u') || uObj.searchParams.get('url') || uObj.searchParams.get('dest');
+                        const next = uObj.searchParams.get('u2') || uObj.searchParams.get('u') || uObj.searchParams.get('url') || uObj.searchParams.get('mpre') || uObj.searchParams.get('dest');
                         if (next && next.startsWith('http')) {
                             temp = decodeURIComponent(next);
-                            currentUrl = temp; // Éxito parcial
+                            currentUrl = temp;
                         } else break;
                     } catch (e) { break; }
                 }
             }
         } catch (e) { }
 
-        // 2. MONETIZACIÓN DIRECTA (Si ya tenemos el link limpio)
+        // 2. MONETIZACIÓN DIRECTA (Solo si tenemos el link limpio)
         if (currentUrl.includes('amazon.com') && !currentUrl.includes('slickdeals')) {
-            if (currentUrl.includes('/product-reviews/')) {
-                const asin = currentUrl.match(/\/([A-Z0-9]{10})/)?.[1];
-                if (asin) currentUrl = `https://www.amazon.com/dp/${asin}`;
+            const asin = currentUrl.match(/\/([A-Z0-9]{10})/)?.[1];
+            if (asin) {
+                return `https://www.amazon.com/dp/${asin}?tag=${this.tags.amazon}`;
             }
             const clean = currentUrl.split('?')[0];
             return `${clean}?tag=${this.tags.amazon}`;
@@ -57,23 +56,11 @@ class LinkTransformer {
             return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent(currentUrl)}`;
         }
 
-        // 3. RETORNO DE ENLACE LIMPIO MONETIZABLE
-        // Según las reglas del 'Sistema Profesional', si no es Amazon, entregamos el enlace limpio 
-        // de la tienda para que el script de Sovrn del sitio web lo monetice automáticamente,
-        // o si es Telegram, esperamos que Bot4 lo maneje.
-        // Pero para seguridad, si detectamos una tienda conocida, la devolvemos limpia.
-
-        // Si sigue sucio (tiene slickdeals), aplicamos contingencia Sovrn para no perder tráfico.
-        if (currentUrl.includes('slickdeals.net') || currentUrl.includes('viglink')) {
-            logger.info(`⚠️ Link sucio persistente. Aplicando Wrapper Sovrn de seguridad: ${deal ? deal.title : 'Unknown'}`);
-            return `${this.tags.sovrn_prefix}${encodeURIComponent(currentUrl)}`;
-        }
-
-        // Si es un link limpio de tienda (BestBuy, Walmart, etc.), lo devolvemos tal cual
-        // asumiendo que el frontend tiene el script de Sovrn o que es mejor dar un link limpio que uno roto.
+        // 3. SEGURIDAD FINAL: NO PUBLICAR LINKS SUCIOS
+        // Si el link todavía tiene rastro de Slickdeals, lo devolvemos tal cual.
+        // El CoreProcessor se encargará de descartarlo.
         return currentUrl;
     }
 }
+
 module.exports = new LinkTransformer();
-
-

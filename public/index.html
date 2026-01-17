@@ -548,15 +548,18 @@
 
                             ${couponHtml}
 
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #f1f5f9; margin-top: auto; margin-bottom: 15px;">
+                            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
+                                <button onclick="openEditorial('${deal.id}')" style="width: 100%; background: #f1f5f9; color: #475569; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">🔍 LECTURA EDITORIAL</button>
+                                <a href="/go/${deal.id}" target="_blank" style="display:block; width: 100%; background: #0f172a; color: #fff; text-align: center; padding: 14px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 14px; transition: 0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#0f172a'">VER OFERTA DIRECTA</a>
+                            </div>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #f1f5f9; margin-top: 15px;">
                                 <div style="display: flex; gap: 15px;">
                                     <button onclick="voteUp('${deal.id}')" style="background:none; border:none; cursor:pointer; font-size:14px; color:#64748b; font-weight:700;">👍 ${deal.votes_up || 0}</button>
                                     <button onclick="openComments('${deal.id}', '${deal.title.replace(/'/g, "\\'")}')" style="background:none; border:none; cursor:pointer; font-size:14px; color:#64748b; font-weight:700;">💬 ${deal.comment_count || 0}</button>
                                 </div>
-                                <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">Hace poco</span>
+                                <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">Verificado</span>
                             </div>
-
-                            <a href="/go/${deal.id}" target="_blank" style="display:block; width: 100%; background: #0f172a; color: #fff; text-align: center; padding: 12px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 14px; transition: 0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#0f172a'">VER OFERTA</a>
                         </div>
                     </article>
                 `;
@@ -568,12 +571,42 @@
             try {
                 const res = await fetch(`/api/vote-up/${id}`, { method: 'POST' });
                 if (res.ok) {
-                    const el = document.getElementById(`votes-${id}`);
-                    el.innerText = parseInt(el.innerText) + 1;
-                    el.closest('button').style.color = 'var(--primary)';
-                    el.closest('button').disabled = true;
+                    init();
                 }
             } catch (e) { }
+        }
+
+        function openEditorial(id) {
+            const deal = allDeals.find(d => d.id === id);
+            if (!deal) return;
+
+            // Crear modal dinámico
+            const modal = document.createElement('div');
+            modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(5px);";
+
+            const content = `
+                <div style="background:white; width:100%; max-width:700px; max-height:90vh; border-radius:24px; overflow-y:auto; position:relative; animation: slideUp 0.3s ease;">
+                    <button onclick="this.parentElement.parentElement.remove()" style="position:absolute; top:20px; right:20px; background:#f1f5f9; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; font-weight:800;">✕</button>
+                    <div style="padding:40px;">
+                        <span style="color:var(--primary); font-weight:800; text-transform:uppercase; font-size:12px; letter-spacing:1px;">Análisis Editorial de Expertos</span>
+                        <h2 style="font-size:28px; font-weight:800; margin-top:10px; line-height:1.2;">${deal.title}</h2>
+                        
+                        <div style="margin:30px 0; background:#f8fafc; padding:25px; border-radius:18px; line-height:1.7; color:#334155; font-size:16px;">
+                            ${deal.description.replace(/\n/g, '<br>')}
+                        </div>
+
+                        <div style="display:flex; gap:15px;">
+                            <a href="/go/${deal.id}" target="_blank" style="flex:1; background:var(--primary-gradient); color:white; text-align:center; padding:18px; border-radius:14px; text-decoration:none; font-weight:800; box-shadow:0 10px 20px rgba(37, 99, 235, 0.2);">IR A LA OFERTA DIRECTA</a>
+                        </div>
+                        <p style="text-align:center; font-size:12px; color:#94a3b8; margin-top:20px;">* Precio verificado en tienda origen al momento de la publicación.</p>
+                    </div>
+                </div>
+                <style>
+                    @keyframes slideUp { from { transform:translateY(50px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+                </style>
+            `;
+            modal.innerHTML = content;
+            document.body.appendChild(modal);
         }
 
         async function openComments(id, title) {

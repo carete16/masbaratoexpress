@@ -4,195 +4,111 @@ const parser = new RSSParser();
 const logger = require('../utils/logger');
 
 /**
- * SCRAPER HÍBRIDO PRO (RSS + ENRIQUECIMIENTO)
- * Garantiza el flujo de ofertas sin bloqueos de HTML.
+ * BOT 1: EL RADAR (Referencia de Mercado)
+ * Detecta oportunidades basándose en fuentes externas como Slickdeals.
+ * NO copia contenido, solo identifica el producto, tienda y precio referencial.
  */
-class SlickdealsProScraper {
+class RadarBot {
     constructor() {
         this.rssUrl = 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1';
     }
 
-    async getFrontpageDeals() {
+    async getMarketOpportunities() {
         try {
-            logger.info('📡 Extrayendo ofertas vía Slickdeals RSS (Modo Seguro)...');
-
+            logger.info('📡 Escaneando radar de oportunidades (Slickdeals RSS)...');
             const feed = await parser.parseURL(this.rssUrl);
-            const deals = [];
+            const opportunities = [];
 
             for (const item of feed.items) {
                 try {
-                    const deal = this.parseRSSItem(item);
-                    if (deal && this.validateDeal(deal)) {
-                        deals.push(deal);
+                    const opp = this.parseReference(item);
+                    if (opp && this.validateReference(opp)) {
+                        opportunities.push(opp);
                     }
                 } catch (e) {
-                    logger.warn(`Error parseando item RSS: ${e.message}`);
+                    logger.warn(`Error en radar item: ${e.message}`);
                 }
             }
-
-            logger.info(`✅ RSS: Extraídas ${deals.length} ofertas`);
-            return deals;
-
+            return opportunities;
         } catch (error) {
-            logger.error(`❌ Error en RSS de Slickdeals: ${error.message}`);
+            logger.error(`❌ Error en RadarBot: ${error.message}`);
             return [];
         }
     }
 
-    parseRSSItem(item) {
-        // Título limpio
-        let title = item.title.replace(/\[.*?\]/g, '').trim();
+    parseReference(item) {
+        // Extraemos solo puntos de datos ciegos
+        const rawTitle = item.title;
+        let referencePrice = 0;
+        let msrp = 0;
 
-        // El link de Slickdeals a veces viene codificado o es directo
-        let link = item.link;
+        const prices = rawTitle.match(/\$(\d+(?:\.\d{2})?)/g);
+        if (prices && prices.length >= 2) {
+            referencePrice = parseFloat(prices[0].replace('$', ''));
+            msrp = parseFloat(prices[1].replace('$', ''));
+        } else if (prices) {
+            referencePrice = parseFloat(prices[0].replace('$', ''));
+        }
 
-        // 🔥 MEJORA CRÍTICA: Extraer enlace REAL de la tienda desde el contenido RSS
-        // Slickdeals incluye el enlace directo en el HTML del RSS
+        // Identificamos la tienda probable
+        let store = 'Global';
+        const tLower = rawTitle.toLowerCase();
+        if (tLower.includes('amazon')) store = 'Amazon';
+        else if (tLower.includes('walmart')) store = 'Walmart';
+        else if (tLower.includes('ebay')) store = 'eBay';
+        else if (tLower.includes('best buy')) store = 'Best Buy';
+
+        // Intentamos obtener el ID del producto (ASIN, SKU) para la validación posterior
+        let productId = null;
+        let directLink = null;
+
         if (item.content) {
-            // Buscar enlaces de tiendas conocidas en el contenido
-            const storePatterns = [
-                /href="(https?:\/\/(?:www\.)?amazon\.com[^"]+)"/i,
-                /href="(https?:\/\/(?:www\.)?walmart\.com[^"]+)"/i,
-                /href="(https?:\/\/(?:www\.)?ebay\.com[^"]+)"/i,
-                /href="(https?:\/\/(?:www\.)?bestbuy\.com[^"]+)"/i,
-                /href="(https?:\/\/(?:www\.)?target\.com[^"]+)"/i,
-                /href="(https?:\/\/(?:www\.)?adorama\.com[^"]+)"/i,
-                /href="(https?:\/\/(?:www\.)?bhphotovideo\.com[^"]+)"/i
+            const decodedContent = item.content.replace(/&amp;/g, '&');
+            const directPatterns = [
+                /https?:\/\/(?:www\.)?amazon\.com\/(?:dp|gp\/product)\/[A-Z0-9]{10}/i,
+                /https?:\/\/(?:www\.)?walmart\.com\/ip\/[^"'\s<>\[\]]+\/\d+/i,
+                /https?:\/\/(?:www\.)?ebay\.com\/itm\/\d+/i,
+                /https?:\/\/(?:www\.)?bestbuy\.com\/site\/[^"'\s<>\[\]]+\/\d+\.p/i
             ];
-
-            for (const pattern of storePatterns) {
-                const match = item.content.match(pattern);
+            for (const pattern of directPatterns) {
+                const match = decodedContent.match(pattern);
                 if (match) {
-                    link = match[1].replace(/&amp;/g, '&'); // Decodificar HTML entities
-                    logger.info(`🎯 Bot1 extrajo link directo del RSS: ${link.substring(0, 50)}...`);
+                    directLink = match[0];
                     break;
                 }
             }
         }
 
-        // Imagen: Slickdeals RSS suele poner la imagen en el contenido
-        let image = 'https://placehold.co/600x400?text=Premium+Deal';
+        const asinMatch = rawTitle.match(/\b(B0[A-Z0-9]{8})\b/i);
+        if (asinMatch) {
+            productId = asinMatch[1];
+            if (!directLink) directLink = `https://www.amazon.com/dp/${productId}`;
+        }
+
+        // Link de origen solo para seguir el rastro a la tienda final
+        // let sourceLink = item.link; // This line is now handled by directLink || item.link
+
+        let image = null;
         if (item.content) {
             const imgMatch = item.content.match(/src="([^"]+)"/);
             if (imgMatch) image = imgMatch[1];
         }
 
-        // Precios: Extracción de ALTA PRECISIÓN (Triple Captura)
-        let price_offer = 0;
-        let price_official = 0;
-
-        // Patrón A: "$18 $75" (Muy común en Slickdeals)
-        const patternA = title.match(/\$(\d+(?:\.\d{2})?)\s+\$(\d+(?:\.\d{2})?)/);
-        // Patrón B: "$18 (Reg. $75)" o "$18 Was $75"
-        const patternB = title.match(/\$(\d+(?:\.\d{2})?).*?(?:Reg\.|Was|MSRP|List|List Price)\s*\$(\d+(?:\.\d{2})?)/i) ||
-            title.match(/(?:Reg\.|Was|MSRP|List)\s*\$(\d+(?:\.\d{2})?).*?\$(\d+(?:\.\d{2})?)/i);
-
-        if (patternA) {
-            price_offer = parseFloat(patternA[1]);
-            price_official = parseFloat(patternA[2]);
-        } else if (patternB) {
-            price_offer = parseFloat(patternB[1]);
-            price_official = parseFloat(patternB[2]);
-        } else {
-            // Último recurso: solo capturar el primer precio y buscar el segundo en el texto
-            const allPrices = title.match(/\$(\d+(?:\.\d{2})?)/g);
-            if (allPrices && allPrices.length >= 2) {
-                price_offer = parseFloat(allPrices[0].replace('$', ''));
-                price_official = parseFloat(allPrices[1].replace('$', ''));
-            } else if (allPrices) {
-                price_offer = parseFloat(allPrices[0].replace('$', ''));
-            }
-        }
-
-        // 🚨 FILTRO DE CALIDAD: Si no hay comparación, no hay clonación al 100%
-        if (price_official === 0 || price_official <= price_offer) {
-            // Intentar buscar en el content del RSS si el título falló
-            if (item.content) {
-                const contentMatch = item.content.match(/(?:Was|Reg\.)\s*\$(\d+(?:\.\d{2})?)/i);
-                if (contentMatch) price_official = parseFloat(contentMatch[1]);
-            }
-        }
-
-        // Si después de todo no hay precio comparativo, marcar para revisión o descartar
-        // Ahora permitimos que price_official sea 0 para que Bot2 lo enriquezca.
-
-        // Inversión de seguridad si existen ambos
-        if (price_official > 0 && price_offer > 0 && price_official < price_offer) {
-            [price_offer, price_official] = [price_official, price_offer];
-        }
-
-        // Tienda (Base - Reconocimiento ampliado)
-        let tienda = 'Oferta USA';
-        const tLower = title.toLowerCase();
-        const storeMap = {
-            'walmart': 'Walmart', 'ebay': 'eBay', 'best buy': 'Best Buy', 'amazon': 'Amazon',
-            'target': 'Target', 'nike': 'Nike', 'adidas': 'Adidas', 'apple': 'Apple',
-            'dell': 'Dell', 'hp ': 'HP', 'samsung': 'Samsung', 'lenovo': 'Lenovo',
-            'homedepot': 'Home Depot', 'lowe': 'Lowes', 'costco': 'Costco', 'kohls': 'Kohls',
-            'macy': 'Macys', 'nordstrom': 'Nordstrom', 'newegg': 'Newegg', 'gamestop': 'GameStop'
-        };
-
-        for (const [key, value] of Object.entries(storeMap)) {
-            if (tLower.includes(key)) {
-                tienda = value;
-                break;
-            }
-        }
-
-        // LIMPIEZA EXTREMA DEL TÍTULO (Para paridad con Slickdeals)
-        let cleanTitle = title
-            .replace(/slickdeals/gi, '') // Quitar marca
-            .replace(/\[.*?\]/g, '') // Quitar corchetes
-            .replace(/\$(\d+(?:\.\d{2})?)/g, '') // Quitar cualquier precio $99.99
-            .replace(/(?:Reg\.|Was|MSRP|List|List Price)\s*:\s*\$\d+(?:\.\d{2})?/gi, '') // Quitar MSRP del texto
-            .replace(/\s+\+/g, '') // Quitar signos + sueltos
-            .replace(/Free Shipping/gi, '') // Quitar envío gratis del título (redundante)
-            .replace(/Prime Members/gi, '') // Quitar menciones a membresías
-            .replace(/Kindle eBook/gi, '')
-            .replace(/\s\s+/g, ' ') // Quitar espacios dobles
-            .trim();
-
-        // Si el título quedó vacío por error, usar el original sin marcas
-        if (!cleanTitle || cleanTitle.length < 5) cleanTitle = title.replace(/slickdeals/gi, '').trim();
-
-        // 🚨 MOTOR DE RECONSTRUCCIÓN DE ENLACES (Último Recurso de Automatización)
-        // Si el link sigue siendo de Slickdeals, intentamos reconstruir el link de la tienda
-        if (link.includes('slickdeals.net')) {
-            const skuMatch = title.match(/\b([A-Z0-9-]{5,15})\b/i); // Buscar códigos como 75379, B0D123..., etc
-            if (skuMatch) {
-                const sku = skuMatch[1];
-                if (tienda === 'Amazon') {
-                    link = `https://www.amazon.com/s?k=${sku}`;
-                    logger.info(`🛠️ Bot1 reconstruyó link de Amazon (Búsqueda SKU): ${sku}`);
-                } else if (tienda === 'Walmart') {
-                    link = `https://www.walmart.com/search?q=${sku}`;
-                    logger.info(`🛠️ Bot1 reconstruyó link de Walmart (Búsqueda SKU): ${sku}`);
-                } else if (tienda === 'eBay') {
-                    link = `https://www.ebay.com/sch/i.html?_nkw=${sku}`;
-                    logger.info(`🛠️ Bot1 reconstruyó link de eBay (Búsqueda SKU): ${sku}`);
-                }
-            }
-        }
-
         return {
-            id: require('crypto').createHash('md5').update(item.link).digest('hex').substring(0, 10),
-            title: cleanTitle,
-            link: link,
-            image: image,
-            price_offer: price_offer,
-            price_official: price_official,
-            tienda: tienda,
-            categoria: 'Tecnología',
-            score: 50,
-            coupon: null,
-            description: title,
-            pubDate: item.pubDate || new Date().toISOString()
+            title: rawTitle.replace(/slickdeals|\[.*?\]/gi, '').trim(),
+            referencePrice,
+            msrp,
+            store,
+            productId,
+            sourceLink: directLink || item.link,
+            image,
+            pubDate: item.pubDate
         };
     }
 
-    validateDeal(deal) {
-        return deal.title && deal.link && deal.price_offer > 0;
+    validateReference(opp) {
+        return opp.referencePrice > 0;
     }
 }
 
-module.exports = new SlickdealsProScraper();
+module.exports = new RadarBot();

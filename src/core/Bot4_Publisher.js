@@ -100,6 +100,7 @@ class TelegramNotifier {
                 image: deal.image,
                 tienda: deal.tienda,
                 categoria: deal.categoria,
+                description: deal.viralContent || deal.description,
                 coupon: deal.coupon,
                 badge: deal.badge,
                 score: deal.score,

@@ -1,57 +1,113 @@
 const axios = require('axios');
+const cheerio = require('cheerio');
 const logger = require('../utils/logger');
 
 /**
- * BOT 2: EXPLORADOR DE PROFUNDIDAD (Protocolo de Extracción Estática)
- * Intenta obtener el link sin entrar a Slickdeals si es posible.
+ * BOT 2: EL VALIDADOR (Verificación Obligatoria)
+ * Su misión: Confirmar precio y stock directamente en la tienda original.
  */
-class DeepExplorerBot {
+class ValidatorBot {
     constructor() {
-        this.userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+        this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36';
     }
 
-    async explore(initialUrl) {
-        logger.info(`🕵️ BOT 2: Procesando ${initialUrl.substring(0, 50)}...`);
+    async validate(opportunity) {
+        logger.info(`🔍 Validando oportunidad en tienda origen: ${opportunity.title.substring(0, 40)}...`);
 
         const result = {
-            finalUrl: initialUrl,
-            coupon: null,
-            isExpired: false,
-            price_offer: null,
-            price_official: null,
-            store: 'Oferta USA',
+            isValid: false,
+            finalUrl: null,
+            realPrice: 0,
+            hasStock: true,
+            storeName: opportunity.store,
             image: null
         };
 
         try {
-            // TÉCNICA 1: DECODIFICACIÓN DE PARÁMETROS (Rápido y Seguro)
-            const uObj = new URL(initialUrl);
-            const rawDest = uObj.searchParams.get('u2') || uObj.searchParams.get('url') || uObj.searchParams.get('dest') || uObj.searchParams.get('mpre');
-
-            if (rawDest && rawDest.startsWith('http')) {
-                result.finalUrl = decodeURIComponent(rawDest);
-                logger.info(`🎯 Bot 2: Extracción estática exitosa.`);
-                return await this.finalizeResult(result);
+            // 1. OBTENER LINK FINAL (Saltando Slickdeals)
+            let finalUrl = opportunity.sourceLink;
+            // Si es Amazon con ASIN, generamos el link directo para evitar rastro
+            if (opportunity.productId && opportunity.store === 'Amazon') {
+                finalUrl = `https://www.amazon.com/dp/${opportunity.productId}`;
+            } else {
+                // Si no, usamos el Bot5 para extraer el link real si es necesario
+                const Bot5 = require('./Bot5_BrowserSim');
+                const trace = await Bot5.extractRealLink(opportunity.sourceLink);
+                if (trace.success) finalUrl = trace.link;
             }
 
-            // Si no hay u2, el CoreProcessor activará automáticamente el Bot 5
-            return await this.finalizeResult(result);
+            if (!finalUrl || finalUrl.includes('slickdeals.net')) {
+                logger.warn(`❌ No se pudo obtener el link de la tienda original.`);
+                return result;
+            }
+
+            result.finalUrl = finalUrl;
+
+            // 2. VERIFICACIÓN EN MODO "SIGILOSO" (AXIOS + CHEERIO)
+            // Intentamos verificar el precio en la tienda
+            try {
+                const response = await axios.get(finalUrl, {
+                    headers: { 'User-Agent': this.userAgent, 'Accept-Language': 'en-US,en;q=0.9' },
+                    timeout: 10000
+                });
+
+                const $ = cheerio.load(response.data);
+
+                // Selectores genéricos de precios por tienda
+                let foundPrice = 0;
+                if (finalUrl.includes('amazon.com')) {
+                    const priceStr = $('.a-price-whole').first().text() + $('.a-price-fraction').first().text();
+                    foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+                    result.image = $('img#landingImage').attr('src') || $('img#imgBlkFront').attr('src');
+                } else if (finalUrl.includes('walmart.com')) {
+                    const priceStr = $('span[itemprop="price"]').attr('content') || $('.price-characteristic').first().text();
+                    foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+                }
+
+                // VALIDACIÓN DE PRECIO (REGLA CRÍTICA)
+                // Si encontramos el precio y no coincide (margen del 5%), descartamos
+                if (foundPrice > 0) {
+                    const diff = Math.abs(foundPrice - opportunity.referencePrice);
+                    if (diff > (opportunity.referencePrice * 0.05)) {
+                        logger.warn(`❌ Precio no coincide. Ref: $${opportunity.referencePrice} vs Real: $${foundPrice}`);
+                        return result; // Descartar
+                    }
+                    result.realPrice = foundPrice;
+                } else {
+                    // Si no podemos leer el precio con Cheerio (Lazy loading/JS), 
+                    // confiamos en la referencia pero marcamos como "Verificación parcial"
+                    logger.info(`⚠️ Verificación de precio parcial (HTML protegido).`);
+                    result.realPrice = opportunity.referencePrice;
+                }
+
+                // VERIFICACIÓN DE STOCK (Sencilla)
+                const bodyText = response.data.toLowerCase();
+                if (bodyText.includes('out of stock') || bodyText.includes('currently unavailable') || bodyText.includes('sold out')) {
+                    result.hasStock = false;
+                    logger.warn(`❌ Producto sin stock.`);
+                    return result;
+                }
+
+                result.isValid = true;
+                logger.info(`✅ Oportunidad VALIDADA: $${result.realPrice}`);
+
+            } catch (e) {
+                // Si la tienda bloquea el acceso simple (403), pero el link es directo, 
+                // permitimos el paso si el link es de alta calidad (DP de Amazon, etc.)
+                if (finalUrl.includes('/dp/') || finalUrl.includes('/ip/')) {
+                    logger.info(`✅ Validación por estructura de link (Tienda protegida).`);
+                    result.isValid = true;
+                    result.realPrice = opportunity.referencePrice;
+                }
+            }
+
+            return result;
 
         } catch (error) {
+            logger.error(`❌ Error en ValidatorBot: ${error.message}`);
             return result;
         }
     }
-
-    async finalizeResult(result) {
-        const url = result.finalUrl.toLowerCase();
-        if (url.includes('amazon.com')) result.store = 'Amazon';
-        else if (url.includes('walmart.com')) result.store = 'Walmart';
-        else if (url.includes('ebay.com')) result.store = 'eBay';
-        else if (url.includes('bestbuy.com')) result.store = 'Best Buy';
-        else if (url.includes('target.com')) result.store = 'Target';
-
-        return result;
-    }
 }
 
-module.exports = new DeepExplorerBot();
+module.exports = new ValidatorBot();

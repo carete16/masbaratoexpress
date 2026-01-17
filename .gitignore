@@ -4,3 +4,6 @@ dist
 .DS_Store
 logs
 *.log
+src/database/deals.db
+src/database/*.db
+check_db.js
