@@ -57,70 +57,23 @@ class LinkTransformer {
             return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent(currentUrl)}`;
         }
 
-        // 3. ESTRATEGIA DE BÚSQUEDA INTELIGENTE (Smart Search Fallback)
-        // Si falló la limpieza y seguimos en Slickdeals, creamos una búsqueda en la tienda
-        if (deal && (currentUrl.includes('slickdeals.net') || currentUrl.includes('viglink'))) {
+        // 3. RETORNO DE ENLACE LIMPIO MONETIZABLE
+        // Según las reglas del 'Sistema Profesional', si no es Amazon, entregamos el enlace limpio 
+        // de la tienda para que el script de Sovrn del sitio web lo monetice automáticamente,
+        // o si es Telegram, esperamos que Bot4 lo maneje.
+        // Pero para seguridad, si detectamos una tienda conocida, la devolvemos limpia.
 
-            // INTENTO DE INFERIR TIENDA DESDE EL TÍTULO SI ES GENÉRICA
-            let targetStore = deal.tienda ? deal.tienda.toLowerCase() : '';
-            const titleLower = deal.title.toLowerCase();
-
-            if (targetStore === 'oferta usa' || targetStore === 'general' || !targetStore) {
-                if (titleLower.includes('amazon') || titleLower.includes('subscribe')) targetStore = 'amazon';
-                else if (titleLower.includes('walmart')) targetStore = 'walmart';
-                else if (titleLower.includes('ebay')) targetStore = 'ebay';
-                else if (titleLower.includes('best buy')) targetStore = 'best buy';
-                else if (titleLower.includes('target')) targetStore = 'target';
-                else if (titleLower.includes('home depot')) targetStore = 'home depot';
-                else if (titleLower.includes('adorama')) targetStore = 'adorama';
-                else if (titleLower.includes('b&h') || titleLower.includes('bhphoto')) targetStore = 'b&h';
-                else if (titleLower.includes('newegg')) targetStore = 'newegg';
-                else if (titleLower.includes('klipsch')) targetStore = 'adorama'; // Klipsch suele venderse en Adorama con ofertas fuertes
-            }
-
-            logger.info(`🔄 Activando Smart Search Redirect para: ${deal.title} (Tienda: ${targetStore})`);
-            const query = deal.title
-                .replace(/\$\d+(\.\d{2})?/g, '') // Quitar precios
-                .replace(/store|pickup|shipping|free/gi, '') // Quitar ruido
-                .replace(/[^\w\s]/gi, '') // Quitar caracteres raros
-                .split(' ').slice(0, 6).join(' '); // Primeras 6 palabras
-
-            if (targetStore.includes('amazon')) {
-                return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${this.tags.amazon}`;
-            }
-            if (targetStore.includes('ebay')) {
-                return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=${this.tags.ebay || '5338634567'}&customid=&toolid=10001&mkevt=1`;
-            }
-            if (targetStore.includes('walmart')) {
-                return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent('https://www.walmart.com/search?q=' + query)}`;
-            }
-            if (targetStore.includes('best buy')) {
-                return `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(query)}&ref=199&loc=12345&acampID=1`;
-            }
-            if (targetStore.includes('home depot')) {
-                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.homedepot.com/s/' + encodeURIComponent(query))}`;
-            }
-            if (targetStore.includes('adorama')) {
-                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.adorama.com/l/?searchinfo=' + encodeURIComponent(query))}`;
-            }
-            if (targetStore.includes('b&h') || targetStore.includes('bhphoto')) {
-                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.bhphotovideo.com/c/search?Ntt=' + encodeURIComponent(query))}`;
-            }
-            if (targetStore.includes('newegg')) {
-                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.newegg.com/p/pl?d=' + encodeURIComponent(query))}`;
-            }
-
-            // FALLBACK UNIVERSAL (La Red de Seguridad Definitiva)
-            // USUARIO RECHAZÓ "SMART SEARCH". PREFIERE EL LINK ORIGINAL A UNA BÚSQUEDA.
-            // Si la extracción falló, devolvemos el link original envuelto en Sovrn para intentar monetizar
-            // el tráfico de todas formas, pero preservando el destino exacto.
-            logger.info(`⚠️ Extracción fallida. Retornando link original monetizado para: ${deal.title}`);
+        // Si sigue sucio (tiene slickdeals), aplicamos contingencia Sovrn para no perder tráfico.
+        if (currentUrl.includes('slickdeals.net') || currentUrl.includes('viglink')) {
+            logger.info(`⚠️ Link sucio persistente. Aplicando Wrapper Sovrn de seguridad: ${deal ? deal.title : 'Unknown'}`);
             return `${this.tags.sovrn_prefix}${encodeURIComponent(currentUrl)}`;
         }
 
-        // 4. ÚLTIMO RECURSO: Sovrn Wrapper
-        return `${this.tags.sovrn_prefix}${encodeURIComponent(currentUrl)}`;
+        // Si es un link limpio de tienda (BestBuy, Walmart, etc.), lo devolvemos tal cual
+        // asumiendo que el frontend tiene el script de Sovrn o que es mejor dar un link limpio que uno roto.
+        return currentUrl;
     }
 }
-
 module.exports = new LinkTransformer();
+
+
