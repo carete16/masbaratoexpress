@@ -14,12 +14,10 @@ app.use(express.static(path.join(__dirname, 'src/web/public'))); // Fallback
 app.use(express.json());
 
 // --- MIDDLEWARE DE ADMIN ---
-// --- MIDDLEWARE DE ADMIN ---
 const authMiddleware = (req, res, next) => {
   const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
   const headerPass = req.headers['x-admin-password'];
 
-  // Aceptamos la pass del entorno O la maestra de recuperación
   if (headerPass === adminPass || headerPass === 'Masbarato2026') {
     next();
   } else {
@@ -30,7 +28,6 @@ const authMiddleware = (req, res, next) => {
 // 1. OBTENER OFERTAS (PÚBLICO)
 app.get('/api/deals', (req, res) => {
   try {
-    // Solo últimas 100 ofertas PUBLICADAS de la última semana
     const deals = db.prepare(`
             SELECT * FROM published_deals 
             ORDER BY posted_at DESC 
@@ -40,40 +37,6 @@ app.get('/api/deals', (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
-});
-
-// 1b. OBTENER OFERTAS PENDIENTES (ADMIN)
-app.get('/api/admin/pending', authMiddleware, (req, res) => {
-  try {
-    const deals = db.prepare("SELECT * FROM published_deals WHERE status = 'pending' ORDER BY posted_at DESC").all();
-    res.json(deals);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 1c. SUBIR OFERTA PÚBLICA (PORTAL COLABORADORES)
-app.post('/api/public-submit', async (req, res) => {
-  try {
-    const { title, price, price_official, link, image, store, category, description } = req.body;
-
-    // Generar ID único
-    const uuid = 'user_' + Math.random().toString(36).substring(2, 11);
-
-    // Guardar como PENDIENTE
-    const stmt = db.prepare(`
-        INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, status, posted_at, score)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', datetime('now'), 10)
-    `);
-    stmt.run(uuid, title, price, price_official || 0, link, image, store, category, description || '', 10);
-
-    // 🔔 NOTIFICACIÓN PERSONALIZADA AL ADMIN
-    try {
-      const Bot4 = require('./src/core/Bot4_Publisher');
-      await Bot4.sendAdminModerationAlert(req.body);
-    } catch (e) { console.error("Error enviando alerta admin:", e); }
-
-    console.log(`📩 Nueva oferta colaborativa pendiente de inspección: ${title}`);
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 2. REDIRECTOR INTELIGENTE (PÚBLICO)
@@ -89,92 +52,7 @@ app.get('/go/:id', (req, res) => {
   } catch (e) { res.redirect('/'); }
 });
 
-// 3. ANALIZADOR DE LINKS (ADMIN)
-app.post('/api/analyze-deal', async (req, res) => {
-  try {
-    let { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'URL requerida' });
-
-    // 💰 PRE-MONETIZACIÓN (Opcional, para ver link final)
-    const monetizedLink = await LinkTransformer.transform(url);
-    const link = monetizedLink || url;
-
-    // Detectar tienda
-    let store = 'Otros';
-    if (/amazon/i.test(link)) store = 'Amazon';
-    else if (/ebay/i.test(link)) store = 'eBay';
-    else if (/walmart/i.test(link)) store = 'Walmart';
-    else if (/bestbuy/i.test(link)) store = 'Best Buy';
-
-    let title = "";
-    let img = "";
-    let price = "";
-
-    // --- ESTRATEGIA AMAZON (Anti-Bloqueo) ---
-    const amazonAsinMatch = link.match(/\/([A-Z0-9]{10})(?:[/?]|$)/i);
-    if (store === 'Amazon' && amazonAsinMatch) {
-      const asin = amazonAsinMatch[1];
-      // Usar imagen oficial de API de Widgets (100% fiable)
-      img = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&Format=_SL500_&ASIN=${asin}&MarketPlace=US`;
-      title = `Producto Amazon (ASIN: ${asin})`; // Fallback title
-    }
-
-    // Scraping Genérico (o para obtener título real de Amazon si deja)
-    try {
-      const response = await axios.get(link, {
-        timeout: 4000,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-        }
-      });
-
-      if (response && response.data) {
-        const html = response.data;
-
-        // Título
-        const ogTitle = html.match(/<meta property="og:title" content="([^"]+)"/i);
-        if (ogTitle) title = ogTitle[1].replace('Amazon.com: ', '').substring(0, 100);
-        else {
-          const titleTag = html.match(/<title>([^<]*)<\/title>/i);
-          if (titleTag) title = titleTag[1].replace('Amazon.com: ', '').substring(0, 100);
-        }
-
-        // Imagen (Si no tenemos la de Amazon Widget)
-        if (!img) {
-          const ogImage = html.match(/<meta property="og:image" content="([^"]+)"/i);
-          if (ogImage) img = ogImage[1];
-        }
-
-        // Precio
-        const priceMatch = html.match(/(\$[\d,]+\.\d{2})/);
-        if (priceMatch) price = parseFloat(priceMatch[1].replace('$', '').replace(',', ''));
-      }
-    } catch (e) {
-      console.log("Scraping simple falló (normal en Amazon), usando datos base.");
-    }
-
-    res.json({ success: true, title, price, store, img, link });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// --- DIAGNÓSTICO Y CONTROL ---
-app.get('/api/force-collect', async (req, res) => {
-  try {
-    const Bot1 = require('./src/core/Bot1_Scraper');
-    const rawDeals = await Bot1.getFrontpageDeals();
-    res.json({
-      status: "Bot triggered",
-      found_in_surface: rawDeals.length,
-      note: "El procesamiento profundo (Doble Bot) se ejecuta en segundo plano."
-    });
-    // Disparar ciclo sin esperar
-    const CoreProcessor = require('./src/core/CoreProcessor');
-    CoreProcessor.start();
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// --- SISTEMA DE COMUNIDAD (Hilos al estilo Slickdeals) ---
+// 3. VOTACIÓN Y COMENTARIOS
 app.post('/api/vote-up/:id', (req, res) => {
   try {
     const { voteUp } = require('./src/database/db');
@@ -183,258 +61,13 @@ app.post('/api/vote-up/:id', (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.get('/api/comments/:dealId', (req, res) => {
-  try {
-    const { getComments } = require('./src/database/db');
-    const comments = getComments(req.params.dealId);
-    res.json(comments);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
 app.post('/api/comments', (req, res) => {
   try {
-    const { dealId, author, text } = req.body;
     const { addComment } = require('./src/database/db');
+    const { dealId, author, text } = req.body;
     addComment(dealId, author, text);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// --- ENDPOINTS PROTEGIDOS ---
-
-app.post('/api/submit-deal', authMiddleware, async (req, res) => {
-  try {
-    let { title, price, price_official, link, image, store, category, description, coupon } = req.body;
-
-    // 💰 MONETIZACIÓN FORZOSA AUTOMÁTICA 💰
-    // Antes de guardar, transformamos el link para asegurar que lleve el código de afiliado.
-    const originalLink = link;
-    try {
-      link = await LinkTransformer.transform(link);
-      console.log(`[MONETIZACIÓN] Manual: ${originalLink} -> ${link}`);
-    } catch (errTransform) {
-      console.error("Error transformando link:", errTransform);
-      link = null;
-    }
-
-    // SAFETY NET: Si falla la monetización, usamos el link original (Admin manda)
-    if (!link) {
-      console.warn(`⚠️ Fallo monetización para ${originalLink}, guardando sin monetizar.`);
-      link = originalLink;
-    }
-
-    const uuid = Math.random().toString(36).substring(2, 11);
-    const stmt = db.prepare(`
-            INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, coupon, posted_at, score)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 100)
-        `);
-    stmt.run(uuid, title, price, price_official || 0, link, image, store, category, description || '', coupon || null);
-
-    // Notificar al canal Telegram
-    try {
-      const Bot4 = require('./src/core/Bot4_Publisher');
-      Bot4.sendManualDeal({ title, price_offer: price, price_official, link, image, description, coupon });
-    } catch (e) { console.error("Error notificando TG:", e); }
-
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/update-deal', authMiddleware, async (req, res) => {
-  try {
-    let { id, title, price, price_official, link, image, store, category, description, coupon } = req.body;
-
-    // 💰 MONETIZACIÓN FORZOSA EN EDICIÓN TAMBIÉN 💰
-    const originalLink = link;
-    try {
-      const mLink = await LinkTransformer.transform(link);
-      if (mLink) link = mLink;
-    } catch (e) {
-      console.warn("Fallo monetizando update, conservando original");
-    }
-
-    const stmt = db.prepare(`
-            UPDATE published_deals 
-            SET title=?, price_offer=?, price_official=?, link=?, image=?, tienda=?, categoria=?, description=?, coupon=?
-            WHERE id=?
-        `);
-    stmt.run(title, price, price_official || 0, link, image, store, category, description || '', coupon || null, id);
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 5. APROBAR OFERTA (ADMIN - INSPECCIÓN)
-app.post('/api/approve-deal', authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.body;
-    const deal = db.prepare("SELECT * FROM published_deals WHERE id = ?").get(id);
-
-    if (!deal) return res.status(404).json({ error: 'Oferta no encontrada' });
-
-    // 💰 MONETIZACIÓN AUTOMÁTICA AL APROBAR
-    const monetizedLink = await LinkTransformer.transform(deal.link);
-    const finalLink = monetizedLink || deal.link;
-
-    // ACTUALIZAR A PUBLICADA
-    db.prepare(`
-        UPDATE published_deals 
-        SET status = 'published', link = ?, posted_at = datetime('now') 
-        WHERE id = ?
-    `).run(finalLink, id);
-
-    // NOTIFICAR A TELEGRAM
-    try {
-      const Bot4 = require('./src/core/Bot4_Publisher');
-      await Bot4.sendOffer({ ...deal, link: finalLink });
-    } catch (e) { console.error("Error TG:", e); }
-
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/delete-deal', authMiddleware, (req, res) => {
-  try {
-    const { id } = req.body;
-    db.prepare('DELETE FROM published_deals WHERE id = ?').run(id);
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// --- REDIRECT ENDPOINT (Monetización) ---
-app.get('/go/:id', (req, res) => {
-  try {
-    const { id } = req.params;
-    const deal = db.prepare('SELECT link FROM published_deals WHERE id = ?').get(id);
-
-    if (!deal) {
-      return res.status(404).send('Oferta no encontrada');
-    }
-
-    // Registrar click para analytics
-    db.prepare('UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?').run(id);
-
-    // Redirigir al link monetizado
-    res.redirect(302, deal.link);
-  } catch (e) {
-    res.status(500).send('Error al procesar la redirección');
-  }
-});
-
-// --- LOGIN ENDPOINT ---
-app.post('/api/login', (req, res) => {
-  const { password } = req.body;
-  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
-
-  if (password === adminPass || password === 'Masbarato2026') {
-    res.json({ success: true });
-  } else {
-    res.status(403).json({ error: 'Contraseña incorrecta' });
-  }
-});
-
-// --- NUKE ENDPOINT (Borrar todo para corregir errores) ---
-app.post('/api/nuke', authMiddleware, (req, res) => {
-  try {
-    db.prepare("DELETE FROM published_deals").run();
-    res.json({ success: true, message: "💥 BASE DE DATOS LIMPIADA" });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// --- SEEDER ENDPOINT (Corregido con imágenes estables) ---
-app.post('/api/seed', authMiddleware, async (req, res) => {
-  try {
-    const Telegram = require('./src/notifiers/TelegramNotifier');
-    const PROMOS = [
-      {
-        title: "Apple AirPods (2nd Generation)",
-        price: 89.00,
-        official: 129.00,
-        link: "https://www.amazon.com/dp/B07PXGQC1Q",
-        img: "https://m.media-amazon.com/images/I/61CVih3UpdL._AC_SL1500_.jpg",
-        cat: "Tecnología",
-        desc: "🎧 Los auriculares más vendidos del mundo. Conexión mágica con iPhone."
-      },
-      {
-        title: "Amazon Fire TV Stick 4K Streaming Device",
-        price: 29.99,
-        official: 49.99,
-        link: "https://www.amazon.com/dp/B08XVYZ1Y5",
-        img: "https://m.media-amazon.com/images/I/51DrsMrHkCL._AC_SL1000_.jpg",
-        cat: "Tecnología",
-        desc: "📺 Convierte tu TV en Smart TV. Cine en casa con Dolby Vision."
-      },
-      {
-        title: "Crocs Unisex-Adult Classic Clogs",
-        price: 34.99,
-        official: 49.99,
-        link: "https://www.amazon.com/dp/B0014C2N16",
-        img: "https://m.media-amazon.com/images/I/61N-Fqvj2LL._AC_SY695_.jpg",
-        cat: "Moda",
-        desc: "👟 Comodidad total. El calzado #1 en ventas de Amazon."
-      },
-      {
-        title: "Stanley Quencher H2.0 FlowState Tumbler 40oz",
-        price: 45.00,
-        official: 55.00,
-        link: "https://www.amazon.com/dp/B0C1TB6M74",
-        img: "https://m.media-amazon.com/images/I/61D6C5pL+JL._AC_SL1500_.jpg",
-        cat: "Hogar",
-        desc: "🥤 El vaso viral de TikTok. Mantiene el hielo por 2 días."
-      }
-    ];
-
-    let count = 0;
-    const LinkTransformer = require('./src/utils/LinkTransformer');
-
-    for (const p of PROMOS) {
-      const exists = db.prepare('SELECT id FROM published_deals WHERE link = ?').get(p.link);
-      if (exists) continue;
-
-      // MONETIZAR EL ENLACE
-      const monetizedLink = await LinkTransformer.transform(p.link);
-      if (!monetizedLink) {
-        console.log(`⚠️  No se pudo monetizar: ${p.title}`);
-        continue;
-      }
-
-      const uuid = Math.random().toString(36).substring(2, 11);
-      db.prepare(`
-                INSERT INTO published_deals (id, title, price_offer, price_official, link, image, tienda, categoria, description, posted_at, score)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), 500)
-            `).run(uuid, p.title, p.price, p.official, monetizedLink, p.img, 'Amazon', p.cat, p.desc);
-
-      // Notificar TG (Con link monetizado)
-      await Telegram.sendOffer({
-        id: uuid, title: p.title, price_offer: p.price, price_official: p.official,
-        link: monetizedLink, image: p.img, tienda: 'Amazon', categoria: p.cat,
-        viralContent: `<b>🔥 ${p.title}</b>\n💰 $${p.price} <s>$${p.official}</s>\n${p.desc}\n👉 <a href="${monetizedLink}">VER OFERTA</a>`
-      });
-      count++;
-      await new Promise(r => setTimeout(r, 2000));
-    }
-    res.json({ success: true, seeded: count });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-// 6. SEO ENDPOINTS (Sitemap Automático)
-app.get('/sitemap.xml', (req, res) => {
-  try {
-    const baseUrl = 'https://' + req.get('host');
-    const deals = db.prepare('SELECT id, posted_at FROM published_deals ORDER BY posted_at DESC LIMIT 1000').all();
-
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-    xml += `  <url><loc>${baseUrl}/</loc><changefreq>hourly</changefreq><priority>1.0</priority></url>\n`;
-
-    deals.forEach(deal => {
-      const date = deal.posted_at ? new Date(deal.posted_at).toISOString() : new Date().toISOString();
-      xml += `  <url><loc>${baseUrl}/go/${deal.id}</loc><lastmod>${date}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
-    });
-
-    xml += '</urlset>';
-    res.header('Content-Type', 'application/xml');
-    res.send(xml);
-  } catch (e) { console.error("Sitemap Error:", e); res.status(500).end(); }
 });
 
 // 4. RUTAS DEL FRONTEND
@@ -442,7 +75,6 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// Ruta raíz explícita para asegurar carga
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -451,7 +83,7 @@ app.get('/', (req, res) => {
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ WEB ONLINE EN PUERTO: ${PORT}`);
 
-  // Iniciar el Bot solo si tenemos el Token
+  // Iniciar el Bot y Recolección
   if (process.env.TELEGRAM_BOT_TOKEN) {
     try {
       console.log("🤖 Iniciando Bot de Telegram y Recolección...");
@@ -460,6 +92,12 @@ app.listen(PORT, '0.0.0.0', async () => {
       console.error("❌ Error al iniciar el bot:", botError.message);
     }
   } else {
-    console.log("⚠️ TELEGRAM_BOT_TOKEN no configurado. El bot no arrancará.");
+    console.log("⚠️ TELEGRAM_BOT_TOKEN no configurado.");
   }
+
+  // 🚀 SISTEMA ALWAYS-ON: Evita que Render duerma la web
+  const RENDER_URL = process.env.RENDER_EXTERNAL_URL || 'https://masbaratodeals.onrender.com';
+  setInterval(() => {
+    axios.get(RENDER_URL).then(() => console.log('💓 Heartbeat: Sistema activo')).catch(() => { });
+  }, 10 * 60 * 1000); // Cada 10 min
 });
