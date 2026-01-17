@@ -35,7 +35,13 @@ class PriceAuditorBot {
         const savings = price_official > price_offer ? price_official - price_offer : 0;
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
 
-        if (savingsPercent < 10) {
+        // Si no tenemos precio oficial, no rechazamos, solo no mostramos ahorro
+        if (price_official === 0) {
+            report.badge = 'OFERTA USA';
+            report.confidenceScore = 60;
+        }
+        else if (savingsPercent < 10) {
+            // Solo rechazar si tenemos la certeza de que el descuento es malo
             logger.warn(`🛑 BOT 3: Descuento insignificante (${savingsPercent}%). Rechazando por falta de impacto.`);
             report.isGoodDeal = false;
             return report;

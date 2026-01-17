@@ -90,10 +90,10 @@ class SlickdealsProScraper {
         }
 
         // Si después de todo no hay precio comparativo, marcar para revisión o descartar
-        if (price_official === 0) return null;
+        // Ahora permitimos que price_official sea 0 para que Bot2 lo enriquezca.
 
-        // Inversión de seguridad
-        if (price_official > 0 && price_official < price_offer) {
+        // Inversión de seguridad si existen ambos
+        if (price_official > 0 && price_offer > 0 && price_official < price_offer) {
             [price_offer, price_official] = [price_official, price_offer];
         }
 

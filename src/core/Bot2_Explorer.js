@@ -47,30 +47,25 @@ class DeepExplorerBot {
             const html = response.data;
             const $ = cheerio.load(html);
 
-            // A. EXTRACCIÓN DE PRECIOS (PARIDAD TOTAL)
+            // A. EXTRACCIÓN DE PRECIOS (PARIDAD TOTAL - SELECTORES SLICKDEALS 2024)
             const priceText = $('.dealPrice').first().text().trim() ||
                 $('.itemPrice').first().text().trim() ||
                 $('[data-bhw="Price"]').text().trim() ||
-                $('.item-price').first().text().trim(); // Fallback selector
+                $('.mainItemPrice').text().trim() ||
+                $('.price').first().text().trim();
+
             if (priceText) {
-                // Capturar el primer precio que aparezca (el de oferta)
                 const match = priceText.match(/\$(\d+(?:\.\d{2})?)/);
                 if (match) result.price_offer = parseFloat(match[1]);
             }
 
-            // Si el precio de oferta es nulo, buscarlo en el título o descripción prominente
-            if (!result.price_offer) {
-                const titleText = $('.dealTitle').text();
-                const offerTitleMatch = titleText.match(/\$(\d+(?:\.\d{2})?)/);
-                if (offerTitleMatch) result.price_offer = parseFloat(offerTitleMatch[1]);
-            }
-
-            // PRECIO ORIGINAL (MSRP / List Price / Reg Price / Was)
-            // Agregando selectores PROFUNDOS de Slickdeals
+            // B. PRECIO ORIGINAL (MSRP / List Price / Was) - CRÍTICO PARA CLONACIÓN
             const originalPriceText = $('.listPrice').first().text().trim() ||
                 $('.oldPrice').first().text().trim() ||
                 $('.regPrice').first().text().trim() ||
                 $('.strike').first().text().trim() ||
+                $('.msrp').first().text().trim() ||
+                $('.wasPrice').first().text().trim() ||
                 $('.itemPrice.reg').text().trim() ||
                 $('[data-bhw="ListPrice"]').text().trim() ||
                 $('.strikethrough').first().text().trim();
@@ -80,25 +75,31 @@ class DeepExplorerBot {
                 if (match) result.price_official = parseFloat(match[1]);
             }
 
-            // Si aún no tenemos precio oficial, buscar en el texto descriptivo (Reg., MSRP, Was)
+            // Si aún no tenemos precio oficial, buscar en el texto descriptivo con patrones avanzados
             if (!result.price_official || result.price_official <= result.price_offer) {
                 const text = $('.itemDetails, .description, .dealTitle, .mainContent').text();
-                // Patrones comunes en Slickdeals: "List Price: $99.99", "Was $99.99", "$99.99 (Reg. $150)"
-                const regMatch = text.match(/(?:Reg\.|Was|MSRP|List|List Price|Original|Retail)\s*[:\-]?\s*(\$[\d,]+\.?\d*)/i);
-                if (regMatch) {
-                    result.price_official = parseFloat(regMatch[1].replace('$', '').replace(',', ''));
+                const patterns = [
+                    /(?:Reg\.|Was|MSRP|List|List Price|Original|Retail|Normally)\s*[:\-]?\s*\$([\d,]+\.?\d*)/i,
+                    /\$([\d,]+\.?\d*)\s*(?:Reg\.|Was|MSRP|List)/i,
+                    /save\s*.*?\s*off\s*\$([\d,]+\.?\d*)/i
+                ];
+
+                for (let p of patterns) {
+                    const m = text.match(p);
+                    if (m) {
+                        result.price_official = parseFloat(m[1].replace(',', ''));
+                        break;
+                    }
                 }
             }
 
-            // SEGURIDAD: Si no hay MSRP, intentar extraerlo del título si el scraper falló
-            if (!result.price_official) {
-                const pageTitle = $('title').text();
-                const titleMatch = pageTitle.match(/(?:Reg\.|Was|MSRP|List)\s*\$(\d+(?:\.\d{2})?)/i);
-                if (titleMatch) result.price_official = parseFloat(titleMatch[1]);
-            }
+            // SEGURIDAD: Sincronizar con lo que detectó el Bot 1 si aquí falló
+            // (Esto se hace en el CoreProcessor)
 
             // Garantizar que si el precio oficial es menor o igual al de oferta, se anule (Data Sanitize)
-            if (result.price_official && result.price_official <= result.price_offer) result.price_official = 0;
+            if (result.price_official && result.price_offer && result.price_official <= result.price_offer) {
+                result.price_official = 0;
+            }
 
             // B. DETECTAR IMAGEN DE ALTA CALIDAD
             result.image = $('.itemImage img, .mainImage img, .imageContainer img').attr('src') ||
