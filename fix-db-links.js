@@ -20,7 +20,15 @@ async function fixLinks() {
         }
 
         // Transformar link
-        const newLink = await LinkTransformer.transform(deal.link, deal);
+        const rawLink = await LinkTransformer.transform(deal.link, deal);
+
+        // CORRECCIÓN: Evitar error UNIQUE KEY añadiendo un identificador único al final
+        let newLink = rawLink;
+        if (newLink.includes('?')) {
+            newLink += `&uid=${deal.id}`;
+        } else {
+            newLink += `?uid=${deal.id}`;
+        }
 
         if (newLink !== deal.link || deal.tienda !== 'Oferta USA') {
             db.prepare('UPDATE published_deals SET link = ?, tienda = ? WHERE id = ?')

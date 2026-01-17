@@ -90,6 +90,15 @@ class LinkTransformer {
             if (targetStore.includes('walmart')) {
                 return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent('https://www.walmart.com/search?q=' + query)}`;
             }
+            if (targetStore.includes('best buy')) {
+                return `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(query)}&ref=199&loc=12345`;
+            }
+
+            // FALLBACK UNIVERSAL (La Red de Seguridad Definitiva)
+            // Si no detectamos tienda, mandamos a Amazon Search (que tiene de todo)
+            // Esto asegura 100% que el link NO SEA Slickdeals.
+            logger.info(`⚠️ Tienda desconocida. Aplicando Fallback Amazon para: ${deal.title}`);
+            return `https://www.amazon.com/s?k=${encodeURIComponent(query)}&tag=${this.tags.amazon}`;
         }
 
         // 4. ÚLTIMO RECURSO: Sovrn Wrapper
