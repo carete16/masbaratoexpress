@@ -75,6 +75,21 @@ app.post('/api/comments', (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/purge', authMiddleware, (req, res) => {
+  try {
+    const deleted = db.prepare(`
+            DELETE FROM published_deals 
+            WHERE tienda LIKE '%Translate%' 
+            OR tienda LIKE '%Google%' 
+            OR link LIKE '%slickdeals.net%' 
+            OR link LIKE '%translate.google%'
+        `).run();
+    res.json({ success: true, message: `Se eliminaron ${deleted.changes} ofertas corruptas.` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // 4. RUTAS DEL FRONTEND
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
