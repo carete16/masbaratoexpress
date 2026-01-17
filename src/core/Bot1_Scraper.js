@@ -46,6 +46,30 @@ class SlickdealsProScraper {
         // El link de Slickdeals a veces viene codificado o es directo
         let link = item.link;
 
+        // 🔥 MEJORA CRÍTICA: Extraer enlace REAL de la tienda desde el contenido RSS
+        // Slickdeals incluye el enlace directo en el HTML del RSS
+        if (item.content) {
+            // Buscar enlaces de tiendas conocidas en el contenido
+            const storePatterns = [
+                /href="(https?:\/\/(?:www\.)?amazon\.com[^"]+)"/i,
+                /href="(https?:\/\/(?:www\.)?walmart\.com[^"]+)"/i,
+                /href="(https?:\/\/(?:www\.)?ebay\.com[^"]+)"/i,
+                /href="(https?:\/\/(?:www\.)?bestbuy\.com[^"]+)"/i,
+                /href="(https?:\/\/(?:www\.)?target\.com[^"]+)"/i,
+                /href="(https?:\/\/(?:www\.)?adorama\.com[^"]+)"/i,
+                /href="(https?:\/\/(?:www\.)?bhphotovideo\.com[^"]+)"/i
+            ];
+
+            for (const pattern of storePatterns) {
+                const match = item.content.match(pattern);
+                if (match) {
+                    link = match[1].replace(/&amp;/g, '&'); // Decodificar HTML entities
+                    logger.info(`🎯 Bot1 extrajo link directo del RSS: ${link.substring(0, 50)}...`);
+                    break;
+                }
+            }
+        }
+
         // Imagen: Slickdeals RSS suele poner la imagen en el contenido
         let image = 'https://placehold.co/600x400?text=Premium+Deal';
         if (item.content) {
