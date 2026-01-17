@@ -17,6 +17,9 @@ async function fixLinks() {
             else if (t.includes('walmart')) deal.tienda = 'Walmart';
             else if (t.includes('ebay')) deal.tienda = 'eBay';
             else if (t.includes('best buy')) deal.tienda = 'Best Buy';
+            else if (t.includes('adorama') || t.includes('klipsch')) deal.tienda = 'Adorama';
+            else if (t.includes('newegg')) deal.tienda = 'Newegg';
+            else if (t.includes('b&h') || t.includes('bhphoto')) deal.tienda = 'B&H Photo';
         }
 
         // Transformar link
