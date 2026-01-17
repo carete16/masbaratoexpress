@@ -11,21 +11,23 @@ class CoreProcessor {
         const Bot2 = require('./Bot2_Explorer');
         const Bot3 = require('./Bot3_Auditor');
         const Bot4 = require('./Bot4_Publisher');
+        const Bot5 = require('./Bot5_BrowserSim');
         const QA = require('../utils/QualityAssurance');
         const AI = require('./AIProcessor');
         const LinkTransformer = require('../utils/LinkTransformer');
 
-        logger.info('🛰️ ARQUITECTURA DE 4 BOTS ACTIVA (Síncronía de Precios)');
-        logger.info('🤖 BOT 1: RECOLECTOR (Detección MSRP)');
-        logger.info('🕵️ BOT 2: EXPLORADOR (Precios Reales + Tiendas USA)');
+        logger.info('🛰️ ARQUITECTURA DE 5 BOTS ACTIVA (Sistema Profesional)');
+        logger.info('🤖 BOT 1: RECOLECTOR (RSS Intelligence)');
+        logger.info('🕵️ BOT 2: EXPLORADOR (Deep Trace + Proxy Scrubbing)');
         logger.info('⚖️ BOT 3: AUDITOR (Verificación de Ganga)');
+        logger.info('🌐 BOT 5: FANTASMA (Browser Simulation Fallback)');
         logger.info('📱 BOT 4: PUBLICADOR (Monetización + Telegram)');
 
         let isRunning = false;
         const runCycle = async () => {
             if (isRunning) return;
             isRunning = true;
-            logger.info('\n--- 🚀 INICIANDO CICLO DE ALTO RENDIMIENTO (4 BOTS) ---');
+            logger.info('\n--- 🚀 INICIANDO CICLO DE ALTO RENDIMIENTO (5 BOTS) ---');
 
             try {
                 // 1. BOT 1: RECOLECCIÓN
@@ -123,7 +125,7 @@ class CoreProcessor {
                     } catch (innerE) { logger.error(`Error en item: ${innerE.message}`); }
                 }
 
-                logger.info('--- ✅ CICLO DE 4 BOTS FINALIZADO ---');
+                logger.info('--- ✅ CICLO DE 5 BOTS FINALIZADO ---');
                 isRunning = false;
             } catch (e) {
                 logger.error(`❌ Error general: ${e.message}`);
