@@ -50,31 +50,48 @@ class RadarBot {
             referencePrice = parseFloat(prices[0].replace('$', ''));
         }
 
-        // Identificamos la tienda probable
+        // Identificamos la tienda probable con mayor precisión (Patrón [Tienda])
         let store = 'Global';
-        const tLower = rawTitle.toLowerCase();
-        if (tLower.includes('amazon')) store = 'Amazon';
-        else if (tLower.includes('walmart')) store = 'Walmart';
-        else if (tLower.includes('ebay')) store = 'eBay';
-        else if (tLower.includes('best buy')) store = 'Best Buy';
+        const storeMatch = rawTitle.match(/\[(.*?)\]/);
+        if (storeMatch) {
+            store = storeMatch[1].trim();
+        } else {
+            const tLower = rawTitle.toLowerCase();
+            if (tLower.includes('amazon')) store = 'Amazon';
+            else if (tLower.includes('walmart')) store = 'Walmart';
+            else if (tLower.includes('ebay')) store = 'eBay';
+            else if (tLower.includes('best buy')) store = 'Best Buy';
+            else if (tLower.includes('target')) store = 'Target';
+        }
 
         // Intentamos obtener el ID del producto (ASIN, SKU) para la validación posterior
         let productId = null;
         let directLink = null;
 
         if (item.content) {
-            const decodedContent = item.content.replace(/&amp;/g, '&');
+            const decodedContent = item.content.replace(/&amp;/g, '&').replace(/&quot;/g, '"');
             const directPatterns = [
                 /https?:\/\/(?:www\.)?amazon\.com\/(?:dp|gp\/product)\/[A-Z0-9]{10}/i,
                 /https?:\/\/(?:www\.)?walmart\.com\/ip\/[^"'\s<>\[\]]+\/\d+/i,
                 /https?:\/\/(?:www\.)?ebay\.com\/itm\/\d+/i,
-                /https?:\/\/(?:www\.)?bestbuy\.com\/site\/[^"'\s<>\[\]]+\/\d+\.p/i
+                /https?:\/\/(?:www\.)?bestbuy\.com\/site\/[^"'\s<>\[\]]+\/\d+\.p/i,
+                /https?:\/\/(?:www\.)?target\.com\/p\/[^"'\s<>\[\]]+\/-\/A-\d+/i
             ];
             for (const pattern of directPatterns) {
                 const match = decodedContent.match(pattern);
                 if (match) {
                     directLink = match[0];
+                    if (directLink.includes('amazon.com')) store = 'Amazon';
                     break;
+                }
+            }
+
+            // EXTRA TOTAL: Búsqueda del parámetro u2 en el contenido
+            const u2Match = decodedContent.match(/[?&]u2=([^"'\s&<>\[\]]+)/i);
+            if (u2Match && !directLink) {
+                const decoded = decodeURIComponent(u2Match[1]);
+                if (decoded.startsWith('http') && !decoded.includes('slickdeals.net')) {
+                    directLink = decoded;
                 }
             }
         }
@@ -83,6 +100,7 @@ class RadarBot {
         if (asinMatch) {
             productId = asinMatch[1];
             if (!directLink) directLink = `https://www.amazon.com/dp/${productId}`;
+            store = 'Amazon';
         }
 
         // Link de origen solo para seguir el rastro a la tienda final
@@ -95,7 +113,7 @@ class RadarBot {
         }
 
         return {
-            title: rawTitle.replace(/slickdeals|\[.*?\]/gi, '').trim(),
+            title: rawTitle.replace(/\[.*?\]/g, '').replace(/slickdeals/gi, '').trim(),
             referencePrice,
             msrp,
             store,

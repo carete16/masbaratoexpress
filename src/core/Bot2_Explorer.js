@@ -24,16 +24,22 @@ class ValidatorBot {
         };
 
         try {
-            // 1. OBTENER LINK FINAL (Saltando Slickdeals)
+            // 1. OBTENER LINK FINAL (Inteligente)
             let finalUrl = opportunity.sourceLink;
-            // Si es Amazon con ASIN, generamos el link directo para evitar rastro
-            if (opportunity.productId && opportunity.store === 'Amazon') {
-                finalUrl = `https://www.amazon.com/dp/${opportunity.productId}`;
-            } else {
-                // Si no, usamos el Bot5 para extraer el link real si es necesario
-                const Bot5 = require('./Bot5_BrowserSim');
-                const trace = await Bot5.extractRealLink(opportunity.sourceLink);
-                if (trace.success) finalUrl = trace.link;
+
+            // Si el link NO es de Slickdeals, ya es directo (¡Garantizado!)
+            const isDirect = !finalUrl.includes('slickdeals.net');
+
+            if (!isDirect) {
+                // Si es Amazon con ASIN, generamos el link directo para evitar rastro
+                if (opportunity.productId && opportunity.store === 'Amazon') {
+                    finalUrl = `https://www.amazon.com/dp/${opportunity.productId}`;
+                } else {
+                    // Solo usamos el Bot5 si el link sigue siendo de Slickdeals
+                    const Bot5 = require('./Bot5_BrowserSim');
+                    const trace = await Bot5.extractRealLink(opportunity.sourceLink);
+                    if (trace.success) finalUrl = trace.link;
+                }
             }
 
             if (!finalUrl || finalUrl.includes('slickdeals.net')) {
@@ -42,6 +48,18 @@ class ValidatorBot {
             }
 
             result.finalUrl = finalUrl;
+
+            // RE-IDENTIFICACIÓN DE TIENDA (Fase 1: Estructura de URL)
+            const lowUrl = finalUrl.toLowerCase();
+            if (lowUrl.includes('amazon.com')) result.storeName = 'Amazon';
+            else if (lowUrl.includes('walmart.com')) result.storeName = 'Walmart';
+            else if (lowUrl.includes('ebay.com')) result.storeName = 'eBay';
+            else if (lowUrl.includes('bestbuy.com')) result.storeName = 'Best Buy';
+            else if (lowUrl.includes('target.com')) result.storeName = 'Target';
+            else if (lowUrl.includes('adidas.com')) result.storeName = 'Adidas';
+            else if (lowUrl.includes('nike.com')) result.storeName = 'Nike';
+            else if (opportunity.store && opportunity.store !== 'Global') result.storeName = opportunity.store;
+            else result.storeName = 'Tienda USA'; // Mejor que 'Global'
 
             // 2. VERIFICACIÓN EN MODO "SIGILOSO" (AXIOS + CHEERIO)
             // Intentamos verificar el precio en la tienda
@@ -55,11 +73,11 @@ class ValidatorBot {
 
                 // Selectores genéricos de precios por tienda
                 let foundPrice = 0;
-                if (finalUrl.includes('amazon.com')) {
+                if (result.storeName === 'Amazon') {
                     const priceStr = $('.a-price-whole').first().text() + $('.a-price-fraction').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
                     result.image = $('img#landingImage').attr('src') || $('img#imgBlkFront').attr('src');
-                } else if (finalUrl.includes('walmart.com')) {
+                } else if (result.storeName === 'Walmart') {
                     const priceStr = $('span[itemprop="price"]').attr('content') || $('.price-characteristic').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
                 }

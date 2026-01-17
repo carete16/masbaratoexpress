@@ -38,27 +38,34 @@ class LinkTransformer {
             }
         } catch (e) { }
 
-        // 2. MONETIZACIÓN DIRECTA (Solo si tenemos el link limpio)
-        if (currentUrl.includes('amazon.com') && !currentUrl.includes('slickdeals')) {
-            const asin = currentUrl.match(/\/([A-Z0-9]{10})/)?.[1];
+        // 2. MONETIZACIÓN DIRECTA (Solo si tenemos el link de la tienda)
+        const isSlickdealsDomain = currentUrl.includes('slickdeals.net');
+
+        if (currentUrl.includes('amazon.com') && !isSlickdealsDomain) {
+            // Extraer ASIN (Patrón de 10 caracteres alfanuméricos)
+            const asinMatch = currentUrl.match(/\/(dp|gp\/product|exec\/obidos\/ASIN)\/([A-Z0-9]{10})/i) || currentUrl.match(/[?&]asin=([A-Z0-9]{10})/i);
+            const asin = asinMatch ? asinMatch[2] : null;
+
             if (asin) {
                 return `https://www.amazon.com/dp/${asin}?tag=${this.tags.amazon}`;
             }
-            const clean = currentUrl.split('?')[0];
-            return `${clean}?tag=${this.tags.amazon}`;
+            // Si no hay ASIN, limpiamos parámetros y aplicamos tag
+            const base = currentUrl.split('?')[0];
+            return `${base}?tag=${this.tags.amazon}`;
         }
 
-        if (currentUrl.includes('ebay.com') && !currentUrl.includes('slickdeals')) {
-            return `https://www.ebay.com/rover/1/${this.tags.ebay || '5338634567'}/1?mpre=${encodeURIComponent(currentUrl)}`;
+        if (currentUrl.includes('ebay.com') && !isSlickdealsDomain) {
+            const base = currentUrl.split('?')[0];
+            return `https://www.ebay.com/rover/1/${this.tags.ebay || '5338634567'}/1?mpre=${encodeURIComponent(base)}`;
         }
 
-        if (currentUrl.includes('walmart.com') && !currentUrl.includes('slickdeals')) {
-            return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent(currentUrl)}`;
+        if (currentUrl.includes('walmart.com') && !isSlickdealsDomain) {
+            const base = currentUrl.split('?')[0];
+            return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent(base)}`;
         }
 
         // 3. SEGURIDAD FINAL: NO PUBLICAR LINKS SUCIOS
-        // Si el link todavía tiene rastro de Slickdeals, lo devolvemos tal cual.
-        // El CoreProcessor se encargará de descartarlo.
+        // Si el link todavía pertenece al dominio slickdeals.net, el CoreProcessor lo descartará.
         return currentUrl;
     }
 }
