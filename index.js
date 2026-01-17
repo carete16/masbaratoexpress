@@ -30,6 +30,11 @@ app.get('/api/deals', (req, res) => {
   try {
     const deals = db.prepare(`
             SELECT * FROM published_deals 
+            WHERE status = 'published'
+            AND link NOT LIKE '%slickdeals.net%'
+            AND link NOT LIKE '%translate.google%'
+            AND tienda NOT LIKE '%Translate%'
+            AND tienda NOT LIKE '%Google%'
             ORDER BY posted_at DESC 
             LIMIT 100
         `).all();
