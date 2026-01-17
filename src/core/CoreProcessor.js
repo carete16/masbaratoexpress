@@ -65,20 +65,22 @@ class CoreProcessor {
 
                         // 5. BOT 4: PUBLICACIÓN Y MONETIZACIÓN
                         const monetizedLink = await LinkTransformer.transform(deal.link);
-                        // 6. ESTRATEGIA DE CONTINGENCIA (Auto-Unlock)
-                        // Si el bypass falló (por bloqueo 429), permitimos el link de Slickdeals
-                        // para asegurar que el usuario tenga contenido real y funcional.
-                        /*
-                        if (!monetizedLink || monetizedLink.includes('slickdeals.net')) {
-                            logger.warn(`🚫 BLOQUEO: Link de competencia detectado. No se publicará: ${deal.title}`);
-                            continue;
+                        // 6. ESTRATEGIA DE CONTINGENCIA (Monetización Forzada)
+                        // Si después de todo el link sigue siendo Slickdeals, lo envolvemos en Sovrn
+                        // Esto garantiza que NO se vea Slickdeals y que TÚ cobres.
+                        if (monetizedLink && (monetizedLink.includes('slickdeals.net') || monetizedLink.includes('viglink'))) {
+                            // Fallback a Sovrn directo si la extracción falló
+                            const fallbackSovrn = process.env.SOVRN_URL_PREFIX || 'https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u=';
+                            deal.link = `${fallbackSovrn}${encodeURIComponent(deal.link)}`;
+                            logger.info(`🛡️ Fallback Sovrn aplicado a: ${deal.title}`);
+                        } else if (monetizedLink) {
+                            deal.link = monetizedLink;
                         }
-                        */
-                        if (monetizedLink) deal.link = monetizedLink;
 
                         // 7. LIMPIEZA ANTI-COMPETENCIA (RESGUARDO FINAL)
-                        const blockRegex = /slickdeals|slick\s*deals/gi;
-                        deal.title = deal.title.replace(blockRegex, '').trim();
+                        const blockRegex = /slickdeals|slick\s*deals|via\s+SD|SD\s+Exclusive/gi;
+                        deal.title = deal.title.replace(blockRegex, '').replace(/\s{2,}/g, ' ').trim();
+
                         if (deal.tienda.toLowerCase().includes('slickdeals') || deal.tienda === 'Analizando...') {
                             deal.tienda = 'Oferta USA';
                         }

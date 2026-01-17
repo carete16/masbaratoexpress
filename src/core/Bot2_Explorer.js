@@ -159,17 +159,31 @@ class DeepExplorerBot {
             if (buyNowLink) {
                 if (buyNowLink.startsWith('/')) buyNowLink = 'https://slickdeals.net' + buyNowLink;
 
-                // 1. INTENTO POR PARÁMETROS (Rápido)
+                // 1. INTENTO POR PARÁMETROS (Rápido y Silencioso - Evita Bloqueos 429)
                 try {
-                    const u = new URL(buyNowLink, 'https://slickdeals.net');
-                    const realUrl = u.searchParams.get('u2') || u.searchParams.get('url') || u.searchParams.get('lno') || u.searchParams.get('u');
-                    if (realUrl && realUrl.startsWith('http')) {
-                        result.finalUrl = decodeURIComponent(realUrl);
+                    // Decodificar recursivamente hasta encontrar un http
+                    let candidate = buyNowLink;
+                    let found = false;
+                    for (let i = 0; i < 3; i++) { // Intentar 3 niveles de profundidad
+                        try {
+                            const u = new URL(candidate.startsWith('/') ? 'https://slickdeals.net' + candidate : candidate);
+                            const nextParam = u.searchParams.get('u2') || u.searchParams.get('url') ||
+                                u.searchParams.get('lno') || u.searchParams.get('u') ||
+                                u.searchParams.get('dest') || u.searchParams.get('mpre');
+
+                            if (nextParam && nextParam.startsWith('http')) {
+                                candidate = decodeURIComponent(nextParam);
+                                found = true;
+                            } else {
+                                break;
+                            }
+                        } catch (e) { break; }
                     }
+                    if (found) result.finalUrl = candidate;
                 } catch (e) { }
 
-                // 2. INTENTO POR RASTREO FÍSICO (Si sigue siendo Slickdeals)
-                if (result.finalUrl.includes('slickdeals.net') || result.finalUrl.includes('redirect.viglink.com')) {
+                // 2. INTENTO POR RASTREO FÍSICO (Solo si la extracción estática falló)
+                if ((result.finalUrl.includes('slickdeals.net') || result.finalUrl.includes('redirect.viglink.com')) && !result.finalUrl.includes('amazon.com')) {
                     try {
                         const shopRes = await axios.get(buyNowLink, {
                             headers: {
