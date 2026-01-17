@@ -29,227 +29,128 @@ class DeepExplorerBot {
             // 1. CARGAR PÁGINA INTERNA DE SLICKDEALS
             let response;
             try {
+                // Intento 1: Request Directo con headers completos
                 response = await axios.get(initialUrl, {
-                    headers: { 'User-Agent': this.userAgent },
-                    timeout: 12000
+                    headers: {
+                        'User-Agent': this.userAgent,
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Referer': 'https://www.google.com/'
+                    },
+                    timeout: 10000
                 });
             } catch (e) {
                 if (e.response && (e.response.status === 403 || e.response.status === 429)) {
-                    logger.info(`🛡️ Slickdeals bloqueó acceso directo. Activando Bypass via Google Proxy...`);
-                    const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(initialUrl)}`;
-                    response = await axios.get(proxyUrl, {
-                        headers: { 'User-Agent': this.userAgent },
-                        timeout: 15000
-                    });
+                    logger.info(`🛡️ Slickdeals bloqueó acceso directo (403/429). Activando Google Proxy Bypass...`);
+                    try {
+                        const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(initialUrl)}`;
+                        response = await axios.get(proxyUrl, {
+                            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+                            timeout: 15000
+                        });
+                    } catch (proxyError) {
+                        logger.error('❌ Proxy también falló. Abortando exploración profunda.');
+                        throw e; // Rendirse si ambos fallan
+                    }
                 } else { throw e; }
             }
 
             const html = response.data;
             const $ = cheerio.load(html);
 
-            // A. EXTRACCIÓN DE PRECIOS (PARIDAD TOTAL - SELECTORES SLICKDEALS 2024)
-            const priceText = $('.dealPrice').first().text().trim() ||
-                $('.itemPrice').first().text().trim() ||
-                $('[data-bhw="Price"]').text().trim() ||
-                $('.mainItemPrice').text().trim() ||
-                $('.price').first().text().trim();
-
+            // A. EXTRACCIÓN DE PRECIOS & CUPONES (PARIDAD TOTAL)
+            const priceText = $('.dealPrice, .price, .itemPrice, .mainItemPrice').first().text().trim();
             if (priceText) {
                 const match = priceText.match(/\$(\d+(?:\.\d{2})?)/);
                 if (match) result.price_offer = parseFloat(match[1]);
             }
 
-            // B. PRECIO ORIGINAL (MSRP / List Price / Was) - CRÍTICO PARA CLONACIÓN
-            const originalPriceText = $('.listPrice').first().text().trim() ||
-                $('.oldPrice').first().text().trim() ||
-                $('.regPrice').first().text().trim() ||
-                $('.strike').first().text().trim() ||
-                $('.msrp').first().text().trim() ||
-                $('.wasPrice').first().text().trim() ||
-                $('.itemPrice.reg').text().trim() ||
-                $('[data-bhw="ListPrice"]').text().trim() ||
-                $('.strikethrough').first().text().trim();
-
+            const originalPriceText = $('.listPrice, .oldPrice, .regPrice, .strike, .msrp').first().text().trim();
             if (originalPriceText) {
                 const match = originalPriceText.match(/\$(\d+(?:\.\d{2})?)/);
                 if (match) result.price_official = parseFloat(match[1]);
             }
 
-            // Si aún no tenemos precio oficial, buscar en el texto descriptivo con patrones avanzados
-            if (!result.price_official || result.price_official <= result.price_offer) {
-                const text = $('.itemDetails, .description, .dealTitle, .mainContent').text();
-                const patterns = [
-                    /(?:Reg\.|Was|MSRP|List|List Price|Original|Retail|Normally)\s*[:\-]?\s*\$([\d,]+\.?\d*)/i,
-                    /\$([\d,]+\.?\d*)\s*(?:Reg\.|Was|MSRP|List)/i,
-                    /save\s*.*?\s*off\s*\$([\d,]+\.?\d*)/i
-                ];
-
-                for (let p of patterns) {
-                    const m = text.match(p);
-                    if (m) {
-                        result.price_official = parseFloat(m[1].replace(',', ''));
-                        break;
-                    }
-                }
-            }
-
-            // SEGURIDAD: Sincronizar con lo que detectó el Bot 1 si aquí falló
-            // (Esto se hace en el CoreProcessor)
-
-            // Garantizar que si el precio oficial es menor o igual al de oferta, se anule (Data Sanitize)
-            if (result.price_official && result.price_offer && result.price_official <= result.price_offer) {
-                result.price_official = 0;
-            }
-
-            // B. DETECTAR IMAGEN DE ALTA CALIDAD
-            result.image = $('.itemImage img, .mainImage img, .imageContainer img').attr('src') ||
-                $('.imageCanvas img').attr('src') ||
-                $('meta[property="og:image"]').attr('content');
-
+            result.image = $('.itemImage img, .mainImage img, .imageContainer img').attr('src') || $('meta[property="og:image"]').attr('content');
             if (result.image && result.image.startsWith('//')) result.image = 'https:' + result.image;
 
-            // C. DETECTAR CUPÓN (Múltiples fuentes)
             result.coupon = $('.couponCode, .promoCode, [data-bhw="CouponCode"]').first().text().trim() ||
                 $('button[data-clipboard-text]').attr('data-clipboard-text');
 
-            // Búsqueda inteligente de cupones en el contenido (Si falla el selector directo)
             if (!result.coupon) {
                 const descText = $('.itemDetails, .description, .mainContent').text() || '';
-                // Buscar patrones como: "code ENERO50", "coupon HALLAZGOS", ó texto en mayúsculas de 4-15 chars
-                const couponMatches = descText.match(/(?:code|coupon|código|cupón)[:\s]?\s*([A-Z0-9]{4,15})/i) ||
-                    descText.match(/([A-Z0-9]{5,15})\s*(?:Copy Code)/i);
-                if (couponMatches) {
-                    result.coupon = couponMatches[1].toUpperCase();
-                    logger.info(`🎯 Cupón detectado en texto: ${result.coupon}`);
-                }
+                const couponMatches = descText.match(/(?:code|coupon|código|cupón)[:\s]?\s*([A-Z0-9]{4,15})/i);
+                if (couponMatches) result.coupon = couponMatches[1].toUpperCase();
             }
 
-            // D. VERIFICAR SI ESTÁ EXPIRADA
-            const expiredSignals = $('.expired, .dealExpired, :contains("Deal is Expired")').length > 0;
-            if (expiredSignals) {
-                logger.warn(`⚠️ Oferta detectada como EXPIRADA.`);
-                result.isExpired = true;
-                return result;
-            }
-
-            // E. SEGUIR EL RASTRO HASTA LA TIENDA REAL (Búsqueda Agresiva)
-            let buyNowLinks = $('a.buyNow, a.button--primary, a.button--checkout, a[data-bhw="BuyNowButton"], a.button, .buyNow .button, a:contains("Consigue"), a:contains("Amazon"), a:contains("eBay"), a:contains("Walmart")');
+            // E. SEGUIR EL RASTRO HASTA LA TIENDA REAL (Extracción Multifacética)
             let buyNowLink = null;
 
+            // E.1. Búsqueda en Botones
+            let buyNowLinks = $('a.buyNow, a.button--primary, a:contains("See Deal"), a:contains("Buy Now")');
             for (let i = 0; i < buyNowLinks.length; i++) {
-                let href = $(buyNowLinks[i]).attr('data-href') || $(buyNowLinks[i]).attr('href');
-                if (href && !href.includes('product-reviews') && !href.includes('/reviews/') && href !== '#') {
+                let href = $(buyNowLinks[i]).attr('href');
+                if (href && !href.includes('product-reviews') && href !== '#') {
                     buyNowLink = href;
                     break;
                 }
             }
 
-            // 2. Si no hay, buscar en JSON-LD (Slickdeals suele ponerlo ahí)
+            // E.2. Búsqueda en JSON-LD (Suele ser más fiable)
             if (!buyNowLink) {
-                const scripts = $('script[type="application/ld+json"]');
-                scripts.each((i, el) => {
+                $('script[type="application/ld+json"]').each((i, el) => {
                     try {
                         const json = JSON.parse($(el).html());
-                        if (json.url && !json.url.includes('slickdeals.net')) buyNowLink = json.url;
                         if (json.offers && json.offers.url) buyNowLink = json.offers.url;
+                        if (json.url && !json.url.includes('slickdeals.net')) buyNowLink = json.url;
                     } catch (e) { }
+                });
+            }
+
+            // E.3. Búsqueda "Sucia" (Links ocultos en attributos data-u2)
+            if (!buyNowLink) {
+                $('a').each((i, el) => {
+                    const h = $(el).attr('href');
+                    if (h && h.includes('u2=')) {
+                        buyNowLink = h;
+                        return false;
+                    }
                 });
             }
 
             if (buyNowLink) {
                 if (buyNowLink.startsWith('/')) buyNowLink = 'https://slickdeals.net' + buyNowLink;
 
-                // 1. INTENTO POR PARÁMETROS (Rápido y Silencioso - Evita Bloqueos 429)
+                // --- EXTRACCIÓN ESTÁTICA BLINDADA ---
                 try {
-                    // Decodificar recursivamente hasta encontrar un http
-                    let candidate = buyNowLink;
-                    let found = false;
-                    for (let i = 0; i < 3; i++) { // Intentar 3 niveles de profundidad
-                        try {
-                            const u = new URL(candidate.startsWith('/') ? 'https://slickdeals.net' + candidate : candidate);
-                            const nextParam = u.searchParams.get('u2') || u.searchParams.get('url') ||
-                                u.searchParams.get('lno') || u.searchParams.get('u') ||
-                                u.searchParams.get('dest') || u.searchParams.get('mpre');
-
-                            if (nextParam && nextParam.startsWith('http')) {
-                                candidate = decodeURIComponent(nextParam);
-                                found = true;
-                            } else {
-                                break;
-                            }
-                        } catch (e) { break; }
+                    let temp = buyNowLink;
+                    for (let k = 0; k < 3; k++) {
+                        const u = new URL(temp.startsWith('/') ? 'https://slickdeals.net' + temp : temp);
+                        const next = u.searchParams.get('u2') || u.searchParams.get('dest') || u.searchParams.get('url') || u.searchParams.get('pno');
+                        if (next && next.startsWith('http')) {
+                            temp = decodeURIComponent(next);
+                            result.finalUrl = temp;
+                        } else break;
                     }
-                    if (found) result.finalUrl = candidate;
                 } catch (e) { }
-
-                // 2. INTENTO POR RASTREO FÍSICO (Solo si la extracción estática falló)
-                if ((result.finalUrl.includes('slickdeals.net') || result.finalUrl.includes('redirect.viglink.com')) && !result.finalUrl.includes('amazon.com')) {
-                    try {
-                        const shopRes = await axios.get(buyNowLink, {
-                            headers: {
-                                'User-Agent': this.userAgent,
-                                'Referer': 'https://slickdeals.net/'
-                            },
-                            maxRedirects: 15,
-                            timeout: 12000
-                        });
-
-                        let candidate = shopRes.request?.res?.responseUrl || shopRes.config?.url;
-
-                        // Si el resultado sigue teniendo el envoltorio de Viglink/Slickdeals, extraer de nuevo
-                        if (candidate && (candidate.includes('u2=') || candidate.includes('u='))) {
-                            const cUrl = new URL(candidate);
-                            candidate = cUrl.searchParams.get('u2') || cUrl.searchParams.get('u') || candidate;
-                        }
-
-                        result.finalUrl = decodeURIComponent(candidate);
-                    } catch (e) {
-                        logger.warn(`⚠️ Error resolviendo link físico: ${e.message}`);
-                    }
-                }
             }
 
-            // F. DETECTAR TIENDA POR DOMINIO (Garantizar no poner "Slickdeals")
+            // F. INFERIR TIENDA (Mismo de siempre)
             const domainMatch = result.finalUrl.match(/https?:\/\/(?:www\.)?([^/]+)/);
             if (domainMatch) {
-                const domain = domainMatch[1].toLowerCase();
-                const storeMap = {
-                    'amazon': 'Amazon', 'walmart': 'Walmart', 'ebay': 'eBay', 'target': 'Target',
-                    'bestbuy': 'Best Buy', 'academy': 'Academy', 'adidas': 'Adidas', 'nike': 'Nike',
-                    'puma': 'Puma', 'kohls': 'Kohls', 'macys': 'Macys', 'homedepot': 'Home Depot',
-                    'lowes': 'Lowes', 'newegg': 'Newegg', 'costco': 'Costco'
-                };
-
-                for (const [key, value] of Object.entries(storeMap)) {
-                    if (domain.includes(key)) {
-                        result.store = value;
-                        break;
-                    }
-                }
-
-                if (result.store === 'Oferta USA' || result.store.toLowerCase().includes('slickdeals')) {
-                    const parts = domain.split('.');
-                    let name = parts.length > 2 ? parts[1] : parts[0];
-
-                    // BLOQUEO ABSOLUTO: Prohibido decir Slickdeals
-                    if (name.toLowerCase().includes('slickdeals')) {
-                        name = 'Oferta USA';
-                    }
-
-                    result.store = name.charAt(0).toUpperCase() + name.slice(1);
-                }
+                const d = domainMatch[1].toLowerCase();
+                if (d.includes('amazon')) result.store = 'Amazon';
+                else if (d.includes('walmart')) result.store = 'Walmart';
+                else if (d.includes('ebay')) result.store = 'eBay';
+                else if (d.includes('adorama') || result.finalUrl.includes('adorama')) result.store = 'Adorama';
+                else if (d.includes('bhphoto')) result.store = 'B&H Photo';
+                else if (d.includes('newegg')) result.store = 'Newegg';
             }
 
-            // G. LIMPIEZA FINAL DE SEGURIDAD (Doble Check)
-            if (result.store.toLowerCase().includes('slickdeals')) {
-                result.store = 'Oferta USA';
-            }
-
-            logger.info(`✅ BOT 1 completado. Tienda: ${result.store}`);
             return result;
 
         } catch (error) {
-            logger.error(`❌ BOT 1 Error Profundo: ${error.message}`);
+            logger.error(`❌ BOT 1 Error: ${error.message}`);
             return result;
         }
     }
