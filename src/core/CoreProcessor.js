@@ -65,13 +65,18 @@ class CoreProcessor {
 
                         // 5. BOT 4: PUBLICACIÓN Y MONETIZACIÓN
                         const monetizedLink = await LinkTransformer.transform(deal.link);
+                        // 6. ESTRATEGIA DE CONTINGENCIA (Auto-Unlock)
+                        // Si el bypass falló (por bloqueo 429), permitimos el link de Slickdeals
+                        // para asegurar que el usuario tenga contenido real y funcional.
+                        /*
                         if (!monetizedLink || monetizedLink.includes('slickdeals.net')) {
                             logger.warn(`🚫 BLOQUEO: Link de competencia detectado. No se publicará: ${deal.title}`);
                             continue;
                         }
-                        deal.link = monetizedLink;
+                        */
+                        if (monetizedLink) deal.link = monetizedLink;
 
-                        // 6. LIMPIEZA ANTI-COMPETENCIA (RESGUARDO FINAL)
+                        // 7. LIMPIEZA ANTI-COMPETENCIA (RESGUARDO FINAL)
                         const blockRegex = /slickdeals|slick\s*deals/gi;
                         deal.title = deal.title.replace(blockRegex, '').trim();
                         if (deal.tienda.toLowerCase().includes('slickdeals') || deal.tienda === 'Analizando...') {
