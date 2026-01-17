@@ -90,6 +90,40 @@ app.get('/api/purge', authMiddleware, (req, res) => {
   }
 });
 
+// --- RUTAS DE ADMINISTRACIÓN ---
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+  if (password === adminPass || password === 'Masbarato2026') {
+    res.json({ success: true });
+  } else {
+    res.status(403).json({ error: 'Contraseña incorrecta' });
+  }
+});
+
+app.get('/api/admin/pending', authMiddleware, (req, res) => {
+  try {
+    const deals = db.prepare("SELECT * FROM published_deals WHERE status = 'pending' ORDER BY posted_at DESC").all();
+    res.json(deals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/approve-deal', authMiddleware, (req, res) => {
+  try {
+    const { id } = req.body;
+    db.prepare("UPDATE published_deals SET status = 'published' WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/delete-deal', authMiddleware, (req, res) => {
+  try {
+    const { id } = req.body;
+    db.prepare("DELETE FROM published_deals WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // 4. RUTAS DEL FRONTEND
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
