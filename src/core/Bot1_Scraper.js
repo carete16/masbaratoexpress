@@ -53,26 +53,46 @@ class SlickdealsProScraper {
             if (imgMatch) image = imgMatch[1];
         }
 
-        // Precios: Extracción de alta fidelidad (Patrones Slickdeals)
+        // Precios: Extracción de ALTA PRECISIÓN (Triple Captura)
         let price_offer = 0;
         let price_official = 0;
 
-        // Patrón 1: "$Oferta $Original" (Muy común en Frontpage)
-        const doublePriceMatch = title.match(/\$(\d+(?:\.\d{2})?)\s+\$(\d+(?:\.\d{2})?)/);
-        if (doublePriceMatch) {
-            price_offer = parseFloat(doublePriceMatch[1]);
-            price_official = parseFloat(doublePriceMatch[2]);
-        } else {
-            // Patrón 2: "$Oferta (Reg. $Original)"
-            const priceMatch = title.match(/\$(\d+(?:\.\d{2})?)/);
-            if (priceMatch) price_offer = parseFloat(priceMatch[1]);
+        // Patrón A: "$18 $75" (Muy común en Slickdeals)
+        const patternA = title.match(/\$(\d+(?:\.\d{2})?)\s+\$(\d+(?:\.\d{2})?)/);
+        // Patrón B: "$18 (Reg. $75)" o "$18 Was $75"
+        const patternB = title.match(/\$(\d+(?:\.\d{2})?).*?(?:Reg\.|Was|MSRP|List|List Price)\s*\$(\d+(?:\.\d{2})?)/i) ||
+            title.match(/(?:Reg\.|Was|MSRP|List)\s*\$(\d+(?:\.\d{2})?).*?\$(\d+(?:\.\d{2})?)/i);
 
-            const regMatch = title.match(/(?:Reg\.|Was|MSRP|List|List Price)\s*\$(\d+(?:\.\d{2})?)/i) ||
-                title.match(/\$(\d+(?:\.\d{2})?)\s*(?:Reg\.|Was|MSRP|List)/i);
-            if (regMatch) price_official = parseFloat(regMatch[1]);
+        if (patternA) {
+            price_offer = parseFloat(patternA[1]);
+            price_official = parseFloat(patternA[2]);
+        } else if (patternB) {
+            price_offer = parseFloat(patternB[1]);
+            price_official = parseFloat(patternB[2]);
+        } else {
+            // Último recurso: solo capturar el primer precio y buscar el segundo en el texto
+            const allPrices = title.match(/\$(\d+(?:\.\d{2})?)/g);
+            if (allPrices && allPrices.length >= 2) {
+                price_offer = parseFloat(allPrices[0].replace('$', ''));
+                price_official = parseFloat(allPrices[1].replace('$', ''));
+            } else if (allPrices) {
+                price_offer = parseFloat(allPrices[0].replace('$', ''));
+            }
         }
 
-        // Si el precio oficial es menor al de oferta, probablemente están invertidos
+        // 🚨 FILTRO DE CALIDAD: Si no hay comparación, no hay clonación al 100%
+        if (price_official === 0 || price_official <= price_offer) {
+            // Intentar buscar en el content del RSS si el título falló
+            if (item.content) {
+                const contentMatch = item.content.match(/(?:Was|Reg\.)\s*\$(\d+(?:\.\d{2})?)/i);
+                if (contentMatch) price_official = parseFloat(contentMatch[1]);
+            }
+        }
+
+        // Si después de todo no hay precio comparativo, marcar para revisión o descartar
+        if (price_official === 0) return null;
+
+        // Inversión de seguridad
         if (price_official > 0 && price_official < price_offer) {
             [price_offer, price_official] = [price_official, price_offer];
         }

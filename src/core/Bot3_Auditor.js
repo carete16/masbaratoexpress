@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 class PriceAuditorBot {
 
     async audit(deal) {
-        logger.info(`⚖️ BOT 3 (Auditor) analizando competitividad: ${deal.title.substring(0, 40)}...`);
+        logger.info(`⚖️ BOT 3 (Análisis de Calidad) inspeccionando: ${deal.title.substring(0, 40)}...`);
 
         let report = {
             isGoodDeal: true,
@@ -16,46 +16,51 @@ class PriceAuditorBot {
             badge: null
         };
 
-        const { price_offer, price_official } = deal;
+        const { price_offer, price_official, title, image } = deal;
 
-        // Calcular ahorro
-        const savings = deal.price_official > deal.price_offer ? deal.price_official - deal.price_offer : 0;
-        const savingsPercent = deal.price_official > 0 ? Math.round((savings / deal.price_official) * 100) : 0;
-
-        // Si no hay precio oficial detectado, o el precio de oferta es mayor o igual,
-        // intentamos estimar un badge basado en el score (si existe)
-        if (deal.price_official <= deal.price_offer || deal.price_official === 0) {
-            report.isHistoricLow = false;
-            // Asumiendo que deal.score puede existir para determinar el badge
-            report.badge = deal.score && deal.score > 80 ? 'OFERTA DESTACADA' : 'TENDENCIA EN USA';
-            report.confidenceScore = deal.score || 70; // Usar score si existe, sino un valor por defecto
-            // No retornamos aquí, continuamos con el filtro de spam si es necesario
-        } else {
-            // 1. Validar el Margen de Ahorro
-            if (savingsPercent >= 50) {
-                report.badge = 'LIQUIDACIÓN RADICAL';
-                report.confidenceScore = 100;
-                report.isHistoricLow = true;
-            } else if (savingsPercent >= 25) {
-                report.badge = 'OFERTA VERIFICADA';
-                report.confidenceScore = 80;
-            } else if (savingsPercent > 0) {
-                report.badge = 'AHORRO REAL';
-                report.confidenceScore = 60;
-            } else {
-                report.isGoodDeal = true;
-                report.badge = 'TENDENCIA EN USA';
-                report.confidenceScore = 70;
-            }
+        // 1. ANÁLISIS DE PUREZA (Anti-Competencia)
+        if (title.toLowerCase().includes('slickdeals') || title.toLowerCase().includes('deal')) {
+            // Limpieza agresiva de marcas de la competencia
+            deal.title = deal.title.replace(/Slickdeals/gi, '').replace(/\[.*?\]/g, '').trim();
         }
 
-        // 2. Filtro de Spam (Precios demasiado bajos que suelen ser errores o estafas)
-        if (price_offer < 0.50) {
-            logger.warn(`🛑 BOT 3: Precio sospechoso ($${price_offer}). Posible error de sistema. Rehusando.`);
+        // 2. ANÁLISIS VISUAL (Calidad de Imagen)
+        if (!image || image.includes('placehold.co') || image === '') {
+            logger.warn(`🛑 BOT 3: Imagen de baja calidad detectada. Rechazando por decoro visual.`);
             report.isGoodDeal = false;
+            return report;
         }
 
-        logger.info(`✅ BOT 3 completado. Resultado: ${report.badge || 'Normal'}`);
+        // 3. ANÁLISIS MATEMÁTICO (Filtro de Ganga Real)
+        const savings = price_official > price_offer ? price_official - price_offer : 0;
+        const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
+
+        if (savingsPercent < 10) {
+            logger.warn(`🛑 BOT 3: Descuento insignificante (${savingsPercent}%). Rechazando por falta de impacto.`);
+            report.isGoodDeal = false;
+            return report;
+        }
+
+        // 4. CERTIFICACIÓN DE LA OFERTA
+        if (savingsPercent >= 50) {
+            report.badge = 'LIQUIDACIÓN TOTAL';
+            report.isHistoricLow = true;
+        } else if (savingsPercent >= 30) {
+            report.badge = 'SUPER PRECIO';
+        } else {
+            report.badge = 'OFERTA VERIFICADA';
+        }
+
+        // 5. CATEGORIZACIÓN SEMÁNTICA (Análisis de Contenido)
+        const t = title.toLowerCase();
+        if (t.match(/laptop|tv|computer|monitor|ssd|drive|tech|gadget/)) deal.categoria = 'Tecnología';
+        else if (t.match(/shoe|sneaker|shirt|pants|jacket|dress|nike|adidas/)) deal.categoria = 'Moda';
+        else if (t.match(/tool|drill|saw|hammer|dewalt|milwaukee/)) deal.categoria = 'Herramientas';
+        else if (t.match(/cooker|fryer|pot|knife|kitchen|home|table/)) deal.categoria = 'Hogar';
+        else if (t.match(/ps5|xbox|gaming|switch|game/)) deal.categoria = 'Gamer';
+        else deal.categoria = 'General';
+
+        logger.info(`✅ BOT 3 completado. Categoría: ${deal.categoria} | Badge: ${report.badge}`);
         return report;
     }
 }
