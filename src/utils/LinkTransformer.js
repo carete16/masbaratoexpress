@@ -72,6 +72,10 @@ class LinkTransformer {
                 else if (titleLower.includes('best buy')) targetStore = 'best buy';
                 else if (titleLower.includes('target')) targetStore = 'target';
                 else if (titleLower.includes('home depot')) targetStore = 'home depot';
+                else if (titleLower.includes('adorama')) targetStore = 'adorama';
+                else if (titleLower.includes('b&h') || titleLower.includes('bhphoto')) targetStore = 'b&h';
+                else if (titleLower.includes('newegg')) targetStore = 'newegg';
+                else if (titleLower.includes('klipsch')) targetStore = 'adorama'; // Klipsch suele venderse en Adorama con ofertas fuertes
             }
 
             logger.info(`🔄 Activando Smart Search Redirect para: ${deal.title} (Tienda: ${targetStore})`);
@@ -91,7 +95,19 @@ class LinkTransformer {
                 return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent('https://www.walmart.com/search?q=' + query)}`;
             }
             if (targetStore.includes('best buy')) {
-                return `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(query)}&ref=199&loc=12345`;
+                return `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(query)}&ref=199&loc=12345&acampID=1`;
+            }
+            if (targetStore.includes('home depot')) {
+                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.homedepot.com/s/' + encodeURIComponent(query))}`;
+            }
+            if (targetStore.includes('adorama')) {
+                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.adorama.com/l/?searchinfo=' + encodeURIComponent(query))}`;
+            }
+            if (targetStore.includes('b&h') || targetStore.includes('bhphoto')) {
+                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.bhphotovideo.com/c/search?Ntt=' + encodeURIComponent(query))}`;
+            }
+            if (targetStore.includes('newegg')) {
+                return `${this.tags.sovrn_prefix}${encodeURIComponent('https://www.newegg.com/p/pl?d=' + encodeURIComponent(query))}`;
             }
 
             // FALLBACK UNIVERSAL (La Red de Seguridad Definitiva)
