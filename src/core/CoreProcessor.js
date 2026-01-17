@@ -56,7 +56,10 @@ class CoreProcessor {
 
                         // 3. BOT 3: AUDITORÍA
                         const audit = await Bot3.audit(deal);
-                        if (!audit.isGoodDeal) continue;
+                        if (!audit.isGoodDeal) {
+                            logger.warn(`❌ DESCARTADO (Auditoría): ${deal.title} - Motivo: ${audit.reason || 'No es buena oferta'}`);
+                            continue;
+                        }
                         deal.badge = audit.badge;
                         deal.is_historic_low = audit.isHistoricLow;
 
@@ -69,39 +72,32 @@ class CoreProcessor {
                         let monetizedLink = await LinkTransformer.transform(deal.link, deal);
 
                         // 5.5. BOT 5: BROWSER SIMULATOR (Último Recurso)
-                        // Si después de Bot2 y LinkTransformer el link sigue siendo de Slickdeals,
-                        // activamos Bot5 para intentar extraerlo con técnicas de navegador real
                         if (monetizedLink && monetizedLink.includes('slickdeals.net')) {
-                            logger.info(`🔄 Activando BOT 5 (Browser Simulator) para: ${deal.title}`);
+                            logger.info(`🔄 Activando BOT 5 (Fantasma) para intentar rescate: ${deal.title}`);
                             const Bot5 = require('./Bot5_BrowserSim');
                             const bot5Result = await Bot5.extractRealLink(deal.original_link || deal.link);
 
                             if (bot5Result.success) {
-                                // Bot5 logró extraer el link! Re-monetizarlo
                                 monetizedLink = await LinkTransformer.transform(bot5Result.link, deal);
                                 logger.info(`✅ BOT 5 rescató la oferta: ${deal.title}`);
                             }
                         }
 
                         // 6. VALIDACIÓN ESTRICTA (SISTEMA PROFESIONAL)
-                        // Si después de TODO el proceso, el link sigue siendo de Slickdeals o Google Translate,
-                        // significa que NO pudimos obtener el enlace real de la tienda.
-                        // Según el "Sistema Profesional": NO PUBLICAR.
                         if (monetizedLink && (
                             monetizedLink.includes('slickdeals.net') ||
                             monetizedLink.includes('translate.google') ||
                             monetizedLink.includes('translate.googleusercontent')
                         )) {
-                            logger.warn(`❌ DESCARTADO (Link no limpiable): ${deal.title}`);
-                            continue; // Saltar esta oferta
+                            logger.warn(`❌ DESCARTADO (Link Sucio Final): ${deal.title} -> ${monetizedLink.substring(0, 30)}`);
+                            continue;
                         }
 
-                        // Si la tienda detectada es "Translate" o genérica, también descartar
                         if (deal.tienda && (
                             deal.tienda.toLowerCase().includes('translate') ||
                             deal.tienda.toLowerCase().includes('google')
                         )) {
-                            logger.warn(`❌ DESCARTADO (Tienda no identificada): ${deal.title}`);
+                            logger.warn(`❌ DESCARTADO (Tienda Corrupta): ${deal.title}`);
                             continue;
                         }
 

@@ -155,16 +155,35 @@ class SlickdealsProScraper {
         // Si el título quedó vacío por error, usar el original sin marcas
         if (!cleanTitle || cleanTitle.length < 5) cleanTitle = title.replace(/slickdeals/gi, '').trim();
 
+        // 🚨 MOTOR DE RECONSTRUCCIÓN DE ENLACES (Último Recurso de Automatización)
+        // Si el link sigue siendo de Slickdeals, intentamos reconstruir el link de la tienda
+        if (link.includes('slickdeals.net')) {
+            const skuMatch = title.match(/\b([A-Z0-9-]{5,15})\b/i); // Buscar códigos como 75379, B0D123..., etc
+            if (skuMatch) {
+                const sku = skuMatch[1];
+                if (tienda === 'Amazon') {
+                    link = `https://www.amazon.com/s?k=${sku}`;
+                    logger.info(`🛠️ Bot1 reconstruyó link de Amazon (Búsqueda SKU): ${sku}`);
+                } else if (tienda === 'Walmart') {
+                    link = `https://www.walmart.com/search?q=${sku}`;
+                    logger.info(`🛠️ Bot1 reconstruyó link de Walmart (Búsqueda SKU): ${sku}`);
+                } else if (tienda === 'eBay') {
+                    link = `https://www.ebay.com/sch/i.html?_nkw=${sku}`;
+                    logger.info(`🛠️ Bot1 reconstruyó link de eBay (Búsqueda SKU): ${sku}`);
+                }
+            }
+        }
+
         return {
-            id: require('crypto').createHash('md5').update(link).digest('hex').substring(0, 10),
+            id: require('crypto').createHash('md5').update(item.link).digest('hex').substring(0, 10),
             title: cleanTitle,
             link: link,
             image: image,
             price_offer: price_offer,
             price_official: price_official,
             tienda: tienda,
-            categoria: 'Tecnología', // Default, el Core lo mejorará
-            score: 50, // Frontpage deals siempre son buenos
+            categoria: 'Tecnología',
+            score: 50,
             coupon: null,
             description: title,
             pubDate: item.pubDate || new Date().toISOString()

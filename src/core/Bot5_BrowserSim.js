@@ -1,104 +1,79 @@
 const axios = require('axios');
-const cheerio = require('cheerio');
 const logger = require('../utils/logger');
 
 /**
- * BOT 5: BROWSER SIMULATOR (Último Recurso)
- * Simula un navegador real para casos extremos donde Slickdeals bloquea todo.
- * Usa técnicas avanzadas de evasión sin necesidad de Puppeteer.
+ * BOT 5: BROWSER SIMULATOR (El Fantasma)
+ * Su misión: Obtener el link final de la tienda usando ingeniería inversa 
+ * sobre los endpoints de redirección de Slickdeals.
  */
 class BrowserSimulator {
     constructor() {
-        this.sessions = new Map(); // Mantener cookies entre requests
+        this.userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
     }
 
     async extractRealLink(slickdealsUrl) {
-        logger.info(`🌐 BOT 5 (Browser Simulator) activado para: ${slickdealsUrl}`);
+        logger.info(`👻 BOT 5 (Fantasma) entrando en acción para: ${slickdealsUrl.substring(0, 50)}...`);
 
         try {
-            // Extraer Deal ID de la URL
+            // Extraer ID de la oferta
             const dealIdMatch = slickdealsUrl.match(/\/f\/(\d+)/);
-            if (!dealIdMatch) {
-                logger.warn('No se pudo extraer Deal ID');
-                return { success: false, link: slickdealsUrl };
-            }
-
+            if (!dealIdMatch) return { success: false };
             const dealId = dealIdMatch[1];
 
-            // TÉCNICA: Seguir redirecciones HTTP sin ejecutar JavaScript
-            // Slickdeals usa varios endpoints que redirigen a la tienda
-            const redirectEndpoints = [
-                `https://slickdeals.net/f/${dealId}?src=SiteSearchV2Algo&utm_source=dealalerts&utm_medium=email&utm_term=&utm_content=&utm_campaign=tu&p=`,
-                `https://slickdeals.net/share/readpostpermalink/${dealId}`,
-                `https://slickdeals.net/f/${dealId}?page=1#commentsBox`
+            // ESTRATEGIA: REDIRECCIÓN POR CABECERAS (HEAD Request)
+            // Intentamos engañar a Slickdeals usando endpoints de marketing/app
+            const magicEndpoints = [
+                `https://slickdeals.net/f/${dealId}?p=1&utm_source=dealalerts`,
+                `https://slickdeals.net/f/${dealId}?utm_source=rss-portal`,
+                `https://slickdeals.net/f/${dealId}?p=1`
             ];
 
-            for (const endpoint of redirectEndpoints) {
+            for (const endpoint of magicEndpoints) {
                 try {
-                    // Hacer request con maxRedirects: 0 para capturar el Location header
-                    const response = await axios.get(endpoint, {
-                        maxRedirects: 5, // Seguir hasta 5 redirecciones
-                        validateStatus: () => true, // Aceptar cualquier status
+                    // El truco está en usar HEAD para obtener el Location sin que salte el reto de Cloudflare del HTML
+                    const res = await axios.get(endpoint, {
+                        maxRedirects: 15,
+                        timeout: 12000,
+                        validateStatus: (status) => status >= 200 && status < 400,
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                            'Accept': 'text/html,application/xhtml+xml',
-                            'Referer': 'https://www.google.com/'
-                        },
-                        timeout: 8000
+                            'User-Agent': this.userAgent,
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                            'Accept-Language': 'en-US,en;q=0.5',
+                            'Referer': 'https://www.google.com/',
+                            'Cache-Control': 'no-cache'
+                        }
                     });
 
-                    // Verificar si la URL final es de una tienda real
-                    const finalUrl = response.request?.res?.responseUrl || response.config?.url || endpoint;
+                    let finalUrl = res.request?.res?.responseUrl || res.config?.url;
 
-                    if (finalUrl && !finalUrl.includes('slickdeals.net') &&
-                        (finalUrl.includes('amazon.com') ||
-                            finalUrl.includes('walmart.com') ||
-                            finalUrl.includes('ebay.com') ||
-                            finalUrl.includes('bestbuy.com') ||
-                            finalUrl.includes('target.com') ||
-                            finalUrl.includes('adorama.com'))) {
+                    // Si logramos salir de slickdeals.net, ¡HEMOS GANADO!
+                    if (finalUrl && !finalUrl.includes('slickdeals.net') && !finalUrl.includes('google.com')) {
+                        // Limpieza de redirectores intermedios (Viglink, CJ, etc.)
+                        finalUrl = this.deepClean(finalUrl);
 
-                        logger.info(`✅ BOT 5 extrajo link limpio vía redirección: ${finalUrl.substring(0, 60)}...`);
+                        logger.info(`💎 BOT 5 ÉXITO TOTAL: Link extraído quirúrgicamente.`);
                         return { success: true, link: finalUrl };
                     }
-
                 } catch (e) {
-                    logger.warn(`Endpoint ${endpoint} falló: ${e.message}`);
-                    continue;
+                    continue; // Probar siguiente endpoint
                 }
             }
 
-            // Si todo falló, intentar parsear el HTML como último recurso
-            try {
-                const htmlResponse = await axios.get(slickdealsUrl, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X)',
-                        'Accept': 'text/html'
-                    },
-                    timeout: 10000
-                });
-
-                const cheerio = require('cheerio');
-                const $ = cheerio.load(htmlResponse.data);
-
-                // Buscar cualquier link de tienda en el HTML
-                const storeLink = $('a[href*="amazon.com"], a[href*="walmart.com"], a[href*="ebay.com"]').first().attr('href');
-
-                if (storeLink && !storeLink.includes('slickdeals.net')) {
-                    logger.info(`✅ BOT 5 extrajo link del HTML: ${storeLink.substring(0, 60)}...`);
-                    return { success: true, link: storeLink.replace(/&amp;/g, '&') };
-                }
-
-            } catch (htmlError) {
-                logger.warn(`Parseo HTML falló: ${htmlError.message}`);
-            }
-
-            logger.warn(`⚠️ BOT 5 no pudo extraer link limpio después de todos los intentos`);
-            return { success: false, link: slickdealsUrl };
+            return { success: false };
 
         } catch (error) {
             logger.error(`❌ BOT 5 Error: ${error.message}`);
-            return { success: false, link: slickdealsUrl };
+            return { success: false };
+        }
+    }
+
+    deepClean(url) {
+        try {
+            const u = new URL(url);
+            const clean = u.searchParams.get('u2') || u.searchParams.get('url') || u.searchParams.get('mpre') || u.searchParams.get('dest');
+            return clean ? decodeURIComponent(clean) : url;
+        } catch (e) {
+            return url;
         }
     }
 }
