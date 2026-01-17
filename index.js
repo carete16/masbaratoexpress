@@ -133,6 +133,34 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// 6. SITEMAP DINÁMICO (SEO para Facturación)
+app.get('/sitemap.xml', (req, res) => {
+  try {
+    const deals = db.prepare("SELECT id, posted_at FROM published_deals WHERE status = 'published' LIMIT 100").all();
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://masbaratodeals.onrender.com/</loc>
+    <changefreq>always</changefreq>
+    <priority>1.0</priority>
+  </url>`;
+
+    deals.forEach(deal => {
+      xml += `
+  <url>
+    <loc>https://masbaratodeals.onrender.com/go/${deal.id}</loc>
+    <lastmod>${new Date(deal.posted_at).toISOString().split('T')[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    });
+
+    xml += '\n</urlset>';
+    res.header('Content-Type', 'application/xml');
+    res.send(xml);
+  } catch (e) { res.status(500).send('Error generating sitemap'); }
+});
+
 // 5. ARRANQUE DEL BOT Y SERVIDOR
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ WEB ONLINE EN PUERTO: ${PORT}`);
