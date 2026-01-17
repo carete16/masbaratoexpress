@@ -64,7 +64,22 @@ class CoreProcessor {
                         deal.viralContent = aiResult.content;
 
                         // 5. BOT 4: PUBLICACIÓN Y MONETIZACIÓN
-                        const monetizedLink = await LinkTransformer.transform(deal.link, deal);
+                        let monetizedLink = await LinkTransformer.transform(deal.link, deal);
+
+                        // 5.5. BOT 5: BROWSER SIMULATOR (Último Recurso)
+                        // Si después de Bot2 y LinkTransformer el link sigue siendo de Slickdeals,
+                        // activamos Bot5 para intentar extraerlo con técnicas de navegador real
+                        if (monetizedLink && monetizedLink.includes('slickdeals.net')) {
+                            logger.info(`🔄 Activando BOT 5 (Browser Simulator) para: ${deal.title}`);
+                            const Bot5 = require('./Bot5_BrowserSim');
+                            const bot5Result = await Bot5.extractRealLink(deal.original_link || deal.link);
+
+                            if (bot5Result.success) {
+                                // Bot5 logró extraer el link! Re-monetizarlo
+                                monetizedLink = await LinkTransformer.transform(bot5Result.link, deal);
+                                logger.info(`✅ BOT 5 rescató la oferta: ${deal.title}`);
+                            }
+                        }
 
                         // 6. VALIDACIÓN ESTRICTA (SISTEMA PROFESIONAL)
                         // Si después de TODO el proceso, el link sigue siendo de Slickdeals o Google Translate,
