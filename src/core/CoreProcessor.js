@@ -64,7 +64,7 @@ class CoreProcessor {
                         deal.viralContent = aiResult.content;
 
                         // 5. BOT 4: PUBLICACIÓN Y MONETIZACIÓN
-                        const monetizedLink = await LinkTransformer.transform(deal.link);
+                        const monetizedLink = await LinkTransformer.transform(deal.link, deal);
                         // 6. ESTRATEGIA DE CONTINGENCIA (Monetización Forzada)
                         // Si después de todo el link sigue siendo Slickdeals, lo envolvemos en Sovrn
                         // Esto garantiza que NO se vea Slickdeals y que TÚ cobres.
