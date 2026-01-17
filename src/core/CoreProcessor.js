@@ -65,17 +65,30 @@ class CoreProcessor {
 
                         // 5. BOT 4: PUBLICACIÓN Y MONETIZACIÓN
                         const monetizedLink = await LinkTransformer.transform(deal.link, deal);
-                        // 6. ESTRATEGIA DE CONTINGENCIA (Monetización Forzada)
-                        // Si después de todo el link sigue siendo Slickdeals, lo envolvemos en Sovrn
-                        // Esto garantiza que NO se vea Slickdeals y que TÚ cobres.
-                        if (monetizedLink && (monetizedLink.includes('slickdeals.net') || monetizedLink.includes('viglink'))) {
-                            // Fallback a Sovrn directo si la extracción falló
-                            const fallbackSovrn = process.env.SOVRN_URL_PREFIX || 'https://redirect.viglink.com?key=168bdd181cfb276b05d8527e1d4cd03e&u=';
-                            deal.link = `${fallbackSovrn}${encodeURIComponent(deal.link)}`;
-                            logger.info(`🛡️ Fallback Sovrn aplicado a: ${deal.title}`);
-                        } else if (monetizedLink) {
-                            deal.link = monetizedLink;
+
+                        // 6. VALIDACIÓN ESTRICTA (SISTEMA PROFESIONAL)
+                        // Si después de TODO el proceso, el link sigue siendo de Slickdeals o Google Translate,
+                        // significa que NO pudimos obtener el enlace real de la tienda.
+                        // Según el "Sistema Profesional": NO PUBLICAR.
+                        if (monetizedLink && (
+                            monetizedLink.includes('slickdeals.net') ||
+                            monetizedLink.includes('translate.google') ||
+                            monetizedLink.includes('translate.googleusercontent')
+                        )) {
+                            logger.warn(`❌ DESCARTADO (Link no limpiable): ${deal.title}`);
+                            continue; // Saltar esta oferta
                         }
+
+                        // Si la tienda detectada es "Translate" o genérica, también descartar
+                        if (deal.tienda && (
+                            deal.tienda.toLowerCase().includes('translate') ||
+                            deal.tienda.toLowerCase().includes('google')
+                        )) {
+                            logger.warn(`❌ DESCARTADO (Tienda no identificada): ${deal.title}`);
+                            continue;
+                        }
+
+                        deal.link = monetizedLink;
 
                         // 7. LIMPIEZA ANTI-COMPETENCIA (RESGUARDO FINAL)
                         const blockRegex = /slickdeals|slick\s*deals|via\s+SD|SD\s+Exclusive/gi;

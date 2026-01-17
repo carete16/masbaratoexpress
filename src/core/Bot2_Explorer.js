@@ -48,15 +48,10 @@ class DeepExplorerBot {
                     timeout: 8000
                 });
             } catch (e) {
+                // Si hay bloqueo 403/429, mejor descartar esta oferta que usar el proxy corrupto
                 if (e.response && (e.response.status === 403 || e.response.status === 429)) {
-                    logger.info(`🛡️ Bloqueo 403/429. Intentando Google Proxy...`);
-                    try {
-                        const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(initialUrl)}`;
-                        response = await axios.get(proxyUrl, {
-                            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-                            timeout: 15000
-                        });
-                    } catch (proxyError) { throw e; }
+                    logger.warn(`🛡️ Oferta bloqueada por Slickdeals (403/429). Descartando para mantener calidad.`);
+                    throw new Error('BLOCKED_BY_SLICKDEALS');
                 } else { throw e; }
             }
 
