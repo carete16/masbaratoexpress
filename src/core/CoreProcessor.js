@@ -89,9 +89,9 @@ class CoreProcessor {
 
                 isRunning = false;
 
-                // 7. LIMPIEZA AUTOMÁTICA (Purge de ofertas antiguas > 48 horas)
-                logger.info('🧹 Iniciando limpieza de ofertas caducas...');
-                const deleted = db.prepare("DELETE FROM published_deals WHERE posted_at < datetime('now', '-48 hours')").run();
+                // 7. LIMPIEZA AUTOMÁTICA (Purge de ofertas antiguas > 72 horas / 3 días)
+                logger.info('🧹 Iniciando limpieza de ofertas caducas (ventana de 3 días)...');
+                const deleted = db.prepare("DELETE FROM published_deals WHERE posted_at < datetime('now', '-72 hours')").run();
                 if (deleted.changes > 0) {
                     logger.info(`♻️ Se eliminaron ${deleted.changes} ofertas antiguas para mantener la frescura.`);
                 }
