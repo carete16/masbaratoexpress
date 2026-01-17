@@ -13,6 +13,14 @@ class DeepExplorerBot {
     }
 
     async explore(initialUrl) {
+        // Rotación de Agentes para evitar fingerprinting fácil
+        const agents = [
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            'Mozilla/5.0 (Linux; Android 13; SM-S908B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ];
+        const randomAgent = agents[Math.floor(Math.random() * agents.length)];
+
         logger.info(`🕵️ BOT 1 (Explorador) iniciando expedición: ${initialUrl.substring(0, 60)}...`);
 
         let result = {
@@ -29,29 +37,26 @@ class DeepExplorerBot {
             // 1. CARGAR PÁGINA INTERNA DE SLICKDEALS
             let response;
             try {
-                // Intento 1: Request Directo con headers completos
+                // Intento 1: Request Directo con headers móviles
                 response = await axios.get(initialUrl, {
                     headers: {
-                        'User-Agent': this.userAgent,
+                        'User-Agent': randomAgent,
                         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                         'Accept-Language': 'en-US,en;q=0.5',
                         'Referer': 'https://www.google.com/'
                     },
-                    timeout: 10000
+                    timeout: 8000
                 });
             } catch (e) {
                 if (e.response && (e.response.status === 403 || e.response.status === 429)) {
-                    logger.info(`🛡️ Slickdeals bloqueó acceso directo (403/429). Activando Google Proxy Bypass...`);
+                    logger.info(`🛡️ Bloqueo 403/429. Intentando Google Proxy...`);
                     try {
                         const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(initialUrl)}`;
                         response = await axios.get(proxyUrl, {
                             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
                             timeout: 15000
                         });
-                    } catch (proxyError) {
-                        logger.error('❌ Proxy también falló. Abortando exploración profunda.');
-                        throw e; // Rendirse si ambos fallan
-                    }
+                    } catch (proxyError) { throw e; }
                 } else { throw e; }
             }
 
@@ -83,10 +88,10 @@ class DeepExplorerBot {
                 if (couponMatches) result.coupon = couponMatches[1].toUpperCase();
             }
 
-            // E. SEGUIR EL RASTRO HASTA LA TIENDA REAL (Extracción Multifacética)
+            // E. EXTRACCIÓN MAESTRA DE LINKS
             let buyNowLink = null;
 
-            // E.1. Búsqueda en Botones
+            // Método 1: Selectores CSS (Estándar)
             let buyNowLinks = $('a.buyNow, a.button--primary, a:contains("See Deal"), a:contains("Buy Now")');
             for (let i = 0; i < buyNowLinks.length; i++) {
                 let href = $(buyNowLinks[i]).attr('href');
@@ -96,37 +101,36 @@ class DeepExplorerBot {
                 }
             }
 
-            // E.2. Búsqueda en JSON-LD (Suele ser más fiable)
+            // Método 2: Variables Globales JS (SD.pageData) - MUY EFECTIVO
             if (!buyNowLink) {
-                $('script[type="application/ld+json"]').each((i, el) => {
-                    try {
-                        const json = JSON.parse($(el).html());
-                        if (json.offers && json.offers.url) buyNowLink = json.offers.url;
-                        if (json.url && !json.url.includes('slickdeals.net')) buyNowLink = json.url;
-                    } catch (e) { }
-                });
-            }
-
-            // E.3. Búsqueda "Sucia" (Links ocultos en attributos data-u2)
-            if (!buyNowLink) {
-                $('a').each((i, el) => {
-                    const h = $(el).attr('href');
-                    if (h && h.includes('u2=')) {
-                        buyNowLink = h;
-                        return false;
+                const scripts = $('script').map((i, el) => $(el).html()).get();
+                for (const script of scripts) {
+                    if (script.includes('productUrl')) {
+                        const match = script.match(/"productUrl":"([^"]+)"/);
+                        if (match) {
+                            buyNowLink = match[1].replace(/\\/g, '');
+                            break;
+                        }
                     }
-                });
+                    if (script.includes('dealParams') || script.includes('offers')) {
+                        const match = script.match(/"url":"([^"]+)"/);
+                        if (match && !match[1].includes('slickdeals.net')) {
+                            buyNowLink = match[1].replace(/\\/g, '');
+                            break;
+                        }
+                    }
+                }
             }
 
             if (buyNowLink) {
                 if (buyNowLink.startsWith('/')) buyNowLink = 'https://slickdeals.net' + buyNowLink;
 
-                // --- EXTRACCIÓN ESTÁTICA BLINDADA ---
+                // Limpieza estática de parámetros
                 try {
                     let temp = buyNowLink;
                     for (let k = 0; k < 3; k++) {
                         const u = new URL(temp.startsWith('/') ? 'https://slickdeals.net' + temp : temp);
-                        const next = u.searchParams.get('u2') || u.searchParams.get('dest') || u.searchParams.get('url') || u.searchParams.get('pno');
+                        const next = u.searchParams.get('u2') || u.searchParams.get('dest') || u.searchParams.get('url') || u.searchParams.get('pno') || u.searchParams.get('mpre');
                         if (next && next.startsWith('http')) {
                             temp = decodeURIComponent(next);
                             result.finalUrl = temp;
@@ -135,16 +139,15 @@ class DeepExplorerBot {
                 } catch (e) { }
             }
 
-            // F. INFERIR TIENDA (Mismo de siempre)
+            // F. INFERIR TIENDA DESDE URL FINAL
             const domainMatch = result.finalUrl.match(/https?:\/\/(?:www\.)?([^/]+)/);
             if (domainMatch) {
                 const d = domainMatch[1].toLowerCase();
                 if (d.includes('amazon')) result.store = 'Amazon';
                 else if (d.includes('walmart')) result.store = 'Walmart';
                 else if (d.includes('ebay')) result.store = 'eBay';
-                else if (d.includes('adorama') || result.finalUrl.includes('adorama')) result.store = 'Adorama';
-                else if (d.includes('bhphoto')) result.store = 'B&H Photo';
-                else if (d.includes('newegg')) result.store = 'Newegg';
+                else if (d.includes('adorama')) result.store = 'Adorama';
+                else if (d.includes('bestbuy')) result.store = 'Best Buy';
             }
 
             return result;
