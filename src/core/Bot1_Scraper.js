@@ -1,27 +1,38 @@
 const axios = require('axios');
 const RSSParser = require('rss-parser');
-const parser = new RSSParser();
+const parser = new RSSParser({
+    customFields: {
+        item: ['vendorname', 'imagelink'],
+    }
+});
 const logger = require('../utils/logger');
 
 /**
  * BOT 1: EL RADAR (Referencia de Mercado)
- * Detecta oportunidades basándose en fuentes externas como Slickdeals.
- * NO copia contenido, solo identifica el producto, tienda y precio referencial.
+ * Detecta oportunidades basándose en TechBargains RSS.
  */
 class RadarBot {
     constructor() {
-        this.rssUrl = 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1';
+        this.rssUrl = 'https://feeds.feedburner.com/Techbargains';
     }
 
     async getMarketOpportunities() {
         try {
-            logger.info('📡 Escaneando radar de oportunidades (Slickdeals RSS)...');
-            const feed = await parser.parseURL(this.rssUrl);
+            logger.info(`📡 Escaneando radar: ${this.rssUrl}`);
+
+            const response = await axios.get(this.rssUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                },
+                timeout: 15000
+            });
+
+            const feed = await parser.parseString(response.data);
             const opportunities = [];
 
             for (const item of feed.items) {
                 try {
-                    const opp = this.parseReference(item);
+                    const opp = await this.parseReference(item);
                     if (opp && this.validateReference(opp)) {
                         opportunities.push(opp);
                     }
@@ -29,6 +40,7 @@ class RadarBot {
                     logger.warn(`Error en radar item: ${e.message}`);
                 }
             }
+            logger.info(`✅ Radar detectó ${opportunities.length} oportunidades potenciales.`);
             return opportunities;
         } catch (error) {
             logger.error(`❌ Error en RadarBot: ${error.message}`);
@@ -36,96 +48,44 @@ class RadarBot {
         }
     }
 
-    parseReference(item) {
-        // Extraemos solo puntos de datos ciegos
-        const rawTitle = item.title;
-        let referencePrice = 0;
-        let msrp = 0;
+    async parseReference(item) {
+        try {
+            const title = item.title || '';
+            const link = item.link || item.guid || '';
 
-        const prices = rawTitle.match(/\$(\d+(?:\.\d{2})?)/g);
-        if (prices && prices.length >= 2) {
-            referencePrice = parseFloat(prices[0].replace('$', ''));
-            msrp = parseFloat(prices[1].replace('$', ''));
-        } else if (prices) {
-            referencePrice = parseFloat(prices[0].replace('$', ''));
-        }
+            // TechBargains ofrece datos muy limpios en tags personalizados
+            const storeName = item.vendorname || 'Global';
+            const imageUrl = item.imagelink || '';
 
-        // Identificamos la tienda probable con mayor precisión (Patrón [Tienda])
-        let store = 'Global';
-        const storeMatch = rawTitle.match(/\[(.*?)\]/);
-        if (storeMatch) {
-            store = storeMatch[1].trim();
-        } else {
-            const tLower = rawTitle.toLowerCase();
-            if (tLower.includes('amazon')) store = 'Amazon';
-            else if (tLower.includes('walmart')) store = 'Walmart';
-            else if (tLower.includes('ebay')) store = 'eBay';
-            else if (tLower.includes('best buy')) store = 'Best Buy';
-            else if (tLower.includes('target')) store = 'Target';
-        }
-
-        // Intentamos obtener el ID del producto (ASIN, SKU) para la validación posterior
-        let productId = null;
-        let directLink = null;
-
-        if (item.content) {
-            const decodedContent = item.content.replace(/&amp;/g, '&').replace(/&quot;/g, '"');
-            const directPatterns = [
-                /https?:\/\/(?:www\.)?amazon\.com\/(?:dp|gp\/product)\/[A-Z0-9]{10}/i,
-                /https?:\/\/(?:www\.)?walmart\.com\/ip\/[^"'\s<>\[\]]+\/\d+/i,
-                /https?:\/\/(?:www\.)?ebay\.com\/itm\/\d+/i,
-                /https?:\/\/(?:www\.)?bestbuy\.com\/site\/[^"'\s<>\[\]]+\/\d+\.p/i,
-                /https?:\/\/(?:www\.)?target\.com\/p\/[^"'\s<>\[\]]+\/-\/A-\d+/i
-            ];
-            for (const pattern of directPatterns) {
-                const match = decodedContent.match(pattern);
-                if (match) {
-                    directLink = match[0];
-                    if (directLink.includes('amazon.com')) store = 'Amazon';
-                    break;
-                }
+            // Extraer precio del título (suele estar al final: "Product Name $99")
+            let priceOffer = 0;
+            const priceMatch = title.match(/\$(\d+\.?\d*)/);
+            if (priceMatch) {
+                priceOffer = parseFloat(priceMatch[1]);
             }
 
-            // EXTRA TOTAL: Búsqueda del parámetro u2 en el contenido
-            const u2Match = decodedContent.match(/[?&]u2=([^"'\s&<>\[\]]+)/i);
-            if (u2Match && !directLink) {
-                const decoded = decodeURIComponent(u2Match[1]);
-                if (decoded.startsWith('http') && !decoded.includes('slickdeals.net')) {
-                    directLink = decoded;
-                }
-            }
+            // Limpiar el título quitando el precio al final
+            const cleanTitle = title.replace(/\s*\$\d+\.?\d*\s*$/, '').trim();
+
+            return {
+                title: cleanTitle,
+                sourceLink: link,
+                referencePrice: priceOffer,
+                msrp: priceOffer * 1.2, // Estimación
+                store: storeName,
+                image: imageUrl,
+                description: item.contentSnippet || item.content || '',
+                pubDate: item.pubDate,
+                productId: null // TechBargains no da ASIN directo, se sacará del link si es Amazon
+            };
+        } catch (error) {
+            logger.error(`Error parseando item: ${error.message}`);
+            return null;
         }
-
-        const asinMatch = rawTitle.match(/\b(B0[A-Z0-9]{8})\b/i);
-        if (asinMatch) {
-            productId = asinMatch[1];
-            if (!directLink) directLink = `https://www.amazon.com/dp/${productId}`;
-            store = 'Amazon';
-        }
-
-        // Link de origen solo para seguir el rastro a la tienda final
-        // let sourceLink = item.link; // This line is now handled by directLink || item.link
-
-        let image = null;
-        if (item.content) {
-            const imgMatch = item.content.match(/src="([^"]+)"/);
-            if (imgMatch) image = imgMatch[1];
-        }
-
-        return {
-            title: rawTitle.replace(/\[.*?\]/g, '').replace(/slickdeals/gi, '').trim(),
-            referencePrice,
-            msrp,
-            store,
-            productId,
-            sourceLink: directLink || item.link,
-            image,
-            pubDate: item.pubDate
-        };
     }
 
     validateReference(opp) {
-        return opp.referencePrice > 0;
+        return opp.title && opp.sourceLink && opp.referencePrice > 0;
     }
 }
 

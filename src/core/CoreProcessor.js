@@ -3,8 +3,8 @@ const { db, isRecentlyPublished } = require('../database/db');
 
 class CoreProcessor {
     constructor() {
-        // Intervalo de 2 horas paraPriorizar Calidad > Cantidad (Seguimiento de 10-12 ofertas diarias)
-        this.interval = 2 * 60 * 60 * 1000;
+        // Intervalo de 15 minutos para el inicio dinámico (luego volverá a 2h)
+        this.interval = 15 * 60 * 1000;
         this.dailyLimit = 12;
     }
 
@@ -43,8 +43,12 @@ class CoreProcessor {
 
                         // 2. VALIDACIÓN OBLIGATORIA (Tienda Origen)
                         const validation = await Validator.validate(opp);
-                        if (!validation.isValid || !validation.hasStock) {
-                            logger.warn(`❌ Oportunidad descartada en validación: ${opp.title}`);
+                        if (!validation.isValid) {
+                            logger.warn(`❌ Validación fallida (Link/Precio): ${opp.title}`);
+                            continue;
+                        }
+                        if (!validation.hasStock) {
+                            logger.warn(`❌ Producto sin Stock: ${opp.title}`);
                             continue;
                         }
 

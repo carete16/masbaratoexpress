@@ -540,7 +540,9 @@
                         <div class="image-container" style="background:#fff; height: 220px; position:relative; display:flex; align-items:center; justify-content:center; padding: 20px;">
                             ${storeBadge}
                             ${discountBadge}
-                            <img src="${deal.image}" alt="${deal.title}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                            <img src="${deal.image}" alt="${deal.title}" 
+                                 onerror="this.src='https://www.techbargains.com/Content/static/tb-logo.png'; this.style.opacity='0.5';"
+                                 style="max-height: 100%; max-width: 100%; object-fit: contain;">
                         </div>
                         <div class="card-content" style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; border-top: 1px solid #f1f5f9;">
                             <h3 style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 12px; line-height: 1.4; height: 42px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${deal.title}</h3>

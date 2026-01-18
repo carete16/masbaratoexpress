@@ -30,6 +30,15 @@ class ValidatorBot {
             // Si el link NO es de Slickdeals, ya es directo (¡Garantizado!)
             const isDirect = !finalUrl.includes('slickdeals.net');
 
+            // Extraer ASIN si es Amazon y no lo tenemos
+            if (finalUrl.includes('amazon.com') && !opportunity.productId) {
+                const asinMatch = finalUrl.match(/\/([A-Z0-9]{10})(?:[\/?]|$)/);
+                if (asinMatch) {
+                    opportunity.productId = asinMatch[1];
+                    opportunity.store = 'Amazon';
+                }
+            }
+
             if (!isDirect) {
                 // Si es Amazon con ASIN, generamos el link directo para evitar rastro
                 if (opportunity.productId && opportunity.store === 'Amazon') {
@@ -76,10 +85,20 @@ class ValidatorBot {
                 if (result.storeName === 'Amazon') {
                     const priceStr = $('.a-price-whole').first().text() + $('.a-price-fraction').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
-                    result.image = $('img#landingImage').attr('src') || $('img#imgBlkFront').attr('src');
+                    result.image = $('img#landingImage').attr('src') || $('img#imgBlkFront').attr('src') || $('#main-image-container img').attr('src');
+                    result.title = $('#productTitle').text().trim();
                 } else if (result.storeName === 'Walmart') {
                     const priceStr = $('span[itemprop="price"]').attr('content') || $('.price-characteristic').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+                    result.image = $('img[data-testid="main-image"]').attr('src') || $('.wp-image').first().attr('src');
+                    result.title = $('h1').first().text().trim();
+                } else if (result.storeName === 'eBay') {
+                    const priceStr = $('.x-price-primary').first().text() || $('.display-price').first().text();
+                    foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+                    // Imagen en alta resolución (reemplazamos s-l500 por s-l1600)
+                    let img = $('.ux-image-carousel-item.active img').attr('src') || $('.ux-image-carousel-item img').attr('src') || $('img#icImg').attr('src');
+                    if (img) result.image = img.replace(/s-l\d+/, 's-l1600');
+                    result.title = $('.x-item-title__mainTitle').text().trim() || $('h1').first().text().trim();
                 }
 
                 // VALIDACIÓN DE PRECIO (REGLA CRÍTICA)
@@ -107,15 +126,33 @@ class ValidatorBot {
                 }
 
                 result.isValid = true;
+                if (foundPrice > 0) {
+                    result.realPrice = foundPrice;
+                } else if (opportunity.referencePrice > 0) {
+                    result.realPrice = opportunity.referencePrice;
+                }
+
                 logger.info(`✅ Oportunidad VALIDADA: $${result.realPrice}`);
 
             } catch (e) {
                 // Si la tienda bloquea el acceso simple (403), pero el link es directo, 
-                // permitimos el paso si el link es de alta calidad (DP de Amazon, etc.)
-                if (finalUrl.includes('/dp/') || finalUrl.includes('/ip/')) {
-                    logger.info(`✅ Validación por estructura de link (Tienda protegida).`);
-                    result.isValid = true;
-                    result.realPrice = opportunity.referencePrice;
+                // usamos el Simulador de Navegador como último recurso
+                logger.warn(`⚠️ Acceso directo bloqueado (${e.message}). Intentando simulación de navegador...`);
+                try {
+                    const Bot5 = require('./Bot5_BrowserSim');
+                    const browserData = await Bot5.extractRealLink(finalUrl); // Reutilizamos Bot5 para ver la página
+                    if (browserData.success) {
+                        // Aquí podríamos pulir Bot5 para devolver metadatos, 
+                        // pero por ahora al menos sabemos que el link es válido.
+                        result.isValid = true;
+                        result.realPrice = opportunity.referencePrice;
+                    }
+                } catch (browserError) {
+                    if (finalUrl.includes('/dp/') || finalUrl.includes('/ip/') || finalUrl.includes('/itm/')) {
+                        logger.info(`✅ Validación por estructura de link (Tienda protegida).`);
+                        result.isValid = true;
+                        result.realPrice = opportunity.referencePrice;
+                    }
                 }
             }
 

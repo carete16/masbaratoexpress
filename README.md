@@ -1,42 +1,43 @@
 # 🎯 Masbarato Deals Bot - Professional Edition
 
-Sistema automatizado de cacería de ofertas con IA, monetización y dashboard de control.
+Sistema híbrido de cacería de ofertas con IA, monetización automática y control manual de precisión.
 
-## 🚀 Inicio Rápido
+## 🚀 Cómo publicar OFERTAS MANUALES (Recomendado)
 
-1.  **Instalación:** Ejecuta `npm install` en la carpeta raíz.
-2.  **Configuración:** Edita el archivo `.env` con tus tokens (Telegram, IA, Email).
-3.  **Lanzamiento:** Haz doble clic en `INICIAR_SISTEMA.bat`.
+Esta es la forma más potente de usar el sistema para facturar. Tú eliges la oferta y el bot hace el trabajo sucio.
 
-## 🛠️ Características Expertas
+1.  Abre una terminal en la carpeta del proyecto.
+2.  Ejecuta el comando:
+    ```bash
+    node manual_post.js "URL_DE_EBAY_AMAZON_O_WALMART" [PRECIO]
+    ```
+3.  **¿Qué pasará?**
+    - El bot **limpia el link** de códigos externos.
+    - El bot **inyecta tus códigos de afiliado** automáticamente.
+    - La IA redacta un **post profesional** y persuasivo.
+    - La oferta se publica en **Telegram** y en la **Web** al instante.
 
-### 1. Cerebro con IA (AIProcessor)
-Utiliza **LLMs (GPT-3.5/4)** para transformar una oferta aburrida en un post viral irresistible. Si no hay API Key, el sistema usa un motor de respaldo profesional.
+## 🛠️ Configuración Inicial
 
-### 2. Dashboard Premium
-Accede a `http://localhost:3000` para ver:
-- Estadísticas en tiempo real.
-- Gráficas de rendimiento.
-- Historial de ofertas publicadas.
+1.  **Instalación:** Ejecuta `npm install`.
+2.  **Variables (.env):** 
+    - `TELEGRAM_BOT_TOKEN`: Token de @BotFather.
+    - `TELEGRAM_CHANNEL_ID`: ID o @alias de tu canal.
+    - `AMAZON_TAG`, `EBAY_CAMPAIGN_ID`, `WALMART_ID`: Tus IDs de afiliado.
+    - `OPENAI_API_KEY`: Para redacción con IA (opcional, tiene fallback).
 
-### 3. Monetización Automática
-El `LinkTransformer` inyecta tus IDs de afiliado (Amazon, AliExpress, etc.) en cada enlace antes de publicarlo.
+## 📁 Características Principales
 
-### 4. Control de Duplicados (Smart Fingerprint)
-Usa SQLite para asegurar que no se repita ninguna oferta en un rango de 72 horas, manteniendo el canal limpio y profesional.
+- **Dashboard Web Premium:** Visualiza todas las ofertas publicadas en `http://localhost:3000`.
+- **Limpiador Químico de Enlaces:** Elimina rastros de Slickdeals, grupos de Telegram ajenos y redireccionadores.
+- **Sitemap Dinámico:** Optimizado para aparecer en Google Search Console y Discover.
+- **Always-On:** Sistema de latido (Heartbeat) para evitar que Render suspenda la aplicación.
 
-### 5. Nichos y Escalabilidad
-Soporta múltiples canales de Telegram. Puedes dirigir ofertas de tecnología a un canal y de moda a otro automáticamente.
-
-### 6. Reportes Diarios
-Recibe un resumen ejecutivo en tu email cada noche a las 10:00 PM con las métricas del día.
-
-## 📁 Estructura del Código
-- `/collectors`: Scrapers de alta estabilidad (RSS, MercadoLibre, Global).
-- `/core`: Lógica de IA, filtros y procesamiento de datos.
-- `/database`: Persistencia de datos con SQLite.
-- `/notifiers`: Puentes de comunicación (Telegram, Email).
-- `/web`: Servidor Express y UI del Dashboard.
+## 📁 Estructura
+- `manual_post.js`: Tu herramienta principal para publicar hoy.
+- `/src/core`: Los "bots" internos de validación y simulación de navegador.
+- `/src/utils`: Motores de limpieza de links y logger.
+- `/public`: Interfaz web de usuario.
 
 ---
-**Desarrollado para Google Gravity / Agravity por Antigravity Expert.**
+**Potenciado por MasbaratoDeals Team.**
