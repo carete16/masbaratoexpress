@@ -1,0 +1,50 @@
+        function render(deals) {
+            const grid = document.getElementById('grid');
+            if (!deals || deals.length === 0) {
+                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:100px; color:#94a3b8; font-weight:600;">📭 No hay ofertas activas.</div>';
+                return;
+            }
+
+            grid.innerHTML = deals.map(deal => {
+                const discount = (deal.price_official > deal.price_offer)
+                    ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
+                    : 0;
+                
+                const ahorro = (deal.price_official > deal.price_offer) ? (deal.price_official - deal.price_offer).toFixed(2) : 0;
+
+                return `
+                    <article class="premium-card">
+                        <div class="img-wrapper">
+                            <div class="badge-store">${deal.tienda || 'Oferta USA'}</div>
+                            ${discount > 0 ? `<div class="badge-discount">-${discount}%</div>` : ''}
+                            <img src="https://wsrv.nl/?url=${encodeURIComponent(deal.image)}&w=400&h=400&fit=contain" 
+                                 alt="${deal.title}" 
+                                 onerror="this.src='https://www.techbargains.com/Content/static/tb-logo.png';">
+                        </div>
+                        <div class="card-body">
+                            ${discount > 40 ? '<span style="color:#ef4444; font-size:10px; font-weight:900; letter-spacing:1px; text-transform:uppercase;">🔥 SÚPER CHOLLO</span>' : ''}
+                            <h3 class="card-title">${deal.title}</h3>
+                            
+                            <div class="price-container">
+                                <span class="price-now">$${deal.price_offer}</span>
+                                ${deal.price_official > deal.price_offer ? `<span class="price-was">$${deal.price_official}</span>` : ''}
+                            </div>
+
+                            ${ahorro > 0 ? `
+                                <div class="savings-tag">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                                    ¡AHORRAS $${ahorro}!
+                                </div>
+                            ` : ''}
+
+                            <div style="display: flex; gap: 8px; margin-top: 15px;">
+                                <button onclick="openEditorial('${deal.id}')" style="flex:1; background:var(--bg-body); border:1px solid rgba(0,0,0,0.1); padding:10px; border-radius:12px; font-size:12px; font-weight:700; cursor:pointer;">Lupa</button>
+                                <a href="/go/${deal.id}" target="_blank" class="buy-button" style="flex:3; margin-top:0;">
+                                    IR A LA GANGA
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }

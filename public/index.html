@@ -4,38 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MasbaratoDeals | Las Mejores Ofertas y Descuentos en Amazon USA</title>
-    <meta name="description"
-        content="Encuentra las mejores ofertas, cupones y descuentos verificados de Amazon USA, Walmart y eBay. Ahorro inteligente con análisis editorial diario.">
-    <meta name="keywords"
-        content="ofertas amazon usa, descuentos estados unidos, cupones amazon, mejores precios usa, masbaratodeals">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <title>Masbarato Deals | Los Mejores Chollos USA</title>
+    <link rel="icon" href="https://wsrv.nl/?url=https://www.techbargains.com/Content/static/tb-logo.png&w=32&h=32">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2563eb;
-            --primary-gradient: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-            --accent: #f59e0b;
-            --bg: #f8fafc;
+            --primary-glow: rgba(37, 99, 235, 0.15);
+            --bg-body: #f1f5f9;
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --glass: rgba(255, 255, 255, 0.85);
-            --radius: 28px;
-            --shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
-            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #020617;
-                --card-bg: #1e293b;
+                --bg-body: #020617;
+                --card-bg: #0f172a;
                 --text-main: #f8fafc;
                 --text-muted: #94a3b8;
-                --glass: rgba(15, 23, 42, 0.9);
-                --card-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.4);
             }
         }
 
@@ -43,599 +31,445 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background-color: var(--bg);
+            background: var(--bg-body);
             color: var(--text-main);
-            overflow-x: hidden;
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
         }
 
-        /* Nav Glassmorphism Premium */
+        /* --- HEADER --- */
         header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: var(--glass);
+            background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            height: 80px;
-            display: flex;
-            align-items: center;
-            padding: 0 5%;
-        }
-
-        .nav-container {
-            width: 100%;
-            max-width: 1400px;
-            margin: 0 auto;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 15px 5%;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            header {
+                background: rgba(15, 23, 42, 0.8);
+            }
         }
 
         .logo {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 800;
-            letter-spacing: -1.5px;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 15px;
-        }
-
-        .btn {
-            padding: 12px 28px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--primary);
             text-decoration: none;
-            border: none;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px -8px rgba(37, 99, 235, 0.4);
-            filter: brightness(1.05);
-        }
-
-        .btn-outline {
-            background: white;
-            border: 1.5px solid #e2e8f0;
+        .logo i {
+            font-style: normal;
             color: var(--text-main);
         }
 
-        /* Hero Moderno */
+        /* --- HERO --- */
         .hero {
-            padding: 180px 5% 80px;
-            background: radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 20% 100%, rgba(124, 58, 237, 0.05) 0%, transparent 40%);
+            padding: 60px 5%;
             text-align: center;
+            background: radial-gradient(circle at top right, var(--primary-glow), transparent);
         }
 
         .hero h1 {
-            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-size: 42px;
             font-weight: 800;
-            letter-spacing: -0.05em;
-            margin-bottom: 24px;
-            color: #020617;
-            line-height: 1.1;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
         }
 
         .hero p {
             color: var(--text-muted);
-            font-size: 1.2rem;
-            max-width: 650px;
-            margin: 0 auto 50px;
-            font-weight: 500;
+            font-size: 18px;
+            margin-bottom: 30px;
         }
 
-        /* Search Ultra-Clean */
-        .search-wrapper {
-            max-width: 750px;
+        .search-container {
+            max-width: 650px;
             margin: 0 auto;
             position: relative;
         }
 
         .search-input {
             width: 100%;
-            padding: 24px 35px;
-            padding-left: 65px;
-            border-radius: 24px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            font-size: 17px;
-            font-weight: 500;
-            outline: none;
-            transition: all 0.3s;
+            padding: 18px 25px;
+            border-radius: 16px;
+            border: 2px solid rgba(0, 0, 0, 0.05);
             background: var(--card-bg);
             color: var(--text-main);
-            box-shadow: var(--shadow);
+            font-size: 16px;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
         }
 
         .search-input:focus {
+            outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08), 0 20px 40px -10px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
+            box-shadow: 0 0 20px var(--primary-glow);
         }
 
-        .categories-chips {
+        /* --- FILTERS --- */
+        .filters {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            margin-top: 35px;
+            gap: 10px;
+            margin-top: 30px;
             flex-wrap: wrap;
         }
 
         .chip {
-            padding: 10px 22px;
-            border-radius: 100px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-muted);
+            padding: 8px 18px;
+            border-radius: 50px;
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             cursor: pointer;
-            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
         }
 
-        .chip:hover,
+        .chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         .chip.active {
-            background: #020617;
+            background: var(--primary);
             color: white;
-            border-color: #020617;
-            transform: scale(1.05);
+            border-color: var(--primary);
         }
 
-        /* Luxury Deals Grid */
-        main {
-            max-width: 1440px;
-            margin: 0 auto;
-            padding: 60px 5% 120px;
-        }
-
-        .deals-grid {
+        /* --- GRID --- */
+        .deal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 35px;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 30px;
+            padding: 40px 5%;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
+        /* --- CARD --- */
         .deal-card {
             background: var(--card-bg);
-            border-radius: var(--radius);
+            border-radius: 24px;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
             display: flex;
             flex-direction: column;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0, 0, 0, 0.03);
             position: relative;
-        }
-
-        .deal-card::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-            pointer-events: none;
         }
 
         .deal-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.12);
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
         }
 
-        .image-container {
+        .image-wrapper {
+            height: 240px;
+            background: white;
+            padding: 25px;
             position: relative;
-            width: 100%;
-            padding-top: 80%;
-            background: #fff;
-            overflow: hidden;
-            border-bottom: 1px solid #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .image-container img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 85%;
-            height: 85%;
+        .image-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transition: 0.4s;
         }
 
-        .deal-card:hover img {
-            transform: translate(-50%, -55%) scale(1.08);
+        .deal-card:hover .image-wrapper img {
+            transform: scale(1.08);
         }
 
         .discount-badge {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #020617;
+            top: 15px;
+            right: 15px;
+            background: #ef4444;
             color: white;
-            padding: 8px 14px;
-            border-radius: 12px;
+            padding: 5px 12px;
+            border-radius: 10px;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
             z-index: 10;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .store-tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            z-index: 10;
         }
 
         .card-content {
-            padding: 28px;
+            padding: 25px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
         }
 
-        .store-tag {
-            font-size: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--primary);
-            letter-spacing: 0.1em;
-            margin-bottom: 12px;
-            display: block;
-        }
-
         .deal-title {
-            font-size: 19px;
+            font-size: 17px;
             font-weight: 700;
-            color: #020617;
-            margin-bottom: 20px;
-            overflow: hidden;
+            color: var(--text-main);
+            margin-bottom: 15px;
             line-height: 1.4;
-            height: 54px;
-            letter-spacing: -0.01em;
+            height: 48px;
+            overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
-            line-clamp: 2;
         }
 
         .price-row {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: auto;
-            margin-bottom: 25px;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
-        .price-box {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .price-offer {
+        .price-now {
             font-size: 28px;
-            font-weight: 900;
-            color: #020617;
+            font-weight: 800;
+            color: var(--text-main);
             letter-spacing: -1px;
         }
 
-        .price-original {
-            font-size: 14px;
-            color: var(--text-muted);
+        .price-was {
+            font-size: 15px;
+            color: #ef4444;
             text-decoration: line-through;
-            font-weight: 500;
+            opacity: 0.8;
+            font-weight: 600;
         }
 
-        .score-box {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: #f1f5f9;
-            padding: 6px 12px;
-            border-radius: 10px;
+        .savings-line {
+            color: #ef4444;
             font-size: 13px;
             font-weight: 700;
-            color: #475569;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .btn-view {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            background: var(--primary-gradient);
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-editorial {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--bg-body);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            color: var(--text-muted);
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 11px;
+        }
+
+        .btn-editorial:hover {
+            background: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .btn-go {
+            flex: 2;
+            padding: 12px;
+            border-radius: 12px;
+            background: #0f172a;
             color: white;
             text-align: center;
-            border-radius: 16px;
-            font-weight: 800;
             text-decoration: none;
-            transition: all 0.3s;
-            border: none;
-            font-size: 15px;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-
-        .btn-view:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
-        }
-
-        /* Admin Experience */
-        .admin-footer {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .btn-adm {
-            padding: 10px;
-            border-radius: 12px;
+            font-weight: 800;
             font-size: 13px;
-            font-weight: 700;
-            border: 1px solid #e2e8f0;
-            background: #f8fafc;
+            transition: 0.2s;
+        }
+
+        .btn-go:hover {
+            background: var(--primary);
+            transform: scale(1.02);
+        }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            border-radius: 28px;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+            position: relative;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-body {
+            padding: 40px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-body);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-adm-edit:hover {
-            background: #e0f2fe;
-            color: #0369a1;
-            border-color: #7dd3fc;
-        }
-
-        .btn-adm-del:hover {
-            background: #fee2e2;
-            color: #b91c1c;
-            border-color: #fecaca;
+            font-weight: 800;
         }
 
         footer {
-            padding: 80px 5% 40px;
-            background: #ffffff;
-            border-top: 1px solid #f1f5f9;
+            padding: 60px 5%;
             text-align: center;
-        }
-
-        footer .logo-bottom {
-            font-size: 20px;
-            font-weight: 800;
-            color: #020617;
-            margin-bottom: 20px;
-        }
-
-        footer p {
             color: var(--text-muted);
-            font-size: 15px;
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-            header {
-                height: 75px;
-            }
-
-            .hero {
-                padding-top: 130px;
-            }
-
-            .deals-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-actions {
-                display: none;
-            }
-
-            .hero h1 {
-                font-size: 2.2rem;
-            }
+            font-size: 14px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
 
 <body>
-
     <header>
-        <div class="nav-container">
-            <div class="logo">+Barato Deals</div>
-            <div class="nav-actions">
-                <a href="https://t.me/Masbarato_deals" target="_blank" class="btn btn-primary">Recibir Alertas</a>
-            </div>
+        <a href="/" class="logo"><i>BARATO</i> DEALS</a>
+        <div style="display: flex; gap: 15px;">
+            <a href="https://t.me/Masbarato_deals" target="_blank"
+                style="text-decoration:none; font-weight:700; color: var(--text-main); font-size:13px;">TELEGRAM</a>
         </div>
     </header>
 
-    <section class="hero">
-        <h1>Lo Último de USA, <br>Antes que Nadie.</h1>
-        <p>Curamos las liquidaciones más agresivas de la red usando tecnología de monitoreo en tiempo real.</p>
-
-        <div class="search-wrapper">
-            <input type="text" id="search" class="search-input"
-                placeholder="¿Qué estás buscando? (Laptop, Nike, TV...)">
-            <div class="categories-chips">
-                <div class="chip active" data-cat="all">Todo</div>
-                <div class="chip" data-cat="Tecnología">Tecnología</div>
-                <div class="chip" data-cat="Gamer">Gamer</div>
-                <div class="chip" data-cat="Moda">Moda</div>
-                <div class="chip" data-cat="Hogar">Hogar</div>
-                <div class="chip" data-cat="Tools">Herramientas</div>
-            </div>
+    <div class="hero">
+        <h1>Chollos de Verdad en USA</h1>
+        <p>Expertos verificando cada oferta para que nunca pagues de más.</p>
+        <div class="search-container">
+            <input type="text" id="search" class="search-input" placeholder="¿Qué quieres comprar hoy?">
         </div>
-
-        <div id="featured-deals" class="featured-section"
-            style="margin-top: 60px; max-width: 1200px; margin-left: auto; margin-right: auto; display: none;">
-            <h2
-                style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); font-weight: 800; margin-bottom: 25px;">
-                🔥 Tendencias Ahora</h2>
-            <div id="featured-grid"
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                <!-- Featured deals go here -->
-            </div>
+        <div class="filters">
+            <button class="chip active" data-cat="all">Todos</button>
+            <button class="chip" data-cat="Tecnología">Tecnología</button>
+            <button class="chip" data-cat="Moda">Moda</button>
+            <button class="chip" data-cat="Hogar">Hogar</button>
+            <button class="chip" data-cat="Gamer">Gamer</button>
         </div>
-    </section>
+    </div>
 
-    <main>
-        <div id="grid" class="deals-grid">
-            <!-- Dinámico -->
-        </div>
+    <main class="deal-grid" id="grid">
+        <!-- Ofertas -->
     </main>
 
+    <div id="modal" class="modal" onclick="if(event.target == this) closeEditorial()">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeEditorial()">✕</button>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
     <footer>
-        <div class="logo-bottom">+BARATO DEALS</div>
-        <p>Expertos en rastreo de ofertas premium. Participamos en programas de afiliados para mantener este servicio
-            gratuito. Al comprar a través de nuestros enlaces, apoyas el proyecto.</p>
+        <p><strong>© 2026 Masbarato Deals</strong></p>
+        <p>Contenido verificado de Slickdeals, TechBargains y Amazon.</p>
     </footer>
 
     <script>
         let allDeals = [];
-        const isAdmin = localStorage.getItem('admin_password') === 'Masbarato2026';
 
         async function init() {
             try {
-                const res = await fetch(`/api/deals?v=${Date.now()}`);
+                const res = await fetch('/api/deals');
                 allDeals = await res.json();
                 render(allDeals);
-                renderFeatured(allDeals);
-
-                // Eliminado botón admin de la home por privacidad
             } catch (e) {
-                console.error(e);
+                console.error("Error cargando ofertas:", e);
+                document.getElementById('grid').innerHTML = '<p style="text-align:center; grid-column:1/-1;">Conectando con el radar de chollos...</p>';
             }
-        }
-
-        function renderFeatured(deals) {
-            console.log("Renderizado de tendencias iniciado...", deals?.length);
-            const featuredSection = document.getElementById('featured-deals');
-            const featuredGrid = document.getElementById('featured-grid');
-
-            if (!deals || deals.length === 0) return;
-
-            // Tomar las 3 ofertas con mejor score (si los scores son 0, toma las más recientes)
-            const topDeals = [...deals].sort((a, b) => {
-                if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
-                return 0; // Mantener orden original (recientes) si no hay score
-            }).slice(0, 3);
-
-            featuredSection.style.display = 'block';
-            featuredGrid.innerHTML = topDeals.map(deal => {
-                const discount = deal.price_official > deal.price_offer ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100) : 0;
-
-                return `
-                    <div class="deal-card" style="flex-direction: row; align-items: center; padding: 15px; gap: 15px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);" onclick="location.href='/go/${deal.id}'">
-                        <img src="https://wsrv.nl/?url=${encodeURIComponent(deal.image)}&w=100&h=100&fit=contain" style="width: 80px; height: 80px; object-fit: contain; background: white; border-radius: 12px; padding: 5px;">
-                        <div style="text-align: left;">
-                            <h4 style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${deal.title}</h4>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <span style="font-size: 18px; font-weight: 900; color: var(--primary);">$${deal.price_offer}</span>
-                                ${discount > 0 ? `<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 5px; font-size: 10px; font-weight: 800; white-space: nowrap;">-${discount}%</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         }
 
         function render(deals) {
             const grid = document.getElementById('grid');
             if (!deals || deals.length === 0) {
-                grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:100px; color:#94a3b8; font-weight:600;">📭 No hay ofertas activas en esta categoría.</div>';
+                grid.innerHTML = '<p style="text-align:center; grid-column:1/-1; padding:100px; color:var(--text-muted);">Estamos capturando las mejores ofertas de Slickdeals ahora mismo...</p>';
                 return;
             }
 
             grid.innerHTML = deals.map(deal => {
-                // Sistema de Colores por Tienda (Clonación Visual)
-                const storeColors = {
-                    'Amazon': '#232f3e',
-                    'Walmart': '#0071ce',
-                    'eBay': '#e53238',
-                    'Best Buy': '#fff200',
-                    'Target': '#cc0000',
-                    'Adidas': '#000000',
-                    'Nike': '#000000'
-                };
-                const storeColor = storeColors[deal.tienda] || '#475569';
-                const storeTextColor = deal.tienda === 'Best Buy' ? '#000' : '#fff';
-
                 const discount = (deal.price_official > deal.price_offer)
                     ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
                     : 0;
 
-                const discountBadge = discount > 0 ? `
-                    <div style="position:absolute; top:15px; right:15px; background:#ef4444; color:white; padding:5px 10px; border-radius:8px; font-weight:900; font-size:13px; z-index:10; box-shadow:0 4px 10px rgba(239,68,68,0.2);">
-                        -${discount}%
-                    </div>` : '';
-
-                const storeBadge = `
-                    <div style="position:absolute; top:15px; left:15px; background:${storeColor}; color:${storeTextColor}; padding:5px 12px; border-radius:8px; font-weight:800; font-size:10px; z-index:10; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
-                        ${deal.tienda || 'Oferta USA'}
-                    </div>`;
-
-                const couponHtml = deal.coupon ? `
-                    <div style="background:#fff7ed; border:1px dashed #fdba74; padding:8px; border-radius:10px; margin-bottom:12px; text-align:center;">
-                        <span style="font-size:10px; font-weight:700; color:#c2410c; display:block; text-transform:uppercase;">CÓDIGO:</span>
-                        <code style="font-size:15px; color:#9a3412; font-weight:800;">${deal.coupon}</code>
-                    </div>
-                ` : '';
+                const savings = (deal.price_official > deal.price_offer) ? (deal.price_official - deal.price_offer).toFixed(2) : 0;
 
                 return `
-                    <article class="deal-card" id="deal-${deal.id}" style="border: 1px solid #e2e8f0; background: #fff; border-radius: 20px; transition: 0.3s; overflow: hidden; display: flex; flex-direction: column;">
-                        <div class="image-container" style="background:#fff; height: 220px; position:relative; display:flex; align-items:center; justify-content:center; padding: 20px;">
-                            ${storeBadge}
-                            ${discountBadge}
-                            <img src="https://wsrv.nl/?url=${encodeURIComponent(deal.image)}&w=400&h=400&fit=contain" alt="${deal.title}" 
-                                 onerror="this.src='https://www.techbargains.com/Content/static/tb-logo.png'; this.style.opacity='0.5';"
-                                 style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                    <article class="deal-card">
+                        <div class="image-wrapper">
+                            <span class="store-tag">${deal.tienda || 'USA'}</span>
+                            ${discount > 0 ? `<span class="discount-badge">-${discount}%</span>` : ''}
+                            <img src="https://wsrv.nl/?url=${encodeURIComponent(deal.image)}&w=400&h=400&fit=contain" alt="${deal.title}" onerror="this.src='https://www.techbargains.com/Content/static/tb-logo.png'">
                         </div>
-                        <div class="card-content" style="padding: 20px; flex-grow: 1; display: flex; flex-direction: column; border-top: 1px solid #f1f5f9;">
-                            <h3 style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 12px; line-height: 1.4; height: 42px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${deal.title}</h3>
+                        <div class="card-content">
+                            <h3 class="deal-title">${deal.title}</h3>
+                            <div class="price-row">
+                                <span class="price-now">$${deal.price_offer}</span>
+                                ${deal.price_official > 0 ? `<span class="price-was">$${deal.price_official}</span>` : ''}
+                            </div>
+                            ${savings > 0 ? `<p class="savings-line">🔥 ¡AHORRAS $${savings}!</p>` : '<div style="height:20px; margin-bottom:20px;"></div>'}
                             
-                            <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 15px;">
-                                <div style="display: flex; align-items: baseline; gap: 8px;">
-                                    <span style="font-size: 28px; font-weight: 900; color: #0f172a;">$${deal.price_offer}</span>
-                                    ${deal.price_official > deal.price_offer ? `
-                                        <span style="text-decoration: line-through; color: #ef4444; font-size: 16px; font-weight: 600; opacity: 0.8;">$${deal.price_official}</span>
-                                    ` : ''}
-                                </div>
-                                ${deal.price_official > deal.price_offer ? `
-                                    <span style="color: #ef4444; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">🔥 ¡AHORRAS $${(deal.price_official - deal.price_offer).toFixed(2)}!</span>
-                                ` : ''}
-                            </div>
-
-                            ${couponHtml}
-
-                            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto;">
-                                <button onclick="openEditorial('${deal.id}')" style="width: 100%; background: #f1f5f9; color: #475569; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; font-weight: 700; font-size: 13px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">🔍 LECTURA EDITORIAL</button>
-                                <a href="/go/${deal.id}" target="_blank" style="display:block; width: 100%; background: #0f172a; color: #fff; text-align: center; padding: 14px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 14px; transition: 0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#0f172a'">VER OFERTA DIRECTA</a>
-                            </div>
-
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #f1f5f9; margin-top: 15px;">
-                                <div style="display: flex; gap: 15px;">
-                                    <button onclick="voteUp('${deal.id}')" style="background:none; border:none; cursor:pointer; font-size:14px; color:#64748b; font-weight:700;">👍 ${deal.votes_up || 0}</button>
-                                    <button onclick="openComments('${deal.id}', '${deal.title.replace(/'/g, "\\'")}')" style="background:none; border:none; cursor:pointer; font-size:14px; color:#64748b; font-weight:700;">💬 ${deal.comment_count || 0}</button>
-                                </div>
-                                <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">Verificado</span>
+                            <div class="btn-group">
+                                <button class="btn-editorial" onclick="openEditorial('${deal.id}')">ANÁLISIS IA</button>
+                                <a href="/go/${deal.id}" target="_blank" class="btn-go">VER GANGA</a>
                             </div>
                         </div>
                     </article>
@@ -643,99 +477,37 @@
             }).join('');
         }
 
-        // FUNCIONES DE INTERACCIÓN
-        async function voteUp(id) {
-            try {
-                const res = await fetch(`/api/vote-up/${id}`, { method: 'POST' });
-                if (res.ok) {
-                    init();
-                }
-            } catch (e) { }
-        }
-
         function openEditorial(id) {
             const deal = allDeals.find(d => d.id === id);
             if (!deal) return;
-
-            // Crear modal dinámico
-            const modal = document.createElement('div');
-            modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(5px);";
-
-            const content = `
-                <div style="background:white; width:100%; max-width:700px; max-height:90vh; border-radius:24px; overflow-y:auto; position:relative; animation: slideUp 0.3s ease;">
-                    <button onclick="this.parentElement.parentElement.remove()" style="position:absolute; top:20px; right:20px; background:#f1f5f9; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; font-weight:800;">✕</button>
-                    <div style="padding:40px;">
-                        <span style="color:var(--primary); font-weight:800; text-transform:uppercase; font-size:12px; letter-spacing:1px;">Análisis Editorial de Expertos</span>
-                        <h2 style="font-size:28px; font-weight:800; margin-top:10px; line-height:1.2;">${deal.title}</h2>
-                        
-                        <div style="margin:30px 0; background:#f8fafc; padding:25px; border-radius:18px; line-height:1.7; color:#334155; font-size:16px;">
-                            ${deal.description.replace(/\n/g, '<br>')}
-                        </div>
-
-                        <div style="display:flex; gap:15px;">
-                            <a href="/go/${deal.id}" target="_blank" style="flex:1; background:var(--primary-gradient); color:white; text-align:center; padding:18px; border-radius:14px; text-decoration:none; font-weight:800; box-shadow:0 10px 20px rgba(37, 99, 235, 0.2);">IR A LA OFERTA DIRECTA</a>
-                        </div>
-                        <p style="text-align:center; font-size:12px; color:#94a3b8; margin-top:20px;">* Precio verificado en tienda origen al momento de la publicación.</p>
-                    </div>
+            const modal = document.getElementById('modal');
+            const body = document.getElementById('modal-body');
+            body.innerHTML = `
+                <span style="color:var(--primary); font-weight:800; font-size:12px; letter-spacing:1px; text-transform:uppercase;">Inteligencia de Mercado</span>
+                <h2 style="font-size:28px; font-weight:800; margin:10px 0 20px;">${deal.title}</h2>
+                <div style="background:var(--bg-body); padding:25px; border-radius:20px; font-size:16px; color:var(--text-main); line-height:1.7;">
+                    ${deal.description ? deal.description.replace(/\n/g, '<br>') : 'Analizando historial de precios y stock...'}
                 </div>
-                <style>
-                    @keyframes slideUp { from { transform:translateY(50px); opacity:0; } to { transform:translateY(0); opacity:1; } }
-                </style>
+                <div style="margin-top:30px; display:flex;">
+                    <a href="/go/${deal.id}" target="_blank" style="flex:1; background:var(--primary); color:white; text-align:center; padding:18px; border-radius:14px; text-decoration:none; font-weight:800;">VERIFICAR DISPONIBILIDAD</a>
+                </div>
             `;
-            modal.innerHTML = content;
-            document.body.appendChild(modal);
+            modal.style.display = 'flex';
         }
 
-        async function openComments(id, title) {
-            // Simple modal al estilo Slickdeals
-            const author = prompt("Tu nombre:", "Ahorrador");
-            const text = prompt(`Discutiendo: ${title}\n\nEscribe tu comentario:`);
-
-            if (author && text) {
-                const res = await fetch('/api/comments', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ dealId: id, author, text })
-                });
-                if (res.ok) {
-                    alert("¡Comentario publicado! El sistema de hilos lo mostrará pronto.");
-                    init();
-                }
-            }
-        }
-
-        // Filtros dinámicos
-        document.getElementById('search').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = allDeals.filter(d => d.title.toLowerCase().includes(term));
-            render(filtered);
-        });
+        function closeEditorial() { document.getElementById('modal').style.display = 'none'; }
 
         document.querySelectorAll('.chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
                 chip.classList.add('active');
-                const cat = chip.dataset.cat;
-                const filtered = cat === 'all' ? allDeals : allDeals.filter(d => d.categoria === cat);
-                render(filtered);
+                render(chip.dataset.cat === 'all' ? allDeals : allDeals.filter(d => d.categoria === chip.dataset.cat));
             });
         });
 
-        async function deleteDeal(id) {
-            if (!confirm('¿Eliminar de forma permanente?')) return;
-            const pass = localStorage.getItem('admin_password');
-            await fetch('/api/delete-deal', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-admin-password': pass },
-                body: JSON.stringify({ id })
-            });
-            init();
-        }
-
-        function editDeal(id) {
-            localStorage.setItem('edit_id', id);
-            location.href = '/admin';
-        }
+        document.getElementById('search').addEventListener('input', (e) => {
+            render(allDeals.filter(d => d.title.toLowerCase().includes(e.target.value.toLowerCase())));
+        });
 
         init();
     </script>
