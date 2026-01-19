@@ -461,8 +461,6 @@
         <div class="nav-container">
             <div class="logo">+Barato Deals</div>
             <div class="nav-actions">
-                <button id="btn-upload" class="btn btn-outline" style="display: none;"
-                    onclick="location.href='/admin'">Panel Admin</button>
                 <a href="https://t.me/Masbarato_deals" target="_blank" class="btn btn-primary">Recibir Alertas</a>
             </div>
         </div>
@@ -508,10 +506,7 @@
                 allDeals = await res.json();
                 render(allDeals);
 
-                if (isAdmin) {
-                    const ub = document.getElementById('btn-upload');
-                    if (ub) ub.style.display = 'flex';
-                }
+                // Eliminado botón admin de la home por privacidad
             } catch (e) {
                 console.error(e);
             }
