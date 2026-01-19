@@ -25,7 +25,7 @@ class CoreProcessor {
             // 2. VALIDACIÓN OBLIGATORIA (Tienda Origen)
             const validation = await Validator.validate(opp);
             if (!validation.isValid) {
-                logger.warn(`❌ Validación fallida (Link/Precio): ${opp.title}`);
+                logger.warn(`❌ Validación fallida (isValid=false): ${opp.title}`);
                 return false;
             }
             if (!validation.hasStock) {
@@ -39,12 +39,12 @@ class CoreProcessor {
                 price_offer: validation.realPrice,
                 price_official: validation.officialPrice || 0,
                 image: validation.image || opp.image,
-                tienda: validation.storeName
+                tienda: validation.storeName || opp.tienda
             };
 
             const audit = await Auditor.audit(dealData);
             if (!audit.isGoodDeal) {
-                logger.warn(`📉 Descuento insuficiente (${audit.discount}%): ${opp.title}`);
+                logger.warn(`📉 Auditoría rechazada: ${opp.title} | Razón: ${audit.reason || 'Descuento insuficiente'}`);
                 return false;
             }
 
@@ -54,16 +54,16 @@ class CoreProcessor {
             dealData.viralContent = editorial.content;
 
             // 5. MONETIZACIÓN
-            const monetizedLink = await LinkTransformer.transform(validation.finalUrl, dealData);
+            const monetizedLink = await LinkTransformer.transform(validation.finalUrl || opp.sourceLink, dealData);
             dealData.link = monetizedLink;
-            dealData.tienda = validation.storeName;
+            dealData.original_link = validation.finalUrl || opp.sourceLink;
 
             // 6. PUBLICACIÓN
             dealData.id = crypto.createHash('md5').update(monetizedLink).digest('hex').substring(0, 12);
 
             const success = await Publisher.sendOffer(dealData);
             if (success) {
-                logger.info(`🏆 POST EDITORIAL PUBLICADO: ${opp.title}`);
+                logger.info(`🏆 POST PUBLICADO: ${opp.title}`);
                 return true;
             }
             return false;
@@ -76,41 +76,26 @@ class CoreProcessor {
 
     async start() {
         const Radar = require('./Bot1_Scraper');
-        logger.info('🏛️ ARQUITECTURA EDITORIAL ACTIVADA (Calidad sobre Cantidad)');
+        logger.info('🏛️ ARQUITECTURA EDITORIAL ACTIVADA');
 
         let isRunning = false;
         const runCycle = async () => {
             if (isRunning) return;
 
             const todayStats = db.prepare("SELECT COUNT(*) as total FROM published_deals WHERE date(posted_at) = date('now')").get();
-            if (todayStats.total >= this.dailyLimit) {
-                logger.info(`✅ Límite diario alcanzado (${todayStats.total}/${this.dailyLimit}). Esperando al próximo día.`);
-                return;
-            }
+            if (todayStats.total >= this.dailyLimit) return;
 
             isRunning = true;
-            logger.info('\n--- 🚀 INICIANDO CICLO EDITORIAL (ENFOQUE GOOGLE DISCOVER) ---');
-
             try {
                 const opportunities = await Radar.getMarketOpportunities();
                 for (let opp of opportunities) {
                     const success = await this.processDeal(opp);
-                    if (success) {
-                        await new Promise(r => setTimeout(r, 10000));
-                    }
-
-                    const currentCount = db.prepare("SELECT COUNT(*) as total FROM published_deals WHERE date(posted_at) = date('now')").get();
-                    if (currentCount.total >= this.dailyLimit) break;
+                    if (success) await new Promise(r => setTimeout(r, 8000));
                 }
-
-                isRunning = false;
-                logger.info('🧹 Iniciando limpieza de ofertas caducas (ventana de 3 días)...');
-                db.prepare("DELETE FROM published_deals WHERE posted_at < datetime('now', '-72 hours')").run();
-
             } catch (e) {
-                logger.error(`Error general en el ciclo: ${e.message}`);
-                isRunning = false;
+                logger.error(`Error ciclo: ${e.message}`);
             }
+            isRunning = false;
         };
 
         runCycle();
