@@ -482,6 +482,17 @@
                 <div class="chip" data-cat="Tools">Herramientas</div>
             </div>
         </div>
+
+        <div id="featured-deals" class="featured-section"
+            style="margin-top: 60px; max-width: 1200px; margin-left: auto; margin-right: auto; display: none;">
+            <h2
+                style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--primary); font-weight: 800; margin-bottom: 25px;">
+                🔥 Tendencias Ahora</h2>
+            <div id="featured-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <!-- Featured deals go here -->
+            </div>
+        </div>
     </section>
 
     <main>
@@ -505,11 +516,40 @@
                 const res = await fetch(`/api/deals?v=${Date.now()}`);
                 allDeals = await res.json();
                 render(allDeals);
+                renderFeatured(allDeals);
 
                 // Eliminado botón admin de la home por privacidad
             } catch (e) {
                 console.error(e);
             }
+        }
+
+        function renderFeatured(deals) {
+            const featuredSection = document.getElementById('featured-deals');
+            const featuredGrid = document.getElementById('featured-grid');
+
+            if (!deals || deals.length === 0) return;
+
+            // Tomar las 3 ofertas con mejor score
+            const topDeals = [...deals].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
+
+            featuredSection.style.display = 'block';
+            featuredGrid.innerHTML = topDeals.map(deal => {
+                const discount = deal.price_official > deal.price_offer ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100) : 0;
+
+                return `
+                    <div class="deal-card" style="flex-direction: row; align-items: center; padding: 15px; gap: 15px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);" onclick="location.href='/go/${deal.id}'">
+                        <img src="https://wsrv.nl/?url=${encodeURIComponent(deal.image)}&w=100&h=100&fit=contain" style="width: 80px; height: 80px; object-fit: contain; background: white; border-radius: 12px; padding: 5px;">
+                        <div style="text-align: left;">
+                            <h4 style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${deal.title}</h4>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <span style="font-size: 18px; font-weight: 900; color: var(--primary);">$${deal.price_offer}</span>
+                                ${discount > 0 ? `<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 5px; font-size: 10px; font-weight: 800;">-${discount}%</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function render(deals) {
