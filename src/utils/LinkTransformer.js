@@ -8,6 +8,11 @@ class LinkTransformer {
     constructor() {
         require('dotenv').config();
         this.tags = {
+            // Sovrn Commerce (VigLink) - Monetiza TODAS las tiendas automáticamente
+            sovrn_key: process.env.SOVRN_API_KEY || '',
+            sovrn_subid: process.env.SOVRN_SUBID || 'masbarato',
+
+            // Fallbacks directos (si no usas Sovrn)
             amazon: process.env.AMAZON_TAG || 'masbaratodeal-20',
             ebay: process.env.EBAY_CAMPAIGN_ID || '',
             walmart: process.env.WALMART_ID || '',
@@ -42,6 +47,12 @@ class LinkTransformer {
                 } catch (e) { break; }
             }
         } catch (e) { }
+
+        // 2. MONETIZACIÓN CON SOVRN (Si está configurado)
+        if (this.tags.sovrn_key) {
+            // Sovrn Commerce convierte automáticamente enlaces de Amazon, Walmart, eBay, etc.
+            return `https://redirect.viglink.com/?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(currentUrl)}`;
+        }
 
         // 2. MONETIZACIÓN ESPECÍFICA (Borra tags viejos de otros)
 
