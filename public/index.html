@@ -532,8 +532,11 @@
 
             if (!deals || deals.length === 0) return;
 
-            // Tomar las 3 ofertas con mejor score
-            const topDeals = [...deals].sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
+            // Tomar las 3 ofertas con mejor score (si los scores son 0, toma las más recientes)
+            const topDeals = [...deals].sort((a, b) => {
+                if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+                return 0; // Mantener orden original (recientes) si no hay score
+            }).slice(0, 3);
 
             featuredSection.style.display = 'block';
             featuredGrid.innerHTML = topDeals.map(deal => {
