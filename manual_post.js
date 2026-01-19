@@ -36,7 +36,7 @@ async function createManualPost(inputUrl, manualPrice = null) {
             id: dealId,
             title: validation.title || "Super Oferta USA",
             price_offer: price,
-            price_official: price > 0 ? (price * 1.3).toFixed(2) : 0,
+            price_official: validation.officialPrice || (price > 0 ? (price * 1.3).toFixed(2) : 0),
             image: validation.image || 'https://www.techbargains.com/Content/static/tb-logo.png',
             tienda: validation.storeName || 'Tienda USA',
             link: cleanLink,

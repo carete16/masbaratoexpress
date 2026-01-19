@@ -82,24 +82,46 @@ class ValidatorBot {
 
                 // Selectores genéricos de precios por tienda
                 let foundPrice = 0;
+                let officialPrice = 0;
+
                 if (result.storeName === 'Amazon') {
                     const priceStr = $('.a-price-whole').first().text() + $('.a-price-fraction').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+
+                    // Extraer precio oficial (MSRP / List Price)
+                    const basisStr = $('.basisPrice span.a-offscreen').first().text() ||
+                        $('.a-price.a-text-price span.a-offscreen').first().text() ||
+                        $('.a-price[data-a-strike="true"] span.a-offscreen').first().text();
+                    if (basisStr) officialPrice = parseFloat(basisStr.replace(/[^0-9.]/g, ''));
+
                     result.image = $('img#landingImage').attr('src') || $('img#imgBlkFront').attr('src') || $('#main-image-container img').attr('src');
                     result.title = $('#productTitle').text().trim();
+
                 } else if (result.storeName === 'Walmart') {
                     const priceStr = $('span[itemprop="price"]').attr('content') || $('.price-characteristic').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+
+                    const listStr = $('.was-price-text').first().text();
+                    if (listStr) officialPrice = parseFloat(listStr.replace(/[^0-9.]/g, ''));
+
                     result.image = $('img[data-testid="main-image"]').attr('src') || $('.wp-image').first().attr('src');
                     result.title = $('h1').first().text().trim();
+
                 } else if (result.storeName === 'eBay') {
                     const priceStr = $('.x-price-primary').first().text() || $('.display-price').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
+
+                    const listStr = $('.x-price-approx__price .g-text-small').first().text() ||
+                        $('.stk-strikethrough').first().text();
+                    if (listStr) officialPrice = parseFloat(listStr.replace(/[^0-9.]/g, ''));
+
                     // Imagen en alta resolución (reemplazamos s-l500 por s-l1600)
                     let img = $('.ux-image-carousel-item.active img').attr('src') || $('.ux-image-carousel-item img').attr('src') || $('img#icImg').attr('src');
                     if (img) result.image = img.replace(/s-l\d+/, 's-l1600');
                     result.title = $('.x-item-title__mainTitle').text().trim() || $('h1').first().text().trim();
                 }
+
+                if (officialPrice > 0) result.officialPrice = officialPrice;
 
                 // VALIDACIÓN DE PRECIO (REGLA CRÍTICA)
                 // Si encontramos el precio y no coincide (margen del 5%), descartamos

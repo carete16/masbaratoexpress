@@ -56,7 +56,7 @@ class CoreProcessor {
                         const dealData = {
                             title: opp.title,
                             price_offer: validation.realPrice,
-                            price_official: opp.msrp,
+                            price_official: validation.officialPrice || opp.msrp,
                             image: validation.image || opp.image,
                             tienda: validation.storeName
                         };
