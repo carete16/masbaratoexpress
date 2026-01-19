@@ -88,10 +88,14 @@ class ValidatorBot {
                     const priceStr = $('.a-price-whole').first().text() + $('.a-price-fraction').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
 
-                    // Extraer precio oficial (MSRP / List Price)
+                    // Extraer precio oficial (MSRP / List Price) - Reforzado
                     const basisStr = $('.basisPrice span.a-offscreen').first().text() ||
                         $('.a-price.a-text-price span.a-offscreen').first().text() ||
+                        $('#listPrice').text() ||
+                        $('.priceBlockStrikePriceString').text() ||
+                        $('#priceBlockStrikePriceString').text() ||
                         $('.a-price[data-a-strike="true"] span.a-offscreen').first().text();
+
                     if (basisStr) officialPrice = parseFloat(basisStr.replace(/[^0-9.]/g, ''));
 
                     result.image = $('img#landingImage').attr('src') || $('img#imgBlkFront').attr('src') || $('#main-image-container img').attr('src');
@@ -101,7 +105,7 @@ class ValidatorBot {
                     const priceStr = $('span[itemprop="price"]').attr('content') || $('.price-characteristic').first().text();
                     foundPrice = parseFloat(priceStr.replace(/[^0-9.]/g, ''));
 
-                    const listStr = $('.was-price-text').first().text();
+                    const listStr = $('.was-price-text').first().text() || $('[data-testid="list-price"]').text();
                     if (listStr) officialPrice = parseFloat(listStr.replace(/[^0-9.]/g, ''));
 
                     result.image = $('img[data-testid="main-image"]').attr('src') || $('.wp-image').first().attr('src');
