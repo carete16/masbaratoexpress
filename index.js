@@ -151,7 +151,7 @@ app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
       id: dealId,
       title: validation.title || "Super Oferta USA",
       price_offer: finalPrice,
-      price_official: finalPrice > 0 ? (finalPrice * 1.3).toFixed(2) : 0,
+      price_official: validation.officialPrice || 0,
       image: validation.image || 'https://www.techbargains.com/Content/static/tb-logo.png',
       tienda: validation.storeName || 'Tienda USA',
       link: cleanLink,
