@@ -51,7 +51,7 @@ class GlobalDealsCollector {
                     price = parseFloat(priceMatch[1].replace(',', ''));
                     // Estimación precio original (si hay otro precio mayor tachado o mencionado)
                     // (Simplificado: asumimos un 20% más si no se detecta)
-                    originalPrice = price * 1.2;
+                    // originalPrice = price * 1.2; // Eliminado para evitar falsos descuentos del 17%
                 }
 
                 // 2. Extracción de IMAGEN

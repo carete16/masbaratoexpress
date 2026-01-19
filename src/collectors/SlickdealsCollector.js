@@ -52,10 +52,10 @@ class SlickdealsCollector {
                 // Detección de Mínimo Histórico en Reddit
                 const isAllTimeLow = /lowest|all[\s-]time[\s-]low|ATL|best[\s-]price|historic/i.test(title);
 
-                // Si no hay precio original explícito, usamos una estimación conservadora
-                if (originalPrice === 0 && offerPrice > 0) {
-                    originalPrice = parseFloat((offerPrice * 1.25).toFixed(2));
-                }
+                // Eliminado fallback artificial 1.25x
+                // if (originalPrice === 0 && offerPrice > 0) {
+                //    originalPrice = parseFloat((offerPrice * 1.25).toFixed(2));
+                // }
 
                 const asin = this.extractAsin(data.url) || this.extractAsin(data.title);
                 let imageUrl = data.thumbnail && data.thumbnail.startsWith('http') ? data.thumbnail : '';

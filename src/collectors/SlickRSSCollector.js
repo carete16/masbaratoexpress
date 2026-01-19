@@ -68,7 +68,8 @@ class SlickRSSCollector {
                     if (offMatch) originalPrice = offerPrice + parseFloat(offMatch[1]);
                 }
 
-                if (originalPrice === 0 && offerPrice > 0) originalPrice = parseFloat((offerPrice * 1.3).toFixed(2)); // 30% estimado descuento si no hay data
+                // Eliminado fallback artificial 1.3x para evitar descuentos falsos del 17-23%
+                // if (originalPrice === 0 && offerPrice > 0) originalPrice = parseFloat((offerPrice * 1.3).toFixed(2));
 
                 const isAllTimeLow = /lowest|all[\s-]time[\s-]low|best[\s-]price|historic/i.test(title);
 
