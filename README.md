@@ -1,43 +1,113 @@
-# 🎯 Masbarato Deals Bot - Professional Edition
+# MasbaratoDeals
 
-Sistema híbrido de cacería de ofertas con IA, monetización automática y control manual de precisión.
+Elite premium deal aggregator for USA markets. Automated system that finds, validates, and publishes high-quality deals with 20%+ discounts.
 
-## 🚀 Cómo publicar OFERTAS MANUALES (Recomendado)
+## Features
 
-Esta es la forma más potente de usar el sistema para facturar. Tú eliges la oferta y el bot hace el trabajo sucio.
+- 🤖 **Automated Deal Discovery**: Scrapes and validates deals from TechBargains RSS
+- 🛡️ **Quality Filters**: Only products with 20%+ discount, in stock, and specific product pages
+- 💰 **Price Protection**: Blocks inflated prices and currency errors
+- 🖼️ **Triple-Engine Image System**: Proxy → Direct → Category fallback for 100% image reliability
+- 🌐 **Multi-language**: Spanish/English support
+- 📊 **Trust Scoring**: AI-powered confidence scoring for each deal
+- 🎨 **Premium UI**: Apple-style glassmorphism design
 
-1.  Abre una terminal en la carpeta del proyecto.
-2.  Ejecuta el comando:
-    ```bash
-    node manual_post.js "URL_DE_EBAY_AMAZON_O_WALMART" [PRECIO]
-    ```
-3.  **¿Qué pasará?**
-    - El bot **limpia el link** de códigos externos.
-    - El bot **inyecta tus códigos de afiliado** automáticamente.
-    - La IA redacta un **post profesional** y persuasivo.
-    - La oferta se publica en **Telegram** y en la **Web** al instante.
+## Tech Stack
 
-## 🛠️ Configuración Inicial
+- **Backend**: Node.js, Express
+- **Database**: SQLite (better-sqlite3)
+- **Scraping**: Puppeteer, Cheerio, Axios
+- **AI**: OpenAI GPT-4 for editorial content
+- **Monetization**: Amazon Associates integration
 
-1.  **Instalación:** Ejecuta `npm install`.
-2.  **Variables (.env):** 
-    - `TELEGRAM_BOT_TOKEN`: Token de @BotFather.
-    - `TELEGRAM_CHANNEL_ID`: ID o @alias de tu canal.
-    - `AMAZON_TAG`, `EBAY_CAMPAIGN_ID`, `WALMART_ID`: Tus IDs de afiliado.
-    - `OPENAI_API_KEY`: Para redacción con IA (opcional, tiene fallback).
+## Installation
 
-## 📁 Características Principales
+```bash
+npm install
+```
 
-- **Dashboard Web Premium:** Visualiza todas las ofertas publicadas en `http://localhost:3000`.
-- **Limpiador Químico de Enlaces:** Elimina rastros de Slickdeals, grupos de Telegram ajenos y redireccionadores.
-- **Sitemap Dinámico:** Optimizado para aparecer en Google Search Console y Discover.
-- **Always-On:** Sistema de latido (Heartbeat) para evitar que Render suspenda la aplicación.
+## Environment Variables
 
-## 📁 Estructura
-- `manual_post.js`: Tu herramienta principal para publicar hoy.
-- `/src/core`: Los "bots" internos de validación y simulación de navegador.
-- `/src/utils`: Motores de limpieza de links y logger.
-- `/public`: Interfaz web de usuario.
+Create a `.env` file:
 
----
-**Potenciado por MasbaratoDeals Team.**
+```env
+PORT=10000
+ADMIN_PASSWORD=your_admin_password
+OPENAI_API_KEY=your_openai_key
+TELEGRAM_BOT_TOKEN=your_telegram_token
+TELEGRAM_CHANNEL_ID=your_channel_id
+AMAZON_TAG=your_amazon_tag
+```
+
+## Usage
+
+```bash
+# Start the server
+node index.js
+
+# The bot will automatically:
+# - Scan for deals every 15 minutes
+# - Validate stock and prices
+# - Generate AI editorial content
+# - Publish to website and Telegram
+```
+
+## API Endpoints
+
+- `GET /api/deals` - Get all published deals
+- `GET /go/:id` - Redirect to monetized product link
+- `GET /api/proxy-image?url=` - Proxy images to bypass hotlinking
+- `POST /api/vote` - Vote on deals
+- `GET /api/comments/:id` - Get deal comments
+
+## Project Structure
+
+```
+MasbaratoDeals/
+├── public/
+│   └── index.html          # Premium frontend
+├── src/
+│   ├── core/
+│   │   ├── Bot1_Scraper.js      # Deal discovery
+│   │   ├── Bot2_Explorer.js     # Validation
+│   │   ├── Bot3_Auditor.js      # Quality control
+│   │   ├── Bot4_Publisher.js    # Publishing
+│   │   ├── AIProcessor.js       # Content generation
+│   │   └── CoreProcessor.js     # Orchestration
+│   ├── database/
+│   │   └── db.js                # SQLite operations
+│   ├── utils/
+│   │   ├── DeepScraper.js       # Puppeteer scraping
+│   │   ├── LinkResolver.js      # URL resolution
+│   │   └── LinkTransformer.js   # Affiliate links
+│   └── collectors/
+│       └── SlickRSSCollector.js # RSS parsing
+└── index.js                     # Main server
+```
+
+## Key Features
+
+### Anti-Generic Filter
+Automatically rejects:
+- Category pages
+- Search results
+- Gold Box landings
+- Non-specific product URLs
+
+### Price Safety
+- Blocks prices > $5,000 (prevents currency errors)
+- Validates USD pricing
+- Enforces 20% minimum discount
+
+### Image Reliability
+1. **Proxy Engine**: Server-side fetch with browser headers
+2. **Direct Engine**: No-referrer direct load
+3. **Fallback Engine**: Category-specific placeholders
+
+## License
+
+MIT
+
+## Author
+
+Built with ❤️ for deal hunters

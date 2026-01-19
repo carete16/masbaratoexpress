@@ -81,11 +81,17 @@ const getComments = (dealId) => {
 };
 
 const saveDeal = (deal) => {
+  // --- SEGURIDAD ANTI-VALORES LOCOS (Protección Moneda Regional) ---
+  if (deal.price_offer > 5000 && !deal.title.toLowerCase().includes('car') && !deal.title.toLowerCase().includes('house')) {
+    logger.warn(`🚫 BLOQUEO DE SEGURIDAD: Intentando guardar precio sospechoso ($${deal.price_offer}) para "${deal.title}". Omitiendo.`);
+    return false;
+  }
+
   try {
     const stmt = db.prepare(`
         INSERT OR IGNORE INTO published_deals 
-        (id, link, original_link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, link, original_link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status, badge)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
     return stmt.run(
       deal.id,
@@ -101,7 +107,8 @@ const saveDeal = (deal) => {
       deal.coupon || null,
       (deal.is_historic_low || deal.badge === 'Mínimo Histórico') ? 1 : 0,
       deal.score || 0,
-      'published'
+      'published',
+      deal.badge || null
     );
   } catch (e) {
     logger.error(`Error guardando: ${e.message}`);

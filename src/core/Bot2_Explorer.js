@@ -2,68 +2,91 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const logger = require('../utils/logger');
 const LinkResolver = require('../utils/LinkResolver');
+const DeepScraper = require('../utils/DeepScraper');
 
+/**
+ * BOT 2: EL EXPLORADOR (VALIDADOR ESTRICTO)
+ * Su misión: Ir a la tienda final y verificar que el producto EXISTA, tenga STOCK
+ * y que el PRECIO coincida con la oferta.
+ */
 class ValidatorBot {
     constructor() {
-        this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
+        this.userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
     }
 
     async validate(opportunity) {
-        logger.info(`🔍 Validando: ${opportunity.title.substring(0, 50)}...`);
+        logger.info(`🔍 Validando Disponibilidad: ${opportunity.title.substring(0, 50)}...`);
 
         let result = {
-            isValid: true, // Por defecto verdadero si viene de fuente confiable
-            realPrice: opportunity.referencePrice || 0,
+            isValid: false,
+            realPrice: null,
             officialPrice: 0,
-            hasStock: true,
+            hasStock: false,
             image: opportunity.image,
             title: opportunity.title,
-            finalUrl: opportunity.sourceLink
+            finalUrl: opportunity.sourceLink,
+            storeName: opportunity.tienda || 'Tienda USA'
         };
 
         try {
-            // 1. Intentar resolver la URL real (Slickdeals -> Store)
-            const resolvedUrl = await LinkResolver.resolve(opportunity.sourceLink);
-            result.finalUrl = resolvedUrl || opportunity.sourceLink;
+            // 1. Resolver el link de afiliado/redirección a la tienda final
+            const finalUrl = await LinkResolver.resolve(opportunity.sourceLink);
+            result.finalUrl = finalUrl;
 
-            // 2. Intentar scraping ligero si es Amazon/Walmart
-            const config = {
-                headers: { 'User-Agent': this.userAgent },
-                timeout: 5000,
-                validateStatus: null
-            };
+            // 2. Determinar la tienda para validación específica
+            if (finalUrl.includes('amazon.com')) result.storeName = 'Amazon';
+            else if (finalUrl.includes('walmart.com')) result.storeName = 'Walmart';
+            else if (finalUrl.includes('bestbuy.com')) result.storeName = 'Best Buy';
+            else if (finalUrl.includes('ebay.com')) result.storeName = 'eBay';
+            else if (finalUrl.includes('target.com')) result.storeName = 'Target';
 
-            if (result.finalUrl.includes('amazon.com') || result.finalUrl.includes('walmart.com')) {
-                try {
-                    const response = await axios.get(result.finalUrl, config);
-                    if (response.status === 200) {
-                        const $ = cheerio.load(response.data);
+            // --- FILTRO ANTI-GENERICS ---
+            // Si el link final es un landing genérico (como 'Gold Box' o búsquedas), el scraper fallará.
+            // Si no detectamos un patrón de producto específico (/dp/, /ip/, /product/), lo rechazamos.
+            const isGeneric = finalUrl.match(/\/goldbox|\/deals|\/search|\/browse|\/category/i) && !finalUrl.match(/\/dp\/|\/ip\/|\/product\//i);
 
-                        // Extraer precio real si asoma
-                        let scrapPrice = 0;
-                        if (result.finalUrl.includes('amazon')) {
-                            scrapPrice = this.cleanPrice($('.a-price .a-offscreen').first().text());
-                            result.officialPrice = this.cleanPrice($('.basisPrice .a-offscreen').first().text());
-                        }
+            if (isGeneric) {
+                logger.warn(`🛑 ENLACE GENÉRICO DETECTADO: ${finalUrl}. Omitiendo validación por no ser un producto específico.`);
+                return result;
+            }
 
-                        if (scrapPrice > 0) result.realPrice = scrapPrice;
+            // 3. INTENTO DE VALIDACIÓN PROFUNDA (Puppeteer)
+            // Dado que las tiendas bloquean Axios, usamos Puppeteer para asegurar veracidad
+            const deepData = await DeepScraper.scrape(finalUrl);
 
-                        // Verificar stock
-                        const text = response.data.toLowerCase();
-                        if (text.includes('out of stock') || text.includes('unavailable')) {
-                            result.hasStock = false;
-                        }
-                    }
-                } catch (e) {
-                    logger.warn(`Scraping ligero falló para ${result.finalUrl}, usando data de referencia.`);
+            if (deepData && deepData.offerPrice > 0) {
+                // VERIFICACIÓN DE STOCK (Crítica)
+                // El DeepScraper debe retornar si hay botón de compra o mensaje de error
+                if (deepData.isUnavailable) {
+                    logger.warn(`❌ Producto AGOTADO o NO DISPONIBLE: ${opportunity.title}`);
+                    return result;
+                }
+
+                result.realPrice = deepData.offerPrice;
+                result.officialPrice = deepData.officialPrice || 0;
+                result.hasStock = true;
+                result.isValid = true;
+
+                // Actualizar metadatos si el scraper encontró algo más preciso
+                if (deepData.image) result.image = deepData.image;
+                if (deepData.title) result.title = deepData.title;
+
+                logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Stock: OK)`);
+            } else {
+                // FALLBACK: Si Puppeteer falla, intentamos axios pero solo como último recurso
+                logger.warn(`⚠️ Scraping profundo falló para ${opportunity.title}.`);
+
+                // Si es un link de Slickdeals que aún no hemos resuelto bien, lo marcamos inválido
+                if (finalUrl.includes('slickdeals.net/f/')) {
+                    logger.error(`❌ El link no se pudo resolver a una tienda real. Omitiendo.`);
+                    return result;
                 }
             }
 
-            logger.info(`✅ Validado: $${result.realPrice} en ${result.finalUrl.substring(0, 40)}...`);
             return result;
 
         } catch (error) {
-            logger.error(`Error en validación, procediendo con datos de origen: ${error.message}`);
+            logger.error(`❌ Error crítico en ValidatorBot: ${error.message}`);
             return result;
         }
     }
