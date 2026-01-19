@@ -10,7 +10,7 @@ const crypto = require('crypto');
  * Limpia links, inyecta afiliados y publica en segundos.
  */
 
-async function createManualPost(inputUrl, manualPrice = null) {
+async function createManualPost(inputUrl, manualPrice = null, manualCategory = 'Tecnología') {
     logger.info(`🚀 Procesando oferta manual: ${inputUrl}`);
 
     try {
@@ -41,7 +41,7 @@ async function createManualPost(inputUrl, manualPrice = null) {
             tienda: validation.storeName || 'Tienda USA',
             link: cleanLink,
             original_link: inputUrl,
-            categoria: 'Tecnología' // Por defecto
+            categoria: manualCategory
         };
 
         // 3. GENERACIÓN DE CONTENIDO PREMIUM CON AI
@@ -74,9 +74,10 @@ async function createManualPost(inputUrl, manualPrice = null) {
 
 const url = process.argv[2];
 const price = process.argv[3];
+const category = process.argv[4];
 
 if (!url) {
-    console.log('Uso: node manual_post.js "URL_DEL_PRODUCTO" [PRECIO]');
+    console.log('Uso: node manual_post.js "URL_DEL_PRODUCTO" [PRECIO] [CATEGORIA]');
 } else {
-    createManualPost(url, price);
+    createManualPost(url, price, category);
 }
