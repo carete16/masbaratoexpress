@@ -5,7 +5,7 @@ class CoreProcessor {
     constructor() {
         // Intervalo de 15 minutos para el inicio dinámico (luego volverá a 2h)
         this.interval = 15 * 60 * 1000;
-        this.dailyLimit = 12;
+        this.dailyLimit = 100;
     }
 
     async start() {
@@ -74,6 +74,10 @@ class CoreProcessor {
                         dealData.tienda = validation.storeName;
 
                         // 6. PUBLICACIÓN
+                        // Generar ID único limpio (hash MD5) para evitar problemas de routring con URLs
+                        const crypto = require('crypto');
+                        dealData.id = crypto.createHash('md5').update(monetizedLink).digest('hex').substring(0, 12);
+
                         const success = await Publisher.sendOffer(dealData);
                         if (success) {
                             logger.info(`🏆 POST EDITORIAL PUBLICADO: ${opp.title}`);

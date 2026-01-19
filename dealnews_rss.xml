@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+    <head>
+        <title>DealNews is undergoing maintenence!</title>
+        <style>
+        body, td {
+            font-family: Arial;
+            font-size: 18px;
+        }
+        a:link {
+            color: #30309A;
+        }
+        a:visited {
+            color: #1f2e62;
+        }
+        #box {
+            margin: auto;
+            padding: 50px 10px;
+            max-width: 600px;
+        }
+        #message {
+            padding-right: 10px;
+            overflow: hidden;
+        }
+        </style>
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    </head>
+    <body>
+        <div id="box">
+            <h2>Oops! DealNews is not available right now.</h2>
+            <img align="right" src="https://c.dlnws.com/image/upload/creative/logos/dn-logo-web.svg" width="285" border="0" />
+            <div id="message">
+                <strong>DealNews</strong> is undergoing maintenance! We apologize for the inconvenience. DealNews will be available again shortly.
+            </div>
+        </div>
+    </body>
+</html>

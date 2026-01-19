@@ -226,10 +226,28 @@
     </header>
 
     <div class="container">
-        <h2 class="section-title">📦 Ofertas Pendientes <span class="badge" id="count-pending">0</span></h2>
+        <!-- BLOQUE DE INYECCIÓN MANUAL -->
+        <div
+            style="background: var(--primary-gradient); padding: 30px; border-radius: 30px; margin-bottom: 50px; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);">
+            <h2 style="color:white; margin-bottom: 15px; font-weight: 800;">🚀 Inyección Rápida de Ofertas</h2>
+            <p style="color: rgba(255,255,255,0.8); margin-bottom: 25px; font-size: 14px;">Pega un link de Amazon, eBay
+                o Walmart. El sistema lo limpiará y monetizará automáticamente.</p>
 
+            <div style="display: grid; grid-template-columns: 1fr 150px 200px; gap: 15px;">
+                <input type="text" id="manual-url" placeholder="Pega el link aquí (Amazon, eBay, Walmart...)"
+                    style="padding: 18px; border-radius: 16px; border: none; font-weight: 600; font-size: 15px; outline: none;">
+                <input type="number" id="manual-price" placeholder="Precio ($)"
+                    style="padding: 18px; border-radius: 16px; border: none; font-weight: 600; font-size: 15px; outline: none;">
+                <button class="btn btn-approve" onclick="postManual()" id="btn-manual"
+                    style="background: #020617; color: white; border: none; font-size: 14px; height: 100%;">PUBLICAR
+                    AHORA</button>
+            </div>
+            <p id="manual-status"
+                style="margin-top: 15px; font-size: 13px; font-weight: 700; color: white; display: none;"></p>
+        </div>
+
+        <h2 class="section-title">📦 Ofertas Pendientes <span class="badge" id="count-pending">0</span></h2>
         <div id="pending-list">
-            <!-- Cargando -->
             <div class="empty-state">Buscando nuevas ofertas enviadas por la comunidad...</div>
         </div>
 
@@ -349,6 +367,48 @@
             });
             loadPending();
             loadRecent();
+        }
+
+        async function postManual() {
+            const url = document.getElementById('manual-url').value;
+            const price = document.getElementById('manual-price').value;
+            const status = document.getElementById('manual-status');
+            const btn = document.getElementById('btn-manual');
+
+            if (!url) {
+                alert('Por favor, pega un link válido.');
+                return;
+            }
+
+            status.style.display = 'block';
+            status.innerText = '⏳ Procesando link, limpiando tags e inyectando afiliados...';
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+
+            try {
+                const res = await fetch('/api/admin/manual-post', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-password': pass },
+                    body: JSON.stringify({ url, price })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    status.innerText = '✅ ¡Oferta publicada y monetizada con éxito!';
+                    document.getElementById('manual-url').value = '';
+                    document.getElementById('manual-price').value = '';
+                    loadRecent();
+                } else {
+                    status.innerText = '❌ Error: ' + (data.error || 'No se pudo publicar.');
+                }
+            } catch (e) {
+                status.innerText = '❌ Error de conexión con el servidor.';
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                setTimeout(() => { status.style.display = 'none'; }, 5000);
+            }
         }
     </script>
 </body>

@@ -89,9 +89,17 @@ class TelegramNotifier {
                 await this.bot.telegram.sendMessage(channelId, finalCaption, { parse_mode: 'HTML' });
             }
 
+            // Asegurar ID seguro (Hash MD5) siempre
+            const crypto = require('crypto');
+            let safeId = deal.id;
+            if (!safeId || safeId.includes('http')) {
+                safeId = crypto.createHash('md5').update(deal.link || Date.now().toString()).digest('hex').substring(0, 12);
+                logger.info(`🔄 ID Sanizado: ${safeId}`);
+            }
+
             // Guardar en DB con metadatos completos para la web
             saveDeal({
-                id: deal.id || deal.link,
+                id: safeId,
                 link: deal.link,
                 original_link: deal.original_link || deal.link,
                 title: deal.title,

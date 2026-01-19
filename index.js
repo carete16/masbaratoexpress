@@ -124,6 +124,58 @@ app.post('/api/delete-deal', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// NUEVO: PUBLICACIÓN MANUAL DESDE EL PANEL
+app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
+  try {
+    const { url, price } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL requerida' });
+
+    const LinkTransformer = require('./src/utils/LinkTransformer');
+    const Validator = require('./src/core/Bot2_Explorer');
+    const AI = require('./src/core/AIProcessor');
+    const Publisher = require('./src/core/Bot4_Publisher');
+    const { saveDeal } = require('./src/database/db');
+    const crypto = require('crypto');
+
+    // 1. Limpieza y Monetización
+    const cleanLink = await LinkTransformer.transform(url);
+
+    // 2. Extracción/Validación
+    const mockOpp = { sourceLink: cleanLink, title: 'Oferta Especial', referencePrice: price || 0, store: 'Global' };
+    const validation = await Validator.validate(mockOpp);
+
+    const dealId = crypto.createHash('md5').update(cleanLink).digest('hex').substring(0, 10);
+    const finalPrice = price || validation.realPrice || 0;
+
+    const dealData = {
+      id: dealId,
+      title: validation.title || "Super Oferta USA",
+      price_offer: finalPrice,
+      price_official: finalPrice > 0 ? (finalPrice * 1.3).toFixed(2) : 0,
+      image: validation.image || 'https://www.techbargains.com/Content/static/tb-logo.png',
+      tienda: validation.storeName || 'Tienda USA',
+      link: cleanLink,
+      original_link: url,
+      categoria: 'Ofertas'
+    };
+
+    // 3. IA
+    const editorial = await AI.generateViralContent(dealData);
+    dealData.viralContent = editorial.content;
+
+    // 4. Publicar
+    const success = await Publisher.sendOffer(dealData);
+
+    if (success) {
+      res.json({ success: true, deal: dealData });
+    } else {
+      res.status(500).json({ error: 'Error al enviar a Telegram. Revisa el .env' });
+    }
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // 4. RUTAS DEL FRONTEND
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
