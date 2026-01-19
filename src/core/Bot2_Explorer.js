@@ -50,6 +50,12 @@ class ValidatorBot {
                 return result;
             }
 
+            // --- FILTRO AMAZON ONLY ---
+            if (!finalUrl.includes('amazon.com')) {
+                logger.warn(`🛑 SOLO AMAZON: Rechazando ${result.storeName} - ${opportunity.title}`);
+                return result;
+            }
+
             // 3. INTENTO DE VALIDACIÓN PROFUNDA (Puppeteer)
             // Dado que las tiendas bloquean Axios, usamos Puppeteer para asegurar veracidad
             const deepData = await DeepScraper.scrape(finalUrl);

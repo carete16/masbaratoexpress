@@ -510,9 +510,8 @@
             grid.innerHTML = deals.map(deal => {
                 const discount = deal.price_official > deal.price_offer ? Math.round((1 - deal.price_offer / deal.price_official) * 100) : 0;
 
-                // --- TRIPLE-ENGINE IMAGE LOADING ---
+                // --- DIRECT IMAGE LOADING (No Proxy) ---
                 const rawImg = deal.image || 'https://www.techbargains.com/Content/static/tb-logo.png';
-                const proxyImg = rawImg.startsWith('http') ? `/api/proxy-image?url=${encodeURIComponent(rawImg)}` : rawImg;
 
                 // Fallbacks por categoría
                 let fallbackImg = 'https://placehold.co/400x300?text=Oferta';
@@ -527,13 +526,14 @@
                         <div class="score-indicator">${strings.score_label}: ${deal.score || 85}%</div>
                         ${discount > 0 ? `<div class="badge-discount">-${discount}%</div>` : ''}
 
-                        <!-- Engine 1: Proxy -> Engine 2: Direct -> Engine 3: Category Fallback -->
+                        <!-- Direct Load with No-Referrer -->
                         <img 
-                            src="${proxyImg}" 
+                            src="${rawImg}" 
                             alt="${deal.title}"
                             loading="lazy"
                             referrerpolicy="no-referrer"
-                            onerror="if(this.src.includes('/api/proxy-image')){ this.src='${rawImg}'; } else if(this.src === '${rawImg}'){ this.src='${fallbackImg}'; } else { this.onerror=null; }"
+                            crossorigin="anonymous"
+                            onerror="this.onerror=null; this.src='${fallbackImg}';"
                         >
                     </div>
                     <div class="card-content">

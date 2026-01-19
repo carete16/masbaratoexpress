@@ -74,9 +74,28 @@ class CoreProcessor {
         }
     }
 
+    getCategoryBalance() {
+        const categories = ['Tecnología', 'Moda', 'Hogar', 'Gamer', 'Salud'];
+        const counts = {};
+
+        categories.forEach(cat => {
+            const result = db.prepare('SELECT COUNT(*) as count FROM published_deals WHERE categoria = ?').get(cat);
+            counts[cat] = result.count;
+        });
+
+        return counts;
+    }
+
+    needsCategory(categoria) {
+        const balance = this.getCategoryBalance();
+        const minCount = Math.min(...Object.values(balance));
+        return balance[categoria] <= minCount + 2; // Priorizar categorías con menos ofertas
+    }
+
     async start() {
         const Radar = require('./Bot1_Scraper');
         logger.info('🏛️ ARQUITECTURA EDITORIAL ACTIVADA');
+        logger.info('📊 Sistema de Diversificación de Categorías: ACTIVO');
 
         let isRunning = false;
         const runCycle = async () => {
@@ -87,8 +106,22 @@ class CoreProcessor {
 
             isRunning = true;
             try {
+                // Mostrar balance actual
+                const balance = this.getCategoryBalance();
+                logger.info(`📊 Balance de Categorías: ${JSON.stringify(balance)}`);
+
                 const opportunities = await Radar.getMarketOpportunities();
-                for (let opp of opportunities) {
+
+                // Priorizar oportunidades de categorías con menos representación
+                const prioritized = opportunities.sort((a, b) => {
+                    const catA = a.categoria || 'General';
+                    const catB = b.categoria || 'General';
+                    const needsA = this.needsCategory(catA) ? 1 : 0;
+                    const needsB = this.needsCategory(catB) ? 1 : 0;
+                    return needsB - needsA;
+                });
+
+                for (let opp of prioritized) {
                     const success = await this.processDeal(opp);
                     if (success) await new Promise(r => setTimeout(r, 8000));
                 }
