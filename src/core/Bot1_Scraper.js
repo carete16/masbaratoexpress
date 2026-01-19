@@ -71,7 +71,7 @@ class RadarBot {
                 title: cleanTitle,
                 sourceLink: link,
                 referencePrice: priceOffer,
-                msrp: priceOffer * 1.2, // Estimación
+                msrp: 0, // Sin estimación falsa. Dejamos que el Validador encuentre el real.
                 store: storeName,
                 image: imageUrl,
                 description: item.contentSnippet || item.content || '',
