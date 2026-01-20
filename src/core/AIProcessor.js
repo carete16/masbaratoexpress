@@ -1,62 +1,90 @@
-const axios = require('axios');
 const logger = require('../utils/logger');
-require('dotenv').config();
 
+/**
+ * AIProcessor: Extrae y formatea descripciones directamente del producto
+ * Sin necesidad de OpenAI - usa la info real del scraping
+ */
 class AIProcessor {
-    constructor() {
-        this.apiKey = process.env.OPENAI_API_KEY;
-        this.model = 'gpt-4o';
-    }
-
     async generateViralContent(deal) {
-        const storeName = (deal.tienda || 'Oferta').toUpperCase();
-        const discount = (deal.price_official && deal.price_offer && deal.price_official > deal.price_offer)
-            ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
-            : 0;
-
-        if (!this.apiKey || this.apiKey === 'tu_key_aqui') {
-            return { content: this.fallbackEditorial(deal, discount, storeName) };
-        }
-
         try {
-            const systemPrompt = `Eres un redactor editorial experto de MasbaratoDeals. Estilo profesional y persuasivo.`;
-            const userPrompt = `
-Genera un post editorial para:
-- Producto: ${deal.title}
-- Tienda: ${storeName}
-- Precio Final: $${deal.price_offer}
-- Precio Original: $${deal.price_official || '---'}
-- Descuento: ${discount}%
+            const storeName = (deal.tienda || 'Oferta').toUpperCase();
+            const discount = (deal.price_official && deal.price_offer && deal.price_official > deal.price_offer)
+                ? Math.round(((deal.price_official - deal.price_offer) / deal.price_official) * 100)
+                : 0;
 
-Estructura:
-1. Título: 🔥 [${storeName}] ${deal.title} – $${deal.price_offer}
-2. Análisis de oportunidad (150 palabras).
-`;
+            // Usar la descripción ya extraída del scraping o generar una básica
+            let description = deal.description || deal.originalDescription || '';
 
-            const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-                model: this.model,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt }
-                ],
-                max_tokens: 800
-            }, {
-                headers: { 'Authorization': `Bearer ${this.apiKey}` }
-            });
+            // Si no hay descripción del scraping, generar una profesional
+            if (!description || description.length < 50) {
+                description = this.generateProfessionalDescription(deal, discount, storeName);
+            } else {
+                // Limpiar y formatear la descripción extraída
+                description = this.formatScrapedDescription(description, deal, discount, storeName);
+            }
 
-            return { content: response.data.choices[0].message.content };
-        } catch (error) {
-            logger.error(`Error IA: ${error.message}`);
-            return { content: this.fallbackEditorial(deal, discount, storeName) };
+            return { content: description };
+        } catch (e) {
+            logger.error(`Error en AIProcessor: ${e.message}`);
+            return { content: this.generateProfessionalDescription(deal, 0, 'USA Store') };
         }
     }
 
-    fallbackEditorial(deal, discount, storeName) {
-        return `🔥 [${storeName}] ${deal.title} – $${deal.price_offer}
-    
-Este ${deal.title} representa una oportunidad excepcional en el mercado actual. Con un descuento verificado, se posiciona como una de las mejores opciones en cuanto a relación calidad-precio.
+    formatScrapedDescription(rawDesc, deal, discount, storeName) {
+        // Limpiar HTML y caracteres especiales
+        let clean = rawDesc
+            .replace(/<[^>]*>/g, '')
+            .replace(/\s+/g, ' ')
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+            .trim();
 
-La durabilidad y el rendimiento de este modelo han sido destacados en múltiples análisis técnicos, lo que garantiza una compra segura. Para aprovechar este precio, haz clic en el botón de abajo. Stock limitado.`;
+        // Limitar longitud
+        if (clean.length > 400) {
+            clean = clean.substring(0, 397) + '...';
+        }
+
+        // Agregar encabezado con precio
+        let formatted = `🔥 [${storeName}] ${deal.title} – $${deal.price_offer}\n\n`;
+
+        if (discount > 0) {
+            formatted += `💰 AHORRO DEL ${discount}% - Precio original: $${deal.price_official}\n\n`;
+        }
+
+        formatted += clean;
+        formatted += `\n\n⚠️ Oferta por tiempo limitado. Stock sujeto a disponibilidad.`;
+
+        return formatted;
+    }
+
+    generateProfessionalDescription(deal, discount, storeName) {
+        let desc = `🔥 [${storeName}] ${deal.title} – $${deal.price_offer}\n\n`;
+
+        if (discount > 0) {
+            desc += `💰 AHORRA ${discount}% - Precio especial de $${deal.price_offer} `;
+            desc += `(antes $${deal.price_official})\n\n`;
+        }
+
+        // Descripción profesional basada en el título
+        desc += `${deal.title} representa una oportunidad excepcional en el mercado actual. `;
+
+        if (discount >= 30) {
+            desc += `Con un descuento del ${discount}%, este es uno de los mejores precios disponibles. `;
+        }
+
+        desc += `Producto verificado y en stock en ${storeName}.\n\n`;
+
+        // Beneficios genéricos
+        desc += `✅ Producto auténtico\n`;
+        desc += `✅ Envío disponible\n`;
+        desc += `✅ Garantía del fabricante\n`;
+
+        if (deal.categoria) {
+            desc += `\n📦 Categoría: ${deal.categoria}\n`;
+        }
+
+        desc += `\n⚠️ Oferta por tiempo limitado. Stock sujeto a disponibilidad.`;
+
+        return desc;
     }
 }
 
