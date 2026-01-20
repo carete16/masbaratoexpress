@@ -48,13 +48,7 @@ class LinkTransformer {
             }
         } catch (e) { }
 
-        // 2. MONETIZACIÓN CON SOVRN (Si está configurado)
-        if (this.tags.sovrn_key) {
-            // Sovrn Commerce convierte automáticamente enlaces de Amazon, Walmart, eBay, etc.
-            return `https://redirect.viglink.com/?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(currentUrl)}`;
-        }
-
-        // 2. MONETIZACIÓN ESPECÍFICA (Borra tags viejos de otros)
+        // 2. MONETIZACIÓN ESPECÍFICA (Prioridad: AMAZON DIRECTO)
 
         // --- AMAZON ---
         if (currentUrl.includes('amazon.com')) {
@@ -63,9 +57,14 @@ class LinkTransformer {
             if (asin) {
                 return `https://www.amazon.com/dp/${asin}?tag=${this.tags.amazon}`;
             }
-            // Si es un link de búsqueda o categoría, solo forzamos el tag
             const base = currentUrl.split('?')[0];
             return `${base}?tag=${this.tags.amazon}`;
+        }
+
+        // 3. MONETIZACIÓN CON SOVRN (Para el resto de tiendas)
+        if (this.tags.sovrn_key) {
+            // Sovrn Commerce convierte automáticamente enlaces de Walmart, eBay, etc.
+            return `https://redirect.viglink.com/?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(currentUrl)}`;
         }
 
         // --- EBAY ---
