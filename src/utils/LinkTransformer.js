@@ -51,7 +51,6 @@ class LinkTransformer {
         // 2. MONETIZACIÓN ESPECÍFICA (Prioridad: AMAZON DIRECTO)
         // --- AMAZON ---
         if (currentUrl.includes('amazon.com') || currentUrl.includes('amzn.to')) {
-            // Limpiar tags previos
             try {
                 const cleanObj = new URL(currentUrl);
                 cleanObj.searchParams.delete('tag');
@@ -65,24 +64,15 @@ class LinkTransformer {
             if (asin) {
                 return `https://www.amazon.com/dp/${asin}?tag=${this.tags.amazon}`;
             }
-            // Si es un link corto o de búsqueda, asegurar que lleve el tag
             const separator = currentUrl.includes('?') ? '&' : '?';
             return `${currentUrl}${separator}tag=${this.tags.amazon}`;
         }
 
-        // 3. MONETIZACIÓN CON SOVRN (Para el resto de tiendas - EXCLUYENDO AMAZON)
-        if (this.tags.sovrn_key) {
-            // Sovrn Commerce para Walmart, eBay, Best Buy, etc.
-            return `https://redirect.viglink.com/?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(currentUrl)}`;
-        }
-
         // --- EBAY ---
         if (currentUrl.includes('ebay.com')) {
-            // Extraer ID de item si existe para un link más limpio
             const itemMatch = currentUrl.match(/\/itm\/(?:[^\/]+\/)?(\d+)/);
             const itemId = itemMatch ? itemMatch[1] : null;
             const baseUrl = itemId ? `https://www.ebay.com/itm/${itemId}` : currentUrl.split('?')[0];
-
             return `https://www.ebay.com/rover/1/711-53200-19255-0/1?mpre=${encodeURIComponent(baseUrl)}&campid=${this.tags.ebay || '5338634567'}&toolid=20008`;
         }
 
@@ -92,7 +82,20 @@ class LinkTransformer {
             return `https://goto.walmart.com/c/${this.tags.walmart || '2003851'}/565706/9383?u=${encodeURIComponent(base)}`;
         }
 
-        // Si no es de las 3 grandes, devolvemos el link limpio de parámetros de rastreo conocidos
+        // 3. MONETIZACIÓN CON SOVRN (Para el resto: Best Buy, Target, Newegg, etc.)
+        if (this.tags.sovrn_key) {
+            // Limpieza previa para mejores resultados en Sovrn
+            if (currentUrl.includes('bestbuy.com') || currentUrl.includes('target.com') || currentUrl.includes('newegg.com')) {
+                try {
+                    const u = new URL(currentUrl);
+                    ['ref', 'loc', 'tag', 'clickid', 'irclickid'].forEach(p => u.searchParams.delete(p));
+                    currentUrl = u.toString();
+                } catch (e) { }
+            }
+            return `https://redirect.viglink.com/?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(currentUrl)}`;
+        }
+
+        // FALLBACK: Limpieza básica de parámetros de rastreo
         try {
             const cleanUrl = new URL(currentUrl);
             const paramsToStrip = ['tag', 'clickid', 'aff_id', 'aff_sub', 'utm_source', 'utm_medium', 'utm_campaign', 'v_id'];

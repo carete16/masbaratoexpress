@@ -278,6 +278,20 @@
             font-weight: 700;
         }
 
+        .badge-store {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: var(--primary);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            z-index: 10;
+        }
+
         .card-content {
             padding: 30px;
             flex-grow: 1;
@@ -294,16 +308,17 @@
         }
 
         .deal-title {
-            font-size: 19px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--text-main);
             margin-bottom: 20px;
-            line-height: 1.4;
-            height: 53px;
-            overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.4;
+            height: 2.8em;
         }
 
         .price-container {
@@ -415,9 +430,10 @@
         <div class="filters" id="categories">
             <button class="chip active" data-cat="all" data-i18n="filter_all">🔥 Todo</button>
             <button class="chip" data-cat="Tecnología" data-i18n="filter_tech">💻 Tecnología</button>
+            <button class="chip" data-cat="Gamer" data-i18n="filter_gamer">🎮 Gamer</button>
             <button class="chip" data-cat="Moda" data-i18n="filter_fashion">👟 Moda</button>
             <button class="chip" data-cat="Hogar" data-i18n="filter_home">🏠 Hogar</button>
-            <button class="chip" data-cat="Gamer" data-i18n="filter_gamer">🎮 Gamer</button>
+            <button class="chip" data-cat="Salud" data-i18n="filter_health">💊 Salud</button>
         </div>
     </div>
 
@@ -449,6 +465,7 @@
                 filter_fashion: "👟 Moda",
                 filter_home: "🏠 Hogar",
                 filter_gamer: "🎮 Gamer",
+                filter_health: "💊 Salud",
                 footer_text: "© 2026 Masbarato Deals - El standard de las ofertas en USA.",
                 btn_ia: "🤖 ANÁLISIS IA",
                 btn_go: "VER GANGA",
@@ -467,6 +484,7 @@
                 filter_fashion: "👟 Fashion",
                 filter_home: "🏠 Home",
                 filter_gamer: "🎮 Gaming",
+                filter_health: "💊 Health",
                 footer_text: "© 2026 Masbarato Deals - The standard for USA deals.",
                 btn_ia: "🤖 AI ANALYSIS",
                 btn_go: "VIEW DEAL",
@@ -545,6 +563,7 @@
                 <article class="deal-card">
                     <div class="image-outer">
                         <div class="score-indicator">${strings.score_label}: ${deal.score || 85}%</div>
+                        <div class="badge-store">${deal.tienda}</div>
                         ${discount > 0 ? `<div class="badge-discount">-${discount}%</div>` : ''}
 
                         <!-- Direct Load with No-Referrer -->
@@ -557,7 +576,6 @@
                         >
                     </div>
                     <div class="card-content">
-                        <div class="store-info">${deal.tienda}</div>
                         <h3 class="deal-title">${deal.title}</h3>
                         <div class="price-container">
                             <span class="price-now">USD $${deal.price_offer}</span>
