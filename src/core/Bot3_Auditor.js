@@ -51,19 +51,19 @@ class PriceAuditorBot {
         }
 
         if (price_official <= 0) {
-            // Si es Amazon, somos más estrictos (exigimos ver el descuento en el scraping)
-            if (deal.tienda === 'Amazon') {
-                report.isGoodDeal = false;
-                report.reason = `No se pudo verificar MSRP en Amazon.`;
-                return report;
-            }
-            // Para otras tiendas, si el radar ya nos dió un precio de referencia bajo, permitimos pasar
-            score -= 10;
+            // RELAJADO: Si es Amazon, permitimos que pase aunque no veamos el MSRP en el scraping,
+            // siempre que el Radar lo haya marcado con potencial.
+            // Antes lo rechazábamos, ahora bajamos el score para ser cautos.
+            score -= 15;
             report.quality = 'Opportunistic';
-        }
 
-        if (savingsPercent >= 50) score += 40;
-        else if (savingsPercent >= 30) score += 25;
+            // Si el precio es redondo o muy bajo (< $20), solemos confiar más
+            if (price_offer < 20) score += 5;
+        } else if (savingsPercent < 10) {
+            report.isGoodDeal = false;
+            report.reason = `Ahorro real insuficiente (${savingsPercent}%). El filtro exige un mínimo del 10% para evitar "falsas ofertas".`;
+            return report;
+        }
 
         // Bonus por tiendas top
         if (deal.tienda === 'Amazon' || deal.tienda === 'Best Buy') score += 10;

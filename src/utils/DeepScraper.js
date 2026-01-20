@@ -129,11 +129,16 @@ class DeepScraper {
                     description = walmartDesc.substring(0, 400);
                 }
                 else if (window.location.hostname.includes('ebay.com')) {
-                    title = document.querySelector('.x-item-title__mainTitle span')?.innerText;
-                    const op = document.querySelector('.x-price-primary span')?.innerText;
+                    title = document.querySelector('.x-item-title__mainTitle span')?.innerText || document.querySelector('#itemTitle')?.innerText;
+                    const op = document.querySelector('.x-price-primary span')?.innerText ||
+                        document.querySelector('.display-price')?.innerText ||
+                        document.querySelector('#prcIsum')?.innerText;
                     offerPrice = clean(op);
 
-                    const lp = document.querySelector('.ux-textspans--STRIKETHROUGH')?.innerText || document.querySelector('.x-additional-info__text-strike span')?.innerText;
+                    const lp = document.querySelector('.ux-textspans--STRIKETHROUGH')?.innerText ||
+                        document.querySelector('.x-additional-info__text-strike span')?.innerText ||
+                        document.querySelector('.strikethrough')?.innerText ||
+                        document.querySelector('#mm-saleDscPrc')?.innerText;
                     officialPrice = clean(lp);
 
                     image = document.querySelector('.ux-image-magnify__image--main')?.src || document.querySelector('#icImg')?.src;

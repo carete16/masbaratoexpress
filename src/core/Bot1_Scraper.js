@@ -15,10 +15,12 @@ class RadarBot {
     constructor() {
         this.sources = [
             { name: 'TechBargains', url: 'https://feeds.feedburner.com/Techbargains' },
-            { name: 'Slickdeals Hot', url: 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1' },
-            { name: 'Slickdeals eBay', url: 'https://slickdeals.net/newsearch.php?q=ebay&searcharea=deals&searchin=first&rss=1' },
+            { name: 'TechBargains eBay', url: 'https://www.techbargains.com/rss/store/ebay' },
+            { name: 'Slickdeals Frontpage', url: 'https://slickdeals.net/rss/p/frontpage.xml' },
             { name: 'DealNews', url: 'https://www.dealnews.com/c142/c234/-/f/rss.html' },
-            { name: 'BensBargains', url: 'https://bensbargains.com/categories/all/rss/' }
+            { name: 'BensBargains', url: 'https://bensbargains.com/categories/all/rss/' },
+            { name: 'GottaDeal', url: 'https://www.gottadeal.com/RSS/Deals' },
+            { name: 'Bargainist', url: 'https://www.bargainist.com/deals/feed/' }
         ];
     }
 
