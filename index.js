@@ -13,6 +13,11 @@ app.use(express.static('public')); // Servir estáticos principal
 app.use(express.static(path.join(__dirname, 'src/web/public'))); // Fallback
 app.use(express.json());
 
+// --- ROUTES PARA PÁGINAS ---
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/admin.html'));
+});
+
 // --- PROXY DE IMÁGENES (Bypass de bloqueos) ---
 app.get('/api/proxy-image', async (req, res) => {
   const imageUrl = req.query.url;
