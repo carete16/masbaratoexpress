@@ -108,6 +108,12 @@ class RadarBot {
                 else if (lowTitle.includes('costco') || lowLink.includes('costco.com')) storeName = 'Costco';
             }
 
+            // --- BLOQUEO PROACTIVO DE TIENDAS DE SERVICIOS ---
+            const storeBlacklist = ['NordVPN', 'Disney+', 'IPVanish', 'AT&T Internet', 'Stack Social', 'WSJ', 'CIT Bank', 'Bitdefender', 'Surfshark', 'McAfee', 'Norton'];
+            if (storeBlacklist.some(s => storeName.includes(s))) {
+                return null;
+            }
+
             // 3. Extraer Imagen
             let imageUrl = item.imagelink || '';
             if (!imageUrl && item.content) {

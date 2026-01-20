@@ -21,6 +21,15 @@ class PriceAuditorBot {
         };
 
         const { price_offer, price_official, title } = deal;
+        const lowTitle = title.toLowerCase();
+
+        // --- FILTRO DE EXCLUSIÓN: BLOQUEO DE SERVICIOS Y SUSCRIPCIONES ---
+        const blacklist = /bank|citbank|bitdefender|antivirus|subscription|suscripción|vpn|software|hosting|nordvpn|wsj|wall street journal|disney\+|paramount|hulu|netflix|credit card|financial|insurance/i;
+        if (blacklist.test(lowTitle)) {
+            report.isGoodDeal = false;
+            report.reason = 'Producto excluido: Servicios, Bancos o Suscripciones no permitidas.';
+            return report;
+        }
 
         // 1. LIMPIEZA DE TÍTULO PROFESIONAL
         deal.title = deal.title
