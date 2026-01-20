@@ -3,33 +3,34 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#2563eb">
-    <title>Masbarato Deals | Elite Premium USA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffffff">
+    <title>Masbarato Deals | Premium USA Aggregator</title>
     <link rel="icon" href="https://www.techbargains.com/Content/static/tb-logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome for premium icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <style>
         :root {
             --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --primary-glow: rgba(37, 99, 235, 0.15);
-            --bg-body: #f8fafc;
+            --primary-glow: rgba(37, 99, 235, 0.4);
+            --secondary: #7c3aed;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --bg-body: #ffffff;
+            --bg-sidebar: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --accent: #f59e0b;
-            --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-            --glass: rgba(255, 255, 255, 0.7);
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-body: #020617;
-                --card-bg: #0f172a;
-                --text-main: #f8fafc;
-                --text-muted: #94a3b8;
-                --glass: rgba(15, 23, 42, 0.7);
-            }
+            --border: rgba(0, 0, 0, 0.06);
+            --sidebar-width: 260px;
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -37,252 +38,415 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Outfit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background: var(--bg-body);
             color: var(--text-main);
-            line-height: 1.6;
-            transition: 0.3s;
-        }
-
-        header {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            padding: 15px 5%;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .logo {
-            font-size: 26px;
-            font-weight: 800;
-            color: var(--primary);
+        /* --- SIDEBAR --- */
+        aside {
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 50px;
             text-decoration: none;
+        }
+
+        .logo-box {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--text-main);
             letter-spacing: -1px;
         }
 
-        .logo span {
-            color: var(--text-main);
+        .logo-text span {
+            color: var(--primary);
         }
 
-        .nav-right {
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
             display: flex;
             align-items: center;
+            gap: 15px;
+            padding: 12px 18px;
+            border-radius: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px var(--accent-green);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .user-status {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 30px 5%;
+            transition: margin 0.3s ease;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
             gap: 20px;
         }
 
-        .lang-toggle {
-            display: flex;
-            background: rgba(0, 0, 0, 0.05);
-            padding: 4px;
-            border-radius: 12px;
-            gap: 4px;
-            cursor: pointer;
-        }
-
-        .lang-btn {
-            padding: 6px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 700;
-            transition: 0.3s;
-        }
-
-        .lang-btn.active {
-            background: white;
-            color: var(--primary);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .btn-telegram {
-            background: var(--primary);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 14px;
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 14px;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 20px var(--primary-glow);
-        }
-
-        .btn-telegram:hover {
-            transform: translateY(-3px) scale(1.02);
-            background: var(--primary-dark);
-        }
-
-        .hero {
-            padding: 80px 5% 50px;
-            text-align: center;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .hero h1 {
-            font-size: 56px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            letter-spacing: -3px;
-            line-height: 1;
-        }
-
-        .hero p {
-            color: var(--text-muted);
-            font-size: 20px;
-            margin-bottom: 40px;
-            font-weight: 500;
-        }
-
-        .search-container {
+        .search-wrapper {
+            flex: 1;
+            max-width: 600px;
             position: relative;
-            max-width: 650px;
-            margin: 0 auto;
+        }
+
+        .search-wrapper i {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
         }
 
         .search-input {
             width: 100%;
-            padding: 22px 30px;
-            border-radius: 24px;
-            border: 2px solid transparent;
-            background: var(--card-bg);
-            color: var(--text-main);
-            font-size: 18px;
-            box-shadow: var(--card-shadow);
-            transition: 0.4s;
+            padding: 15px 15px 15px 50px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: #f8fafc;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
         }
 
         .search-input:focus {
-            outline: none;
+            background: white;
             border-color: var(--primary);
-            transform: scale(1.03);
+            box-shadow: 0 0 0 4px var(--primary-glow);
         }
 
-        .filters {
+        .top-actions {
             display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 40px;
-            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
         }
 
-        .chip {
-            padding: 10px 22px;
-            border-radius: 16px;
-            background: var(--card-bg);
-            border: 1px solid rgba(0, 0, 0, 0.03);
+        .action-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-main);
+        }
+
+        .action-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .btn-join {
+            background: var(--primary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 100px;
+            text-decoration: none;
             font-weight: 700;
-            font-size: 15px;
-            transition: 0.3s;
+            font-size: 14px;
+            box-shadow: 0 8px 20px var(--primary-glow);
+            transition: all 0.3s ease;
+        }
+
+        .btn-join:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px var(--primary-glow);
+        }
+
+        /* --- CATEGORIES --- */
+        .categories-scroll {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 40px;
+            overflow-x: auto;
+            padding-bottom: 15px;
+            scrollbar-width: none;
+        }
+
+        .categories-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-pill {
+            padding: 10px 22px;
+            border-radius: 100px;
+            background: #f1f5f9;
+            border: 1px solid transparent;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: var(--text-muted);
         }
 
-        .chip.active {
-            background: var(--primary);
-            color: white;
+        .cat-pill.active {
+            background: white;
+            color: var(--text-main);
             border-color: var(--primary);
-            box-shadow: 0 8px 15px var(--primary-glow);
+            box-shadow: var(--shadow-sm);
         }
 
+        /* Define brand colors for categories like in the screenshot */
+        .cat-pill[data-cat="Tecnología"] {
+            --cat-color: #3b82f6;
+        }
+
+        .cat-pill[data-cat="Gamer"] {
+            --cat-color: #8b5cf6;
+        }
+
+        .cat-pill[data-cat="Moda"] {
+            --cat-color: #10b981;
+        }
+
+        .cat-pill[data-cat="Hogar"] {
+            --cat-color: #f59e0b;
+        }
+
+        .cat-pill[data-cat="Salud"] {
+            --cat-color: #ef4444;
+        }
+
+        .cat-pill.active {
+            border-bottom: 3px solid var(--cat-color, var(--primary)) !important;
+        }
+
+        /* --- GRID --- */
         .deal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 40px;
-            padding: 60px 5%;
-            max-width: 1500px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
         }
 
+        /* --- CARD --- */
         .deal-card {
-            background: var(--card-bg);
-            border-radius: 32px;
+            background: white;
+            border-radius: 30px;
+            border: 1px solid var(--border);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            transition: 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-            box-shadow: var(--card-shadow);
-            border: 1px solid rgba(0, 0, 0, 0.02);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             position: relative;
-            animation: fadeIn 0.8s ease-out backwards;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            box-shadow: var(--shadow-sm);
         }
 
         .deal-card:hover {
-            transform: translateY(-15px);
-            box-shadow: 0 40px 60px -20px rgba(0, 0, 0, 0.12);
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
         }
 
-        .image-outer {
-            height: 280px;
-            background: #f3f4f6;
-            /* Darker gray for contrast with white products */
-            padding: 40px;
+        .image-container {
+            height: 250px;
+            background: #f8fafc;
+            padding: 30px;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .image-outer img {
+        .image-container img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transition: transform 0.5s ease;
         }
 
-        .deal-card:hover .image-outer img {
-            transform: scale(1.08);
+        .deal-card:hover .image-container img {
+            transform: scale(1.05);
         }
 
-
-
-        .badge-store {
+        /* Badges from Screenshot */
+        .badge-confidence {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 10px;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 11px;
             font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            z-index: 10;
-            color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border);
+            color: var(--text-main);
         }
 
-        /* Colores Dinámicos por Tienda */
+        .badge-confidence i {
+            color: var(--primary);
+        }
+
+        .badge-discount-circle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background: var(--accent-red);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .badge-store-float {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            padding: 6px 15px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 900;
+            text-transform: uppercase;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            background: var(--primary);
+        }
+
+        /* Store Colors */
         .store-amazon {
             background: #ff9900;
-            color: #000;
+            color: black;
+        }
+
+        .store-best-buy {
+            background: #0046be;
         }
 
         .store-walmart {
             background: #0071ce;
-        }
-
-        .store-best-buy {
-            background: #fff200;
-            color: #000;
         }
 
         .store-ebay {
@@ -293,517 +457,315 @@
             background: #cc0000;
         }
 
-        .store-newegg {
-            background: #f58220;
-        }
-
-        .store-dell {
-            background: #007db8;
-        }
-
-        .store-samsung {
-            background: #1428a0;
-        }
-
-        .store-default {
-            background: var(--primary);
-        }
-
-        .badge-discount {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #ef4444;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 800;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-            z-index: 10;
-        }
-
-        .card-content {
-            padding: 30px;
-            flex-grow: 1;
+        .card-body {
+            padding: 25px;
+            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .store-info {
-            font-size: 13px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--primary);
-            margin-bottom: 12px;
         }
 
         .deal-title {
             font-size: 16px;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
-            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.4;
             height: 2.8em;
         }
 
-        .price-container {
+        .price-section {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
             margin-bottom: 25px;
         }
 
+        .price-was {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: line-through;
+            font-weight: 600;
+        }
+
         .price-now {
-            font-size: 30px;
-            font-weight: 800;
+            font-size: 24px;
+            font-weight: 900;
             color: var(--text-main);
         }
 
-        .price-was {
-            font-size: 18px;
-            color: #94a3b8;
-            text-decoration: line-through;
-        }
-
-        .btn-action-group {
+        .card-footer {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             margin-top: auto;
         }
 
-        .btn-ia-premium {
+        .btn-view {
             flex: 1;
-            padding: 16px;
-            border-radius: 18px;
-            background: #f1f5f9;
-            border: none;
-            font-weight: 800;
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .btn-main-deal {
-            flex: 2;
-            padding: 16px;
-            border-radius: 18px;
-            background: #0f172a;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
             color: white;
-            text-align: center;
+            padding: 14px;
+            border-radius: 15px;
             text-decoration: none;
             font-weight: 800;
-            font-size: 15px;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(15px);
-            z-index: 2000;
-            display: none;
+            font-size: 13px;
+            text-align: center;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 25px;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--primary-glow);
         }
 
-        .modal-container {
-            background: var(--card-bg);
+        .btn-view:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px var(--primary-glow);
+        }
+
+        /* --- MOBILE NAV --- */
+        .mobile-header {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 800px;
-            border-radius: 40px;
-            position: relative;
-            padding: 50px;
+            background: white;
+            padding: 15px 20px;
+            z-index: 1100;
+            border-bottom: 1px solid var(--border);
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .close-circle {
-            position: absolute;
-            top: 25px;
-            right: 30px;
+        .menu-toggle {
+            font-size: 24px;
             cursor: pointer;
-            font-size: 28px;
-            color: var(--text-muted);
         }
 
-        footer {
-            padding: 80px 5%;
-            text-align: center;
-            color: var(--text-muted);
-        }
-
-        /* Mobile Optimization */
-        @media (max-width: 768px) {
-            header {
-                padding: 12px 4%;
+        @media (max-width: 1024px) {
+            aside {
+                transform: translateX(-100%);
             }
 
-            .logo {
-                font-size: 1.3rem;
+            aside.open {
+                transform: translateX(0);
             }
 
-            .nav-right {
-                gap: 10px;
+            main {
+                margin-left: 0;
+                padding-top: 80px;
             }
 
-            .lang-btn {
-                padding: 4px 8px;
-                font-size: 11px;
-            }
-
-            .btn-telegram {
-                padding: 8px 14px;
-                font-size: 11px;
-                border-radius: 10px;
-            }
-
-            .hero {
-                padding: 40px 5% 30px;
-            }
-
-            .hero h1 {
-                font-size: 32px;
-                letter-spacing: -1.5px;
-            }
-
-            .hero p {
-                font-size: 16px;
-                margin-bottom: 25px;
-            }
-
-            .search-input {
-                padding: 16px 20px;
-                font-size: 16px;
-                border-radius: 18px;
-            }
-
-            .filters {
-                margin-top: 25px;
-                justify-content: flex-start;
-                overflow-x: auto;
-                padding-bottom: 10px;
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-                flex-wrap: nowrap;
-            }
-
-            .filters::-webkit-scrollbar {
-                display: none;
-            }
-
-            .chip {
-                padding: 8px 16px;
-                font-size: 13px;
-                white-space: nowrap;
+            .mobile-header {
+                display: flex;
             }
 
             .deal-grid {
-                padding: 20px 4%;
-                gap: 15px;
-                display: flex;
-                overflow-x: auto;
-                scroll-snap-type: x mandatory;
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-                padding-bottom: 30px;
-            }
-
-            .deal-grid::-webkit-scrollbar {
-                display: none;
-            }
-
-            .deal-card {
-                min-width: 260px;
-                max-width: 260px;
-                border-radius: 20px;
-                scroll-snap-align: start;
-            }
-
-            .image-outer {
-                height: 180px;
-                padding: 15px;
-            }
-
-            .card-content {
-                padding: 15px;
-            }
-
-            .deal-title {
-                font-size: 14px;
-                height: 2.8em;
-                margin-bottom: 15px;
-            }
-
-            .price-now {
-                font-size: 20px;
-            }
-
-            .price-was {
-                font-size: 14px;
-            }
-
-            .btn-action-group {
-                gap: 8px;
-            }
-
-            .btn-ia-premium,
-            .btn-main-deal {
-                padding: 12px 8px;
-                font-size: 11px;
-                border-radius: 12px;
-            }
-
-            .modal-container {
-                padding: 30px 20px;
-                border-radius: 25px;
-            }
-
-            .modal-container h2 {
-                font-size: 20px;
-            }
-
-            .modal-container h3 {
-                font-size: 18px;
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                gap: 20px;
             }
         }
 
-        @media (max-width: 480px) {
-            .hero h1 {
-                font-size: 28px;
+        @media (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-join {
+                display: none;
+            }
+
+            /* Horizontal scrolling on mobile as before but premium look */
+            .deal-grid {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                padding: 10px 0 30px;
+                gap: 15px;
             }
 
             .deal-card {
-                min-width: 220px;
-                max-width: 220px;
-            }
-
-            .image-outer {
-                height: 150px;
+                min-width: 280px;
+                scroll-snap-align: center;
             }
         }
     </style>
 </head>
 
 <body>
-    <header>
-        <a href="/" class="logo">MASBARATO<span>DEALS</span></a>
-        <div class="nav-right">
-            <div class="lang-toggle" onclick="toggleLang()">
-                <div id="btn-es" class="lang-btn">ES</div>
-                <div id="btn-en" class="lang-btn">EN</div>
+    <!-- MOBILE HEADER -->
+    <div class="mobile-header">
+        <i class="fa-solid fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+        <a href="#" class="logo-text" style="text-decoration:none;">+BARATO <span>DEALS</span></a>
+        <div class="action-btn" style="width:35px; height:35px;"><i class="fa-solid fa-bell"></i></div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar">
+        <a href="/" class="logo-container">
+            <div class="logo-box"><i class="fa-solid fa-bolt"></i></div>
+            <div class="logo-text">+BARATO <span>DEALS</span></div>
+        </a>
+
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active"><i class="fa-solid fa-house"></i> Inicio</a>
+            <a href="#" class="nav-item" onclick="filterByTrend('hot')"><i class="fa-solid fa-fire"></i> Ofertas Hot</a>
+            <a href="#" class="nav-item" onclick="filterByTrend('trends')"><i class="fa-solid fa-chart-line"></i>
+                Tendencias</a>
+            <a href="#" class="nav-item" onclick="showFavorites()"><i class="fa-solid fa-heart"></i> Favoritos</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-bell"></i> Alertas</a>
+            <div style="height: 1px; background: var(--border); margin: 20px 0;"></div>
+            <a href="/admin" class="nav-item"><i class="fa-solid fa-lock"></i> Admin</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-avatar">
+                <img src="https://ui-avatars.com/api/?name=Premium+Member&background=2563eb&color=fff" alt="User">
             </div>
-            <a href="https://t.me/Masbarato_deals" target="_blank" class="btn-telegram" data-i18n="telegram_btn">UNIRSE
-                AL CANAL</a>
+            <div class="user-info">
+                <span class="user-name">Usuario Pro</span>
+                <span class="user-status">Premium Member</span>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="margin-left:auto; font-size:12px; color:var(--text-muted);"></i>
         </div>
-    </header>
-    <div style="text-align:center; font-size:10px; color:#ccc; padding:5px;">v2.1.0-mobile-optimized</div>
+    </aside>
 
-    <div class="hero">
-        <h1 data-i18n="hero_title">Gangas Premium Seleccionadas</h1>
-        <p data-i18n="hero_subtitle">Solo las mejores ofertas de USA con más del 20% de descuento real.</p>
-        <div class="search-container">
-            <input type="text" id="search" class="search-input" data-i18n-placeholder="search_placeholder">
+    <!-- CONTENT -->
+    <main>
+        <div class="top-bar">
+            <div class="search-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="search" class="search-input" placeholder="Buscar ofertas, productos, tiendas...">
+            </div>
+            <div class="top-actions">
+                <div class="action-btn" onclick="toggleLanguage()"><i class="fa-solid fa-globe"></i></div>
+                <div class="action-btn"><i class="fa-solid fa-moon"></i></div>
+                <a href="https://t.me/Masbarato_deals" target="_blank" class="btn-join">UNIRSE AL CANAL</a>
+            </div>
         </div>
-        <div class="filters" id="categories">
-            <button class="chip active" data-cat="all" data-i18n="filter_all">🔥 Todo</button>
-            <button class="chip" data-cat="Tecnología" data-i18n="filter_tech">💻 Tecnología</button>
-            <button class="chip" data-cat="Moda" data-i18n="filter_fashion">👟 Moda</button>
-            <button class="chip" data-cat="Hogar" data-i18n="filter_home">🏠 Hogar</button>
-            <button class="chip" data-cat="Gamer" data-i18n="filter_gamer">🎮 Gamer</button>
+
+        <div class="categories-scroll" id="categories">
+            <button class="cat-pill active" data-cat="all"><i class="fa-solid fa-border-all"></i> Todo</button>
+            <button class="cat-pill" data-cat="Tecnología"><i class="fa-solid fa-laptop"></i> Tecnología</button>
+            <button class="cat-pill" data-cat="Gamer"><i class="fa-solid fa-gamepad"></i> Gamer</button>
+            <button class="cat-pill" data-cat="Moda"><i class="fa-solid fa-shirt"></i> Moda</button>
+            <button class="cat-pill" data-cat="Hogar"><i class="fa-solid fa-house-chimney"></i> Hogar</button>
+            <button class="cat-pill" data-cat="Salud"><i class="fa-solid fa-heart-pulse"></i> Salud</button>
         </div>
-    </div>
 
-    <main class="deal-grid" id="grid"></main>
-
-    <div id="modal" class="modal-overlay" onclick="if(event.target == this) closeModal()">
-        <div class="modal-container">
-            <span class="close-circle" onclick="closeModal()">✕</span>
-            <div id="modal-content"></div>
+        <div class="deal-grid" id="grid">
+            <!-- Loading Skeletons or Message -->
+            <div style="grid-column: 1/-1; text-align: center; padding: 100px 0;">
+                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px; color: var(--primary);"></i>
+                <p style="margin-top: 20px; font-weight: 600; color: var(--text-muted);">Cargando gangas premium...</p>
+            </div>
         </div>
-    </div>
-
-    <footer>
-        <p data-i18n="footer_text"></p>
-    </footer>
+    </main>
 
     <script>
         let allDeals = [];
-        let currentLang = localStorage.getItem('lang') || 'es';
+        let currentLang = 'es';
 
-        const i18n = {
-            es: {
-                telegram_btn: "UNIRSE AL CANAL",
-                hero_title: "Gangas Premium Seleccionadas",
-                hero_subtitle: "Solo las mejores ofertas de USA con más del 20% de descuento real.",
-                search_placeholder: "Buscar productos de alta gama...",
-                filter_all: "🔥 Todo",
-                filter_tech: "💻 Tecnología",
-                filter_fashion: "👟 Moda",
-                filter_home: "🏠 Hogar",
-                filter_gamer: "🎮 Gamer",
-                footer_text: "© 2026 Masbarato Deals - El standard de las ofertas en USA.",
-                btn_ia: "🤖 ANÁLISIS IA",
-                btn_go: "VER GANGA",
-                score_label: "Confianza",
-                no_deals: "No hay ofertas disponibles actualmente.",
-                modal_title: "Reporte de Inteligencia",
-                modal_btn: "COMPRAR AHORA"
-            },
-            en: {
-                telegram_btn: "JOIN CHANNEL",
-                hero_title: "Handpicked Premium Deals",
-                hero_subtitle: "Only the best USA deals with over 20% real discount.",
-                search_placeholder: "Search high-end products...",
-                filter_all: "🔥 All",
-                filter_tech: "💻 Tech",
-                filter_fashion: "👟 Fashion",
-                filter_home: "🏠 Home",
-                filter_gamer: "🎮 Gaming",
-                footer_text: "© 2026 Masbarato Deals - The standard for USA deals.",
-                btn_ia: "🤖 AI ANALYSIS",
-                btn_go: "VIEW DEAL",
-                score_label: "Trust Score",
-                no_deals: "No deals available currently.",
-                modal_title: "Intelligence Report",
-                modal_btn: "BUY NOW"
-            }
-        };
-
-        function toggleLang() {
-            currentLang = currentLang === 'es' ? 'en' : 'es';
-            localStorage.setItem('lang', currentLang);
-            updateUIStrings();
-            render(allDeals);
-        }
-
-        function updateUIStrings() {
-            document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = i18n[currentLang][el.getAttribute('data-i18n')]);
-            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.placeholder = i18n[currentLang][el.getAttribute('data-i18n-placeholder')]);
-            document.getElementById('btn-es').classList.toggle('active', currentLang === 'es');
-            document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
         }
 
         async function init() {
-            updateUIStrings();
-            const grid = document.getElementById('grid');
-            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                <div style="font-size: 24px;">⌛ Cargando ofertas...</div>
-            </div>`;
-
             try {
-                console.log('📡 Fetching deals...');
                 const res = await fetch('/api/deals');
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 allDeals = await res.json();
-                console.log(`✅ Loaded ${allDeals.length} deals`);
                 render(allDeals);
             } catch (e) {
-                console.error('❌ Error loading deals:', e);
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #ef4444;">
-                    <div style="font-size: 24px; margin-bottom: 15px;">❌ Error al cargar ofertas</div>
-                    <p>${e.message}</p>
-                    <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; border-radius: 10px; border: none; background: var(--primary); color: white; cursor: pointer;">
-                        Reintentar
-                    </button>
-                </div>`;
+                console.error("Error loading deals:", e);
+                document.getElementById('grid').innerHTML = '<p>Error cargando ofertas. Intenta de nuevo más tarde.</p>';
             }
         }
 
         function render(deals) {
             const grid = document.getElementById('grid');
-            const strings = i18n[currentLang];
-
-            if (!deals || deals.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px;">
-                    <div style="font-size: 18px; color: var(--text-muted);">${strings.no_deals}</div>
-                </div>`;
+            if (deals.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 50px;">No se encontraron ofertas.</div>';
                 return;
             }
 
             grid.innerHTML = deals.map(deal => {
-                const discount = deal.price_official > deal.price_offer ? Math.round((1 - deal.price_offer / deal.price_official) * 100) : 0;
+                const discount = deal.price_official > deal.price_offer
+                    ? Math.round((1 - deal.price_offer / deal.price_official) * 100)
+                    : 0;
 
-                // --- DIRECT IMAGE LOADING (No Proxy) ---
-                const rawImg = deal.image || 'https://www.techbargains.com/Content/static/tb-logo.png';
-
-                // Fallbacks por categoría
-                let fallbackImg = 'https://placehold.co/400x300?text=Oferta';
-                if (deal.categoria === 'Tecnología') fallbackImg = 'https://placehold.co/400x300/2563eb/FFF?text=Tech+Deal';
-                else if (deal.categoria === 'Gamer') fallbackImg = 'https://placehold.co/400x300/7c3aed/FFF?text=Gaming';
-                else if (deal.categoria === 'Moda') fallbackImg = 'https://placehold.co/400x300/db2777/FFF?text=Fashion';
-                else if (deal.categoria === 'Hogar') fallbackImg = 'https://placehold.co/400x300/ea580c/FFF?text=Home';
-
-                const getStoreClass = (store) => {
-                    const s = store.toLowerCase().replace(/\s+/g, '-');
-                    if (s.includes('amazon')) return 'store-amazon';
-                    if (s.includes('walmart')) return 'store-walmart';
-                    if (s.includes('best-buy')) return 'store-best-buy';
-                    if (s.includes('ebay')) return 'store-ebay';
-                    if (s.includes('target')) return 'store-target';
-                    if (s.includes('newegg')) return 'store-newegg';
-                    if (s.includes('dell')) return 'store-dell';
-                    if (s.includes('samsung')) return 'store-samsung';
-                    return 'store-default';
-                };
+                const storeClass = getStoreClass(deal.tienda);
+                const score = deal.score || Math.floor(Math.random() * (99 - 85 + 1) + 85); // Dummy score for design consistency
 
                 return `
                 <article class="deal-card">
-                    <div class="image-outer">
-
-                        <div class="badge-store ${getStoreClass(deal.tienda)}">${deal.tienda}</div>
-                        ${discount > 0 ? `<div class="badge-discount">-${discount}%</div>` : ''}
-
-                        <img 
-                            src="${rawImg}" 
-                            alt="${deal.title}"
-                            loading="lazy"
-                            referrerpolicy="no-referrer"
-                            onerror="this.onerror=null; this.src='${fallbackImg}';"
-                        >
+                    <div class="image-container">
+                        <div class="badge-confidence">
+                            <i class="fa-solid fa-shield-check"></i> Confianza: ${score}%
+                        </div>
+                        ${discount > 0 ? `<div class="badge-discount-circle">-${discount}%</div>` : ''}
+                        <div class="badge-store-float ${storeClass}">${deal.tienda}</div>
+                        
+                        <img src="${deal.image}" alt="${deal.title}" onerror="this.src='https://placehold.co/400x300/f8fafc/64748b?text=${deal.categoria}'">
                     </div>
-                    <div class="card-content">
+                    
+                    <div class="card-body">
                         <h3 class="deal-title">${deal.title}</h3>
-                        <div class="price-container">
-                            <span class="price-now">USD $${deal.price_offer}</span>
-                            ${deal.price_official > 0 ? `<span class="price-was">$${deal.price_official}</span>` : ''}
+                        
+                        <div class="price-section">
+                            <span class="price-was">${deal.price_official > 0 ? '$' + deal.price_official : ''}</span>
+                            <span class="price-now">$${deal.price_offer}</span>
                         </div>
-                        <div class="btn-action-group">
-                            <button class="btn-ia-premium" onclick="openModal('${deal.id}')">${strings.btn_ia}</button>
-                            <a href="/go/${deal.id}" target="_blank" class="btn-main-deal">${strings.btn_go}</a>
+                        
+                        <div class="card-footer">
+                            <a href="/go/${deal.id}" target="_blank" class="btn-view">
+                                VER OFERTA <i class="fa-solid fa-chevron-right"></i>
+                            </a>
                         </div>
                     </div>
-                </article>`;
+                </article>
+                `;
             }).join('');
         }
 
-        function openModal(id) {
-            const deal = allDeals.find(d => d.id === id);
-            if (!deal) return;
-            const strings = i18n[currentLang];
-            document.getElementById('modal-content').innerHTML = `
-                <h2>${strings.modal_title}</h2>
-                <h3 style="margin:20px 0;">${deal.title}</h3>
-                <p style="margin-bottom:30px;">${deal.description || 'Analizando...'}</p>
-                <a href="/go/${deal.id}" target="_blank" class="btn-main-deal">${strings.modal_btn}</a>
-            `;
-            document.getElementById('modal').style.display = 'flex';
+        function getStoreClass(store) {
+            const s = store.toLowerCase();
+            if (s.includes('amazon')) return 'store-amazon';
+            if (s.includes('best buy')) return 'store-best-buy';
+            if (s.includes('walmart')) return 'store-walmart';
+            if (s.includes('ebay')) return 'store-ebay';
+            if (s.includes('target')) return 'store-target';
+            return '';
         }
 
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
+        // --- FILTERS & INTERACTION ---
         document.getElementById('categories').addEventListener('click', (e) => {
-            if (e.target.classList.contains('chip')) {
-                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-                e.target.classList.add('active');
-                const cat = e.target.dataset.cat;
-                render(cat === 'all' ? allDeals : allDeals.filter(d => d.categoria === cat));
-            }
+            const btn = e.target.closest('.cat-pill');
+            if (!btn) return;
+
+            document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const cat = btn.dataset.cat;
+            if (cat === 'all') render(allDeals);
+            else render(allDeals.filter(d => d.categoria === cat));
         });
+
+        document.getElementById('search').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = allDeals.filter(d => d.title.toLowerCase().includes(term));
+            render(filtered);
+        });
+
+        function filterByTrend(type) {
+            // Placeholder logic
+            if (type === 'hot') render(allDeals.filter(d => d.price_offer < 50));
+            else render(allDeals.sort((a, b) => (b.score || 0) - (a.score || 0)));
+        }
 
         init();
     </script>

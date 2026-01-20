@@ -4,7 +4,7 @@ const { db, isRecentlyPublished } = require('../database/db');
 class CoreProcessor {
     constructor() {
         this.interval = 15 * 60 * 1000;
-        this.dailyLimit = 100;
+        this.dailyLimit = 500;
     }
 
     async processDeal(opp) {
@@ -102,7 +102,10 @@ class CoreProcessor {
             if (isRunning) return;
 
             const todayStats = db.prepare("SELECT COUNT(*) as total FROM published_deals WHERE date(posted_at) = date('now')").get();
-            if (todayStats.total >= this.dailyLimit) return;
+            if (todayStats.total >= this.dailyLimit) {
+                logger.info(`⏹️ Límite diario alcanzado (${this.dailyLimit}). Deteniendo ciclo.`);
+                return;
+            }
 
             isRunning = true;
             try {
