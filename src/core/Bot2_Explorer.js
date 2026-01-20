@@ -53,12 +53,9 @@ class ValidatorBot {
             // Aceptamos múltiples tiendas para diversificar monetización
 
             // 3. INTENTO DE VALIDACIÓN PROFUNDA (Puppeteer)
-            // Dado que las tiendas bloquean Axios, usamos Puppeteer para asegurar veracidad
             const deepData = await DeepScraper.scrape(finalUrl);
 
             if (deepData && deepData.offerPrice > 0) {
-                // VERIFICACIÓN DE STOCK (Crítica)
-                // El DeepScraper debe retornar si hay botón de compra o mensaje de error
                 if (deepData.isUnavailable) {
                     logger.warn(`❌ Producto AGOTADO o NO DISPONIBLE: ${opportunity.title}`);
                     return result;
@@ -69,17 +66,21 @@ class ValidatorBot {
                 result.hasStock = true;
                 result.isValid = true;
 
-                // Actualizar metadatos si el scraper encontró algo más preciso
                 if (deepData.image) result.image = deepData.image;
                 if (deepData.title) result.title = deepData.title;
 
                 logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Stock: OK)`);
             } else {
-                // FALLBACK: Si Puppeteer falla, intentamos axios pero solo como último recurso
-                logger.warn(`⚠️ Scraping profundo falló para ${opportunity.title}.`);
+                // --- FALLBACK: CONFIANZA EN RADAR (Para tiendas que bloquean bots) ---
+                logger.warn(`⚠️ Scraping profundo bloqueado para ${opportunity.title}.`);
 
-                // Si es un link de Slickdeals que aún no hemos resuelto bien, lo marcamos inválido
-                if (finalUrl.includes('slickdeals.net/f/')) {
+                if (result.storeName !== 'Amazon' && opportunity.referencePrice > 0) {
+                    logger.info(`🔄 Usando precio de referencia del Radar para ${result.storeName}: $${opportunity.referencePrice}`);
+                    result.realPrice = opportunity.referencePrice;
+                    result.officialPrice = opportunity.msrp || 0;
+                    result.hasStock = true;
+                    result.isValid = true;
+                } else if (finalUrl.includes('slickdeals.net/f/')) {
                     logger.error(`❌ El link no se pudo resolver a una tienda real. Omitiendo.`);
                     return result;
                 }
