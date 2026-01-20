@@ -40,6 +40,9 @@ class PriceAuditorBot {
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
         report.discount = savingsPercent;
 
+        // 4. ALGORITMO DE PUNTUACIÓN (Confidence Score 0-100)
+        let score = 50; // Base
+
         // 3. FILTRO DE CALIDAD: "SOLO DESCUENTOS"
         if (price_official > 0 && savingsPercent < 10) {
             report.isGoodDeal = false;
@@ -48,13 +51,17 @@ class PriceAuditorBot {
         }
 
         if (price_official <= 0) {
-            // Si no tenemos precio oficial, dependemos de que el radar haya detectado una oferta real
-            // Pero bajamos el score para ser precavidos
+            // Si es Amazon, somos más estrictos (exigimos ver el descuento en el scraping)
+            if (deal.tienda === 'Amazon') {
+                report.isGoodDeal = false;
+                report.reason = `No se pudo verificar MSRP en Amazon.`;
+                return report;
+            }
+            // Para otras tiendas, si el radar ya nos dió un precio de referencia bajo, permitimos pasar
             score -= 10;
+            report.quality = 'Opportunistic';
         }
 
-        // 4. ALGORITMO DE PUNTUACIÓN (Confidence Score 0-100)
-        let score = 50; // Base
         if (savingsPercent >= 50) score += 40;
         else if (savingsPercent >= 30) score += 25;
 

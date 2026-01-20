@@ -82,14 +82,22 @@ class RadarBot {
             }
 
             // 2. Extraer Tienda
-            let storeName = item.vendorname || 'USA Store';
-            if (storeName === 'Global') {
-                const lowTitle = title.toLowerCase();
-                if (lowTitle.includes('amazon')) storeName = 'Amazon';
-                else if (lowTitle.includes('walmart')) storeName = 'Walmart';
-                else if (lowTitle.includes('ebay')) storeName = 'eBay';
-                else if (lowTitle.includes('target')) storeName = 'Target';
-                else if (lowTitle.includes('best buy')) storeName = 'Best Buy';
+            let storeName = item.vendorname || 'Oferta USA Store';
+            const lowTitle = title.toLowerCase();
+            const lowLink = link.toLowerCase();
+
+            if (storeName === 'Global' || storeName === 'Oferta USA Store') {
+                if (lowTitle.includes('amazon') || lowLink.includes('amazon.com') || lowLink.includes('amzn.to')) storeName = 'Amazon';
+                else if (lowTitle.includes('walmart') || lowLink.includes('walmart.com')) storeName = 'Walmart';
+                else if (lowTitle.includes('ebay') || lowLink.includes('ebay.com')) storeName = 'eBay';
+                else if (lowTitle.includes('target') || lowLink.includes('target.com')) storeName = 'Target';
+                else if (lowTitle.includes('best buy') || lowTitle.includes('bestbuy') || lowLink.includes('bestbuy.com')) storeName = 'Best Buy';
+                else if (lowTitle.includes('newegg') || lowLink.includes('newegg.com')) storeName = 'Newegg';
+                else if (lowTitle.includes('bhphoto') || lowLink.includes('bhphotovideo.com')) storeName = 'B&H Photo';
+                else if (lowTitle.includes('macy') || lowLink.includes('macys.com')) storeName = 'Macy\'s';
+                else if (lowTitle.includes('homedepot') || lowTitle.includes('home depot') || lowLink.includes('homedepot.com')) storeName = 'Home Depot';
+                else if (lowTitle.includes('gamestop') || lowLink.includes('gamestop.com')) storeName = 'GameStop';
+                else if (lowTitle.includes('costco') || lowLink.includes('costco.com')) storeName = 'Costco';
             }
 
             // 3. Extraer Imagen
@@ -101,7 +109,6 @@ class RadarBot {
 
             // 4. Categorización
             let category = 'General';
-            const lowTitle = title.toLowerCase();
             if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|gpu|keyboard|mouse|headphone|earbud|tablet|phone/)) category = 'Tecnología';
             else if (lowTitle.match(/ps5|xbox|nintendo|switch|game|steam|controller|rtx|gaming/)) category = 'Gamer';
             else if (lowTitle.match(/shoe|shirt|pant|watch|dress|bag|nike|adidas/)) category = 'Moda';
