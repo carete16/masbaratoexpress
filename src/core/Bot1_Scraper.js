@@ -17,12 +17,11 @@ class RadarBot {
             { name: 'TechBargains', url: 'https://feeds.feedburner.com/Techbargains' },
             { name: 'Slickdeals Frontpage', url: 'https://slickdeals.net/rss/p/frontpage.xml' },
             { name: 'Slickdeals Nike', url: 'https://slickdeals.net/newsearch.php?q=nike&pp=20&sort=newest&rss=1' },
-            { name: 'Slickdeals Adidas', url: 'https://slickdeals.net/newsearch.php?q=adidas&pp=20&sort=newest&rss=1' },
-            { name: 'Slickdeals iPhone', url: 'https://slickdeals.net/newsearch.php?q=iphone&pp=20&sort=newest&rss=1' },
+            { name: 'Slickdeals Apparel', url: 'https://slickdeals.net/f/apparel?rss=1' },
+            { name: 'Hip2Save', url: 'https://hip2save.com/feed/' },
+            { name: 'SneakerSteal', url: 'https://sneakersteal.com/feed/' },
             { name: 'DealNews Lifestyle', url: 'https://www.dealnews.com/c164/-/f/rss.html' },
-            { name: 'BensBargains', url: 'https://bensbargains.com/categories/all/rss/' },
-            { name: 'GottaDeal', url: 'https://www.gottadeal.com/RSS/Deals' },
-            { name: 'Bargainist', url: 'https://www.bargainist.com/deals/feed/' }
+            { name: 'BensBargains', url: 'https://bensbargains.com/categories/all/rss/' }
         ];
     }
 
