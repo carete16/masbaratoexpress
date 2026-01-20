@@ -16,7 +16,9 @@ class RadarBot {
         this.sources = [
             { name: 'TechBargains', url: 'https://feeds.feedburner.com/Techbargains' },
             { name: 'Slickdeals Hot', url: 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1' },
-            { name: 'DealNews', url: 'https://www.dealnews.com/c142/c234/-/f/rss.html' }
+            { name: 'Slickdeals eBay', url: 'https://slickdeals.net/newsearch.php?q=ebay&searcharea=deals&searchin=first&rss=1' },
+            { name: 'DealNews', url: 'https://www.dealnews.com/c142/c234/-/f/rss.html' },
+            { name: 'BensBargains', url: 'https://bensbargains.com/categories/all/rss/' }
         ];
     }
 
