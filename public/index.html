@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
     <title>Masbarato Deals | Elite Premium USA</title>
     <link rel="icon" href="https://www.techbargains.com/Content/static/tb-logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -435,6 +436,156 @@
             text-align: center;
             color: var(--text-muted);
         }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            header {
+                padding: 12px 4%;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+            }
+
+            .nav-right {
+                gap: 10px;
+            }
+
+            .lang-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            .btn-telegram {
+                padding: 8px 14px;
+                font-size: 11px;
+                border-radius: 10px;
+            }
+
+            .hero {
+                padding: 40px 5% 30px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+                letter-spacing: -1.5px;
+            }
+
+            .hero p {
+                font-size: 16px;
+                margin-bottom: 25px;
+            }
+
+            .search-input {
+                padding: 16px 20px;
+                font-size: 16px;
+                border-radius: 18px;
+            }
+
+            .filters {
+                margin-top: 25px;
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 10px;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+                flex-wrap: nowrap;
+            }
+
+            .filters::-webkit-scrollbar {
+                display: none;
+            }
+
+            .chip {
+                padding: 8px 16px;
+                font-size: 13px;
+                white-space: nowrap;
+            }
+
+            .deal-grid {
+                padding: 20px 4%;
+                gap: 15px;
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+                padding-bottom: 30px;
+            }
+
+            .deal-grid::-webkit-scrollbar {
+                display: none;
+            }
+
+            .deal-card {
+                min-width: 260px;
+                max-width: 260px;
+                border-radius: 20px;
+                scroll-snap-align: start;
+            }
+
+            .image-outer {
+                height: 180px;
+                padding: 15px;
+            }
+
+            .card-content {
+                padding: 15px;
+            }
+
+            .deal-title {
+                font-size: 14px;
+                height: 2.8em;
+                margin-bottom: 15px;
+            }
+
+            .price-now {
+                font-size: 20px;
+            }
+
+            .price-was {
+                font-size: 14px;
+            }
+
+            .btn-action-group {
+                gap: 8px;
+            }
+
+            .btn-ia-premium,
+            .btn-main-deal {
+                padding: 12px 8px;
+                font-size: 11px;
+                border-radius: 12px;
+            }
+
+            .modal-container {
+                padding: 30px 20px;
+                border-radius: 25px;
+            }
+
+            .modal-container h2 {
+                font-size: 20px;
+            }
+
+            .modal-container h3 {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .deal-card {
+                min-width: 220px;
+                max-width: 220px;
+            }
+
+            .image-outer {
+                height: 150px;
+            }
+        }
     </style>
 </head>
 
@@ -450,7 +601,7 @@
                 AL CANAL</a>
         </div>
     </header>
-    <div style="text-align:center; font-size:10px; color:#ccc; padding:5px;">v2.0.4-live</div>
+    <div style="text-align:center; font-size:10px; color:#ccc; padding:5px;">v2.1.0-mobile-optimized</div>
 
     <div class="hero">
         <h1 data-i18n="hero_title">Gangas Premium Seleccionadas</h1>

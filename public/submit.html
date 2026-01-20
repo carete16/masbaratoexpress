@@ -50,6 +50,7 @@
             font-weight: 800;
             background: var(--primary-gradient);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             cursor: pointer;
         }
@@ -172,6 +173,36 @@
         #success-msg h2 {
             font-size: 40px;
             margin-bottom: 20px;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            header {
+                padding: 0 4%;
+            }
+
+            .container {
+                margin: 20px auto;
+                padding: 0 10px;
+            }
+
+            .form-card {
+                padding: 25px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+
+            .btn-submit {
+                padding: 16px;
+                font-size: 15px;
+            }
         }
     </style>
 </head>

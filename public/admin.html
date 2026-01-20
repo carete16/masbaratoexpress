@@ -204,6 +204,56 @@
             border: 2px dashed rgba(255, 255, 255, 0.05);
             border-radius: 30px;
         }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 4%;
+            }
+
+            .logo {
+                font-size: 18px;
+            }
+
+            .container {
+                margin: 20px auto;
+            }
+
+            .section-title {
+                font-size: 20px;
+            }
+
+            /* Injection Box Mobile */
+            .injection-form {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+
+            .injection-form input,
+            .injection-form button {
+                width: 100% !important;
+            }
+
+            /* Moderation Card Mobile */
+            .mod-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding: 20px;
+            }
+
+            .mod-img {
+                margin: 0 auto;
+            }
+
+            .mod-actions {
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            .mod-actions button {
+                flex: 1;
+            }
+        }
     </style>
 </head>
 
@@ -233,7 +283,7 @@
             <p style="color: rgba(255,255,255,0.8); margin-bottom: 25px; font-size: 14px;">Pega un link de Amazon, eBay
                 o Walmart. El sistema lo limpiará y monetizará automáticamente.</p>
 
-            <div style="display: grid; grid-template-columns: 1fr 150px 200px; gap: 15px;">
+            <div class="injection-form" style="display: grid; grid-template-columns: 1fr 150px 200px; gap: 15px;">
                 <input type="text" id="manual-url" placeholder="Pega el link aquí (Amazon, eBay, Walmart...)"
                     style="padding: 18px; border-radius: 16px; border: none; font-weight: 600; font-size: 15px; outline: none;">
                 <input type="number" id="manual-price" placeholder="Precio ($)"
