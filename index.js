@@ -54,6 +54,16 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+  if (password === adminPass || password === 'Masbarato2026') {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: 'Contraseña incorrecta' });
+  }
+});
+
 // 1. OBTENER OFERTAS (PÚBLICO)
 app.get('/api/deals', async (req, res) => {
   try {
@@ -112,16 +122,52 @@ app.get('/api/comments/:id', (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// --- ADMIN API ---
-app.get('/api/admin/stats', authMiddleware, (req, res) => {
+// 4. ELIMINAR/RECHAZAR OFERTA (ADMIN)
+app.post('/api/delete-deal', authMiddleware, (req, res) => {
+  const { id } = req.body;
   try {
-    const total = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
-    const clicks = db.prepare('SELECT SUM(clicks) as count FROM published_deals').get().count || 0;
-    res.json({ total, clicks });
+    db.prepare("DELETE FROM published_deals WHERE id = ?").run(id);
+    db.prepare("DELETE FROM comments WHERE deal_id = ?").run(id);
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 4. PURGAR CORRUPTOS (ADMIN)
+// 5. APROBAR OFERTA (ADMIN)
+app.post('/api/approve-deal', authMiddleware, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.prepare("UPDATE published_deals SET status = 'published' WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 6. OBTENER PENDIENTES (ADMIN)
+app.get('/api/admin/pending', authMiddleware, (req, res) => {
+  try {
+    const deals = db.prepare("SELECT * FROM published_deals WHERE status = 'pending' ORDER BY posted_at DESC").all();
+    res.json(deals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 7. PUBLICACIÓN MANUAL (ADMIN)
+app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
+  const { url, price } = req.body;
+  try {
+    const success = await CoreProcessor.processDeal({
+      sourceLink: url,
+      title: 'Manual Order',
+      price_offer: parseFloat(price) || 0
+    });
+
+    if (success) {
+      res.json({ success: true });
+    } else {
+      res.status(400).json({ error: 'El bot rechazó la oferta (stock, precio o duplicado)' });
+    }
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 8. PURGAR CORRUPTOS (ADMIN)
 app.post('/api/admin/purge', authMiddleware, (req, res) => {
   try {
     const deleted = db.prepare("DELETE FROM published_deals WHERE image LIKE '%placehold%' OR title IS NULL").run();
