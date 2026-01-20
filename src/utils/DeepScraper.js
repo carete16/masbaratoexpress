@@ -77,9 +77,15 @@ class DeepScraper {
 
                     const opElement = document.querySelector('.a-price .a-offscreen') ||
                         document.querySelector('#priceblock_ourprice') ||
-                        document.querySelector('#priceblock_dealprice');
+                        document.querySelector('#priceblock_dealprice') ||
+                        document.querySelector('.a-price-whole') ||
+                        document.querySelector('.priceToPay span.a-offscreen');
 
-                    const opText = opElement?.innerText || "";
+                    let opText = opElement?.innerText || opElement?.textContent || "";
+                    if (!opText && document.querySelector('.a-price-whole')) {
+                        opText = document.querySelector('.a-price-whole').innerText + '.' +
+                            (document.querySelector('.a-price-fraction')?.innerText || '00');
+                    }
                     offerPrice = clean(opText);
 
                     if (offerPrice > 5000 && (title.toLowerCase().includes('lego') || title.toLowerCase().includes('toy'))) {
