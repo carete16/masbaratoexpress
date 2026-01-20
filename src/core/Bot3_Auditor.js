@@ -40,10 +40,16 @@ class PriceAuditorBot {
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
         report.discount = savingsPercent;
 
-        // 3. FILTRO DE CALIDAD NIVEL "ELITE" (20% MÍNIMO)
-        if (price_official > 0 && savingsPercent < 20) {
+        // 3. FILTRO DE CALIDAD ESTRICTO: SOLO DESCUENTOS REALES
+        if (price_official <= 0) {
             report.isGoodDeal = false;
-            report.reason = `Ahorro insuficiente (${savingsPercent}%). Mínimo 20%.`;
+            report.reason = 'Sin precio oficial de referencia. No se puede verificar descuento.';
+            return report;
+        }
+
+        if (savingsPercent < 15) {
+            report.isGoodDeal = false;
+            report.reason = `Ahorro insuficiente (${savingsPercent}%). El estándar mínimo es 15%.`;
             return report;
         }
 

@@ -118,6 +118,11 @@ class DeepScraper {
                     const op = document.querySelector('[data-testid="price-at-a-glance"] .f2')?.innerText ||
                         document.querySelector('[itemprop="price"]')?.content;
                     offerPrice = clean(op);
+
+                    const lp = document.querySelector('[data-testid="list-price"]')?.innerText ||
+                        document.querySelector('.price--was')?.innerText;
+                    officialPrice = clean(lp);
+
                     image = document.querySelector('[data-testid="main-image-container"] img')?.src;
 
                     // EXTRAER DESCRIPCIÓN
@@ -129,6 +134,11 @@ class DeepScraper {
                     title = document.querySelector('.x-item-title__mainTitle span')?.innerText;
                     const op = document.querySelector('.x-price-primary span')?.innerText;
                     offerPrice = clean(op);
+
+                    const lp = document.querySelector('.x-additional-info__text-strike span')?.innerText ||
+                        document.querySelector('.ux-textspans--STRIKETHROUGH')?.innerText;
+                    officialPrice = clean(lp);
+
                     image = document.querySelector('.ux-image-magnify__image--main')?.src || document.querySelector('#icImg')?.src;
                     isUnavailable = bodyText.includes('this item is out of stock') || bodyText.includes('ended');
                 }
