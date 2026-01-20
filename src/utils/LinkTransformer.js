@@ -49,21 +49,30 @@ class LinkTransformer {
         } catch (e) { }
 
         // 2. MONETIZACIÓN ESPECÍFICA (Prioridad: AMAZON DIRECTO)
-
         // --- AMAZON ---
-        if (currentUrl.includes('amazon.com')) {
+        if (currentUrl.includes('amazon.com') || currentUrl.includes('amzn.to')) {
+            // Limpiar tags previos
+            try {
+                const cleanObj = new URL(currentUrl);
+                cleanObj.searchParams.delete('tag');
+                cleanObj.searchParams.delete('ascsubtag');
+                currentUrl = cleanObj.toString();
+            } catch (e) { }
+
             const asinMatch = currentUrl.match(/\/(dp|gp\/product|exec\/obidos\/ASIN)\/([A-Z0-9]{10})/i);
             const asin = asinMatch ? asinMatch[2] : null;
+
             if (asin) {
                 return `https://www.amazon.com/dp/${asin}?tag=${this.tags.amazon}`;
             }
-            const base = currentUrl.split('?')[0];
-            return `${base}?tag=${this.tags.amazon}`;
+            // Si es un link corto o de búsqueda, asegurar que lleve el tag
+            const separator = currentUrl.includes('?') ? '&' : '?';
+            return `${currentUrl}${separator}tag=${this.tags.amazon}`;
         }
 
-        // 3. MONETIZACIÓN CON SOVRN (Para el resto de tiendas)
+        // 3. MONETIZACIÓN CON SOVRN (Para el resto de tiendas - EXCLUYENDO AMAZON)
         if (this.tags.sovrn_key) {
-            // Sovrn Commerce convierte automáticamente enlaces de Walmart, eBay, etc.
+            // Sovrn Commerce para Walmart, eBay, Best Buy, etc.
             return `https://redirect.viglink.com/?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(currentUrl)}`;
         }
 

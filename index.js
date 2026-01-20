@@ -76,13 +76,17 @@ app.get('/go/:id', (req, res) => {
     if (deal && deal.link) {
       db.prepare("UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?").run(req.params.id);
 
-      let finalUrl = deal.link;
-      // Asegurar protocolo
-      if (!finalUrl.startsWith('http')) {
-        finalUrl = 'https://' + finalUrl;
-      }
-
-      res.redirect(finalUrl);
+      // Transformar el link en tiempo real usando el original si existe
+      LinkTransformer.transform(deal.original_link || deal.link).then(finalUrl => {
+        // Asegurar protocolo
+        if (!finalUrl.startsWith('http')) {
+          finalUrl = 'https://' + finalUrl;
+        }
+        res.redirect(finalUrl);
+      }).catch(err => {
+        console.error('Transform error:', err);
+        res.redirect(deal.link);
+      });
     } else {
       res.redirect('/?error=deal_not_found');
     }
