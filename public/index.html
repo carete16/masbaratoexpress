@@ -492,18 +492,38 @@
 
         async function init() {
             updateUIStrings();
+            const grid = document.getElementById('grid');
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                <div style="font-size: 24px;">⌛ Cargando ofertas...</div>
+            </div>`;
+
             try {
+                console.log('📡 Fetching deals...');
                 const res = await fetch('/api/deals');
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 allDeals = await res.json();
+                console.log(`✅ Loaded ${allDeals.length} deals`);
                 render(allDeals);
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error('❌ Error loading deals:', e);
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #ef4444;">
+                    <div style="font-size: 24px; margin-bottom: 15px;">❌ Error al cargar ofertas</div>
+                    <p>${e.message}</p>
+                    <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; border-radius: 10px; border: none; background: var(--primary); color: white; cursor: pointer;">
+                        Reintentar
+                    </button>
+                </div>`;
+            }
         }
 
         function render(deals) {
             const grid = document.getElementById('grid');
             const strings = i18n[currentLang];
+
             if (!deals || deals.length === 0) {
-                grid.innerHTML = `<p style="text-align:center; grid-column:1/-1;">${strings.no_deals}</p>`;
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                    <div style="font-size: 18px; color: var(--text-muted);">${strings.no_deals}</div>
+                </div>`;
                 return;
             }
 
