@@ -55,21 +55,18 @@ const authMiddleware = (req, res, next) => {
 };
 
 // 1. OBTENER OFERTAS (PÚBLICO)
-app.get('/api/deals', (req, res) => {
+app.get('/api/deals', async (req, res) => {
   try {
-    const deals = db.prepare(`
-            SELECT * FROM published_deals 
-            WHERE status = 'published'
-            AND link NOT LIKE '%translate.google%'
-            AND tienda NOT LIKE '%Translate%'
-            AND tienda NOT LIKE '%Google%'
-            ORDER BY posted_at DESC 
-            LIMIT 100
-        `).all();
-    res.json(deals);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+    const deals = db.prepare('SELECT * FROM published_deals ORDER BY posted_at DESC LIMIT 50').all();
+
+    // Transformar links en tiempo real para asegurar que el tag esté presente
+    const transformedDeals = await Promise.all(deals.map(async (deal) => {
+      deal.link = await LinkTransformer.transform(deal.original_link || deal.link);
+      return deal;
+    }));
+
+    res.json(transformedDeals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 2. REDIRECTOR INTELIGENTE (PÚBLICO)
