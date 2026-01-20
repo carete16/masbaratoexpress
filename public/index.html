@@ -270,7 +270,6 @@
             position: absolute;
             bottom: 15px;
             left: 15px;
-            background: var(--primary);
             padding: 4px 10px;
             border-radius: 8px;
             font-size: 10px;
@@ -278,6 +277,47 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             z-index: 10;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Colores Dinámicos por Tienda */
+        .store-amazon {
+            background: #ff9900;
+            color: #000;
+        }
+
+        .store-walmart {
+            background: #0071ce;
+        }
+
+        .store-best-buy {
+            background: #fff200;
+            color: #000;
+        }
+
+        .store-ebay {
+            background: #e53238;
+        }
+
+        .store-target {
+            background: #cc0000;
+        }
+
+        .store-newegg {
+            background: #f58220;
+        }
+
+        .store-dell {
+            background: #007db8;
+        }
+
+        .store-samsung {
+            background: #1428a0;
+        }
+
+        .store-default {
+            background: var(--primary);
         }
 
         .badge-discount {
@@ -559,14 +599,26 @@
                 else if (deal.categoria === 'Moda') fallbackImg = 'https://placehold.co/400x300/db2777/FFF?text=Fashion';
                 else if (deal.categoria === 'Hogar') fallbackImg = 'https://placehold.co/400x300/ea580c/FFF?text=Home';
 
+                const getStoreClass = (store) => {
+                    const s = store.toLowerCase().replace(/\s+/g, '-');
+                    if (s.includes('amazon')) return 'store-amazon';
+                    if (s.includes('walmart')) return 'store-walmart';
+                    if (s.includes('best-buy')) return 'store-best-buy';
+                    if (s.includes('ebay')) return 'store-ebay';
+                    if (s.includes('target')) return 'store-target';
+                    if (s.includes('newegg')) return 'store-newegg';
+                    if (s.includes('dell')) return 'store-dell';
+                    if (s.includes('samsung')) return 'store-samsung';
+                    return 'store-default';
+                };
+
                 return `
                 <article class="deal-card">
                     <div class="image-outer">
                         <div class="score-indicator">${strings.score_label}: ${deal.score || 85}%</div>
-                        <div class="badge-store">${deal.tienda}</div>
+                        <div class="badge-store ${getStoreClass(deal.tienda)}">${deal.tienda}</div>
                         ${discount > 0 ? `<div class="badge-discount">-${discount}%</div>` : ''}
 
-                        <!-- Direct Load with No-Referrer -->
                         <img 
                             src="${rawImg}" 
                             alt="${deal.title}"

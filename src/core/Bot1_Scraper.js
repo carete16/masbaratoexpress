@@ -31,7 +31,10 @@ class RadarBot {
                 logger.info(`🔍 Escaneando: ${source.name}...`);
                 const response = await axios.get(source.url, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                        'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
+                        'Cache-Control': 'no-cache',
+                        'Referer': 'https://www.google.com/'
                     },
                     timeout: 10000
                 });
