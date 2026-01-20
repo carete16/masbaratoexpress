@@ -40,11 +40,17 @@ class PriceAuditorBot {
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
         report.discount = savingsPercent;
 
-        // 3. FILTRO DE CALIDAD NIVEL "ELITE" (20% MÍNIMO)
-        if (price_official > 0 && savingsPercent < 20) {
+        // 3. FILTRO DE CALIDAD: "SOLO DESCUENTOS"
+        if (price_official > 0 && savingsPercent < 10) {
             report.isGoodDeal = false;
-            report.reason = `Ahorro insuficiente (${savingsPercent}%). Mínimo 20%.`;
+            report.reason = `Descuento insuficiente (${savingsPercent}%). Mínimo 10% requerido.`;
             return report;
+        }
+
+        if (price_official <= 0) {
+            // Si no tenemos precio oficial, dependemos de que el radar haya detectado una oferta real
+            // Pero bajamos el score para ser precavidos
+            score -= 10;
         }
 
         // 4. ALGORITMO DE PUNTUACIÓN (Confidence Score 0-100)
