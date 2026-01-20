@@ -66,7 +66,15 @@ class PriceAuditorBot {
         }
 
         // Bonus por tiendas top
-        if (deal.tienda === 'Amazon' || deal.tienda === 'Best Buy') score += 10;
+        if (deal.tienda === 'Amazon' || deal.tienda === 'Best Buy' || deal.tienda === 'eBay') score += 10;
+
+        // --- BONUS POR MARCAS TOP (Prioridad Máxima) ---
+        const topBrands = /iphone|apple|nike|adidas|reebok|puma|samsung|sony|nintendo|playstation|lego/i;
+        if (topBrands.test(deal.title)) {
+            score += 20;
+            report.quality = 'TopBrand';
+            if (!report.badge) report.badge = 'MARCA TOP';
+        }
 
         report.confidenceScore = Math.min(score, 100);
 

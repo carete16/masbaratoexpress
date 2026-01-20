@@ -15,9 +15,11 @@ class RadarBot {
     constructor() {
         this.sources = [
             { name: 'TechBargains', url: 'https://feeds.feedburner.com/Techbargains' },
-            { name: 'TechBargains eBay', url: 'https://www.techbargains.com/rss/store/ebay' },
             { name: 'Slickdeals Frontpage', url: 'https://slickdeals.net/rss/p/frontpage.xml' },
-            { name: 'DealNews', url: 'https://www.dealnews.com/c142/c234/-/f/rss.html' },
+            { name: 'Slickdeals Nike', url: 'https://slickdeals.net/newsearch.php?q=nike&pp=20&sort=newest&rss=1' },
+            { name: 'Slickdeals Adidas', url: 'https://slickdeals.net/newsearch.php?q=adidas&pp=20&sort=newest&rss=1' },
+            { name: 'Slickdeals iPhone', url: 'https://slickdeals.net/newsearch.php?q=iphone&pp=20&sort=newest&rss=1' },
+            { name: 'DealNews Lifestyle', url: 'https://www.dealnews.com/c164/-/f/rss.html' },
             { name: 'BensBargains', url: 'https://bensbargains.com/categories/all/rss/' },
             { name: 'GottaDeal', url: 'https://www.gottadeal.com/RSS/Deals' },
             { name: 'Bargainist', url: 'https://www.bargainist.com/deals/feed/' }
@@ -116,9 +118,9 @@ class RadarBot {
 
             // 4. Categorización
             let category = 'General';
-            if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|gpu|keyboard|mouse|headphone|earbud|tablet|phone/)) category = 'Tecnología';
+            if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|gpu|keyboard|mouse|headphone|earbud|tablet|phone|iphone|apple|ipad|macbook|smartwatch/)) category = 'Tecnología';
             else if (lowTitle.match(/ps5|xbox|nintendo|switch|game|steam|controller|rtx|gaming/)) category = 'Gamer';
-            else if (lowTitle.match(/shoe|shirt|pant|watch|dress|bag|nike|adidas/)) category = 'Moda';
+            else if (lowTitle.match(/shoe|shirt|pant|watch|dress|bag|nike|adidas|reebok|puma|sneaker|clothing|apparel|under armour/)) category = 'Moda';
             else if (lowTitle.match(/vacuum|cooker|fryer|coffee|bed|furniture|kitchen/)) category = 'Hogar';
 
             const cleanTitle = title.replace(/\s*\$\d+\.?\d*\s*$/, '').trim();
