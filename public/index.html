@@ -699,7 +699,23 @@
                     : 0;
 
                 const storeClass = getStoreClass(deal.tienda);
-                const score = deal.score || Math.floor(Math.random() * (99 - 85 + 1) + 85); // Dummy score for design consistency
+                const score = deal.score || Math.floor(Math.random() * (99 - 85 + 1) + 85);
+
+                // --- SMART IMAGE LOADING ---
+                let imgUrl = deal.image;
+
+                // Si no hay imagen pero es Amazon, intentamos generar una desde el ASIN
+                if ((!imgUrl || imgUrl === '') && (deal.link || deal.original_link)) {
+                    const linkToCheck = deal.original_link || deal.link;
+                    if (linkToCheck.includes('amazon') || (deal.tienda && deal.tienda.toLowerCase().includes('amazon'))) {
+                        const asinMatch = linkToCheck.match(/\/(dp|gp\/product|exec\/obidos\/ASIN)\/([A-Z0-9]{10})/i);
+                        if (asinMatch) {
+                            imgUrl = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&Format=_SL500_&ASIN=${asinMatch[2]}&MarketPlace=US`;
+                        }
+                    }
+                }
+
+                const fallbackImg = `https://placehold.co/400x300/f8fafc/64748b?text=${deal.categoria || 'Oferta'}`;
 
                 return `
                 <article class="deal-card">
@@ -710,7 +726,7 @@
                         ${discount > 0 ? `<div class="badge-discount-circle">-${discount}%</div>` : ''}
                         <div class="badge-store-float ${storeClass}">${deal.tienda}</div>
                         
-                        <img src="${deal.image}" alt="${deal.title}" onerror="this.src='https://placehold.co/400x300/f8fafc/64748b?text=${deal.categoria}'">
+                        <img src="${imgUrl}" alt="${deal.title}" onerror="this.src='${fallbackImg}'">
                     </div>
                     
                     <div class="card-body">
@@ -733,7 +749,7 @@
         }
 
         function getStoreClass(store) {
-            const s = store.toLowerCase();
+            const s = (store || '').toLowerCase();
             if (s.includes('amazon')) return 'store-amazon';
             if (s.includes('best buy')) return 'store-best-buy';
             if (s.includes('walmart')) return 'store-walmart';
