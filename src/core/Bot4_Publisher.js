@@ -76,16 +76,31 @@ class TelegramNotifier {
                     photoBuffer = await this.downloadImage(deal.image);
                 }
 
-                let caption = deal.viralContent || deal.title;
+                let caption = `<b>${deal.title}</b>\n\n${deal.viralContent || ''}`;
                 if (deal.coupon) caption += `\n\n🎟️ <b>CUPÓN:</b> <code>${deal.coupon}</code>`;
+
+                // Asegurar que el link esté presente para facturar
+                const inlineKeyboard = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '🛒 VER OFERTA', url: deal.link }]
+                        ]
+                    }
+                };
 
                 try {
                     if (photoBuffer && photoBuffer.length > 500) {
-                        await this.bot.telegram.sendPhoto(channelId, { source: photoBuffer }, { caption, parse_mode: 'HTML' });
+                        await this.bot.telegram.sendPhoto(channelId,
+                            { source: photoBuffer },
+                            { caption, parse_mode: 'HTML', ...inlineKeyboard }
+                        );
                     } else {
-                        await this.bot.telegram.sendMessage(channelId, caption, { parse_mode: 'HTML' });
+                        await this.bot.telegram.sendMessage(channelId,
+                            caption,
+                            { parse_mode: 'HTML', ...inlineKeyboard }
+                        );
                     }
-                    logger.info(`📢 Notificado en Telegram.`);
+                    logger.info(`📢 Notificado en Telegram con botón de compra.`);
                 } catch (tgErr) {
                     logger.warn(`⚠️ Telegram Error (omitido): ${tgErr.message}`);
                 }
