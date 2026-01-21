@@ -87,12 +87,20 @@ app.get('/api/deals', async (req, res) => {
 // 2. REDIRECTOR INTELIGENTE (PÚBLICO)
 app.get('/go/:id', (req, res) => {
   try {
-    const deal = db.prepare('SELECT link FROM published_deals WHERE id = ?').get(req.params.id);
+    const deal = db.prepare('SELECT link, title FROM published_deals WHERE id = ?').get(req.params.id);
     if (deal && deal.link) {
       db.prepare("UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?").run(req.params.id);
 
       // Transformar el link en tiempo real usando el original si existe
       LinkTransformer.transform(deal.original_link || deal.link).then(finalUrl => {
+        // SEGURIDAD: Nunca enviar a Slickdeals
+        if (finalUrl.includes('slickdeals.net')) {
+          console.log(`🔒 Redirección a Slickdeals bloqueada para: ${deal.title}`);
+          // Fallback inteligente: Buscar en Amazon con nuestro tag
+          const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
+          finalUrl = `https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`;
+        }
+
         // Asegurar protocolo
         if (!finalUrl.startsWith('http')) {
           finalUrl = 'https://' + finalUrl;
@@ -100,7 +108,13 @@ app.get('/go/:id', (req, res) => {
         res.redirect(finalUrl);
       }).catch(err => {
         console.error('Transform error:', err);
-        res.redirect(deal.link);
+        // En caso de error, si el link original es slickdeals, usar fallback también
+        if (deal.link.includes('slickdeals.net')) {
+          const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
+          res.redirect(`https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`);
+        } else {
+          res.redirect(deal.link);
+        }
       });
     } else {
       res.redirect('/?error=deal_not_found');
