@@ -841,7 +841,7 @@
                 const storeClass = getStoreClass(deal.tienda);
                 const isFav = favorites.includes(deal.id);
 
-                // --- SMART IMAGE LOADING ---
+                // --- SMART IMAGE LOADING (Fortified) ---
                 let imgUrl = deal.image;
 
                 // Si no hay imagen pero es Amazon, intentamos generar una desde el ASIN
@@ -855,7 +855,25 @@
                     }
                 }
 
+                // Si la imagen existe pero es de un dominio problemático (hotlinking), usamos el proxy de entrada
+                const problematicDomains = ['static.nike.com', 'walmartimages.com', 'ebayimg.com', 'techbargains.com', 'bensbargains.com'];
+                const shouldProxy = problematicDomains.some(d => imgUrl && imgUrl.toLowerCase().includes(d));
+
+                if (shouldProxy) {
+                    imgUrl = `/api/proxy-image?url=${encodeURIComponent(imgUrl)}`;
+                }
+
                 const fallbackImg = `https://placehold.co/400x300/f8fafc/64748b?text=${deal.categoria || 'Oferta'}`;
+
+                // Función onerror mejorada para intentar el proxy si la imagen falla directamente
+                const imgTag = `<img src="${imgUrl || fallbackImg}" 
+                                    alt="${deal.title}" 
+                                    onerror="if(!this.dataset.triedProxy && this.src.indexOf('proxy-image') === -1) { 
+                                        this.dataset.triedProxy=true; 
+                                        this.src='/api/proxy-image?url=' + encodeURIComponent(this.src); 
+                                    } else { 
+                                        this.src='${fallbackImg}'; 
+                                    }">`;
 
                 // --- HEART ICON (Fortified) ---
                 const heartButton = `
@@ -874,7 +892,7 @@
                         
                         ${heartButton}
 
-                        <img src="${imgUrl}" alt="${deal.title}" onerror="this.src='${fallbackImg}'">
+                        ${imgTag}
                     </div>
                     
                     <div class="card-body">

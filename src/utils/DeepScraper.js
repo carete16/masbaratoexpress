@@ -151,6 +151,19 @@ class DeepScraper {
                     isUnavailable = bodyText.includes('this item is out of stock') || bodyText.includes('ended');
                 }
 
+                // FALLBACK UNIVERSAL (Si los selectores fallan)
+                if (!image) {
+                    image = document.querySelector('meta[property="og:image"]')?.content ||
+                        document.querySelector('meta[name="twitter:image"]')?.content ||
+                        document.querySelector('link[rel="image_src"]')?.href;
+                }
+
+                if (!title) {
+                    title = document.querySelector('meta[property="og:title"]')?.content ||
+                        document.querySelector('h1')?.innerText ||
+                        document.title;
+                }
+
                 return { offerPrice, officialPrice, title, image, description, isUnavailable };
             });
 

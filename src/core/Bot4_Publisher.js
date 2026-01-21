@@ -18,20 +18,44 @@ class TelegramNotifier {
     async downloadImage(url) {
         if (!url) return null;
         try {
-            const response = await axios({
+            const config = {
                 method: 'get',
                 url: url,
                 responseType: 'arraybuffer',
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                    'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+                    'Referer': 'https://www.google.com/'
                 },
-                timeout: 10000
-            });
+                timeout: 12000
+            };
+
+            let response = await axios(config);
+
+            // Si falla directamente (ej: 403), intentamos via un servicio de bypass simple si existe o repetimos con proxy
+            if (response.status !== 200) {
+                logger.warn(`⚠️ Reintentando descarga con proxy para: ${url}`);
+                // Podríamos usar un servicio como wsrv.nl para bypass de hotlinking
+                const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+                response = await axios({ ...config, url: proxyUrl });
+            }
+
             if (response.status === 200) {
                 return Buffer.from(response.data, 'binary');
             }
         } catch (error) {
-            logger.error(`Error descarga imagen: ${error.message}`);
+            // Último intento con weserv si el anterior falló por excepción
+            try {
+                const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(url)}`;
+                const res = await axios({
+                    url: proxyUrl,
+                    responseType: 'arraybuffer',
+                    timeout: 8000
+                });
+                if (res.status === 200) return Buffer.from(res.data, 'binary');
+            } catch (e) { }
+
+            logger.error(`Error descarga imagen (${url.substring(0, 30)}...): ${error.message}`);
         }
         return null;
     }
