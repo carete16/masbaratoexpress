@@ -618,11 +618,11 @@
             <a href="#" class="nav-item" onclick="filterByTrend('trends')"><i class="fa-solid fa-chart-line"></i>
                 Tendencias</a>
             <a href="#" class="nav-item" onclick="showFavorites()"><i class="fa-solid fa-heart"></i> Favoritos</a>
-            <a href="#" class="nav-item"><i class="fa-solid fa-bell"></i> Alertas</a>
+            <a href="#" class="nav-item" onclick="showAlerts()"><i class="fa-solid fa-bell"></i> Alertas</a>
             <div style="height: 1px; background: var(--border); margin: 20px 0;"></div>
         </nav>
 
-        <div class="sidebar-footer">
+        <div class="sidebar-footer" onclick="showUserProfile()" style="cursor:pointer;">
             <div class="user-avatar">
                 <img src="https://ui-avatars.com/api/?name=Premium+Member&background=2563eb&color=fff" alt="User">
             </div>
@@ -692,6 +692,8 @@
                 return;
             }
 
+            const favorites = getFavorites();
+
             grid.innerHTML = deals.map(deal => {
                 const discount = deal.price_official > deal.price_offer
                     ? Math.round((1 - deal.price_offer / deal.price_official) * 100)
@@ -699,6 +701,7 @@
 
                 const storeClass = getStoreClass(deal.tienda);
                 const score = deal.score || Math.floor(Math.random() * (99 - 85 + 1) + 85);
+                const isFav = favorites.includes(deal.id);
 
                 // --- SMART IMAGE LOADING ---
                 let imgUrl = deal.image;
@@ -725,6 +728,12 @@
                         ${discount > 0 ? `<div class="badge-discount-circle">-${discount}%</div>` : ''}
                         <div class="badge-store-float ${storeClass}">${deal.tienda}</div>
                         
+                        <!-- HEART ICON -->
+                        <div id="fav-btn-${deal.id}" onclick="toggleFavorite(event, '${deal.id}')" 
+                             style="position:absolute; bottom:15px; right:15px; background:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); cursor:pointer; color:${isFav ? 'red' : '#1e293b'}; font-size:18px; z-index:20;">
+                            <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                        </div>
+
                         <img src="${imgUrl}" alt="${deal.title}" onerror="this.src='${fallbackImg}'">
                     </div>
                     
@@ -776,13 +785,170 @@
             render(filtered);
         });
 
-        function filterByTrend(type) {
-            // Placeholder logic
-            if (type === 'hot') render(allDeals.filter(d => d.price_offer < 50));
-            else render(allDeals.sort((a, b) => (b.score || 0) - (a.score || 0)));
+        // --- FAVORITES SYSTEM ---
+        function getFavorites() {
+            return JSON.parse(localStorage.getItem('mb_favorites') || '[]');
         }
 
-        init();
+        function toggleFavorite(e, id) {
+            e.stopPropagation();
+            e.preventDefault();
+            const favorites = getFavorites();
+            const index = favorites.indexOf(id);
+
+            if (index === -1) {
+                favorites.push(id);
+                showToast('❤️ Añadido a Favoritos');
+            } else {
+                favorites.splice(index, 1);
+                showToast('💔 Eliminado de Favoritos');
+            }
+
+            localStorage.setItem('mb_favorites', JSON.stringify(favorites));
+
+            // Re-render if we are in favorites view
+            const activeNav = document.querySelector('.nav-item.active').innerText;
+            if (activeNav.includes('Favoritos')) {
+                showFavorites();
+            } else {
+                // Update specific heart icon
+                const btn = document.getElementById(`fav-btn-${id}`);
+                if (btn) btn.innerHTML = index === -1 ? '<i class="fa-solid fa-heart" style="color:red"></i>' : '<i class="fa-regular fa-heart"></i>';
+            }
+        }
+
+        function showFavorites() {
+            setActiveNav('Favoritos');
+            const favIds = getFavorites();
+            const favDeals = allDeals.filter(d => favIds.includes(d.id));
+
+            if (favDeals.length === 0) {
+                document.getElementById('grid').innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                        <i class="fa-regular fa-heart" style="font-size: 40px; color: var(--text-muted); margin-bottom: 20px;"></i>
+                        <p>Aún no tienes favoritos guardados.</p>
+                        <button onclick="location.reload()" class="btn-view" style="max-width:200px; margin: 20px auto;">Explorar Ofertas</button>
+                    </div>`;
+            } else {
+                render(favDeals);
+            }
+        }
+
+        // --- ALERTS SYSTEM ---
+        function showAlerts() {
+            setActiveNav('Alertas');
+            const modalHtml = `
+                <div style="text-align:center;">
+                    <i class="fa-solid fa-bell" style="font-size: 40px; color: var(--accent-orange); margin-bottom: 20px;"></i>
+                    <h2>Configurar Alertas</h2>
+                    <p style="color:var(--text-muted); margin-bottom:30px;">Recibe notificaciones instantáneas en Telegram</p>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; text-align:left; margin-bottom:30px;">
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
+                            <input type="checkbox" checked> 🔥 Errores de Precio
+                        </label>
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
+                            <input type="checkbox" checked> 💻 Tecnología
+                        </label>
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
+                            <input type="checkbox"> 👟 Moda
+                        </label>
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
+                            <input type="checkbox"> 🏠 Hogar
+                        </label>
+                    </div>
+
+                    <a href="https://t.me/Masbarato_deals" target="_blank" class="btn-join" style="display:inline-block; width:100%;">
+                        ACTIVAR EN TELEGRAM <i class="fa-brands fa-telegram"></i>
+                    </a>
+                </div>
+            `;
+            openModal(modalHtml);
+        }
+
+        // --- USER PROFILE ---
+        function showUserProfile() {
+            const modalHtml = `
+                <div style="text-align:center;">
+                    <div style="width:80px; height:80px; margin:0 auto 20px; border-radius:50%; background:#e2e8f0; overflow:hidden;">
+                        <img src="https://ui-avatars.com/api/?name=Premium+Member&background=2563eb&color=fff&size=128" style="width:100%;">
+                    </div>
+                    <h2>Usuario Pro</h2>
+                    <div style="background:#f0fdf4; color:#166534; display:inline-block; padding:5px 15px; border-radius:100px; font-size:12px; font-weight:700; margin-bottom:20px;">
+                        MEMBRESÍA ACTIVA
+                    </div>
+                    
+                    <div style="display:flex; gap:15px; margin-bottom:30px;">
+                        <div style="flex:1; background:#f8fafc; padding:15px; border-radius:15px;">
+                            <div style="font-size:20px; font-weight:800; color:var(--primary);">12</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Ofertas Guardadas</div>
+                        </div>
+                        <div style="flex:1; background:#f8fafc; padding:15px; border-radius:15px;">
+                            <div style="font-size:20px; font-weight:800; color:var(--accent-green);">$450</div>
+                            <div style="font-size:11px; color:var(--text-muted);">Ahorro Estimado</div>
+                        </div>
+                    </div>
+
+                    <button onclick="closeModal()" style="background:transparent; border:1px solid var(--border); padding:10px 20px; border-radius:10px; cursor:pointer;">Cerrar</button>
+                </div>
+            `;
+            openModal(modalHtml);
+        }
+
+        // --- FILTERS & UTILS ---
+        function setActiveNav(name) {
+            document.querySelectorAll('.nav-item').forEach(n => {
+                n.classList.remove('active');
+                if (n.innerText.includes(name)) n.classList.add('active');
+            });
+        }
+
+        function filterByTrend(type) {
+            if (type === 'hot') {
+                setActiveNav('Ofertas Hot');
+                render(allDeals.filter(d => (d.score || 0) > 90 || d.price_offer < 50));
+            } else if (type === 'trends') {
+                setActiveNav('Tendencias');
+                render([...allDeals].sort((a, b) => (b.clicks || 0) - (a.clicks || 0)));
+            } else {
+                setActiveNav('Inicio');
+                render(allDeals);
+            }
+        }
+
+        // --- MODAL UTILS ---
+        function openModal(content) {
+            let modal = document.getElementById('main-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'main-modal';
+                modal.className = 'modal-overlay';
+                modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+                modal.innerHTML = '<div class="modal-container" style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:20px; position:relative;"></div>';
+                document.body.appendChild(modal);
+            }
+            modal.querySelector('.modal-container').innerHTML = `<span onclick="closeModal()" style="position:absolute; right:20px; top:20px; cursor:pointer; font-size:24px;">&times;</span>` + content;
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('main-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `position:fixed; bottom:20px; right:20px; background:#0f172a; color:white; padding:12px 24px; border-radius:10px; z-index:9999; animation: slideUp 0.3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.2);`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        // Update render to include heart button
+        /* We need to inject the heart button into the render loop */
+        const originalRender = render;
+        // ... (render function is updated below in next block)
+
     </script>
 </body>
 
