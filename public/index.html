@@ -594,6 +594,119 @@
                 scroll-snap-align: center;
             }
         }
+
+        /* --- MODAL & TOAST --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-container {
+            width: 90%;
+            max-width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            animation: slideUpModal 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUpModal {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* --- DARK MODE --- */
+        body.dark-mode {
+            --bg-body: #0f172a;
+            --bg-sidebar: #1e293b;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .deal-card,
+        body.dark-mode .sidebar-footer,
+        body.dark-mode .modal-container,
+        body.dark-mode .action-btn {
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        body.dark-mode .image-container {
+            background: #020617;
+        }
+
+        body.dark-mode .cat-pill {
+            background: #334155;
+            color: #cbd5e1;
+            border-color: #475569;
+        }
+
+        body.dark-mode .cat-pill.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        body.dark-mode .nav-item:hover,
+        body.dark-mode .nav-item.active {
+            background: #334155;
+            color: white;
+        }
+
+        body.dark-mode .search-input {
+            background: #334155;
+            color: white;
+            border-color: #475569;
+        }
+
+        body.dark-mode .badge-confidence {
+            background: rgba(30, 41, 59, 0.9);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 
@@ -613,7 +726,7 @@
         </a>
 
         <nav class="nav-menu">
-            <a href="#" class="nav-item active"><i class="fa-solid fa-house"></i> Inicio</a>
+            <a href="#" class="nav-item active" onclick="resetHome()"><i class="fa-solid fa-house"></i> Inicio</a>
             <a href="#" class="nav-item" onclick="filterByTrend('hot')"><i class="fa-solid fa-fire"></i> Ofertas Hot</a>
             <a href="#" class="nav-item" onclick="filterByTrend('trends')"><i class="fa-solid fa-chart-line"></i>
                 Tendencias</a>
@@ -643,7 +756,7 @@
             </div>
             <div class="top-actions">
                 <div class="action-btn" onclick="toggleLanguage()"><i class="fa-solid fa-globe"></i></div>
-                <div class="action-btn"><i class="fa-solid fa-moon"></i></div>
+                <div class="action-btn" id="theme-toggle"><i class="fa-solid fa-moon"></i></div>
                 <a href="https://t.me/Masbarato_deals" target="_blank" class="btn-join">UNIRSE AL CANAL</a>
             </div>
         </div>
@@ -669,6 +782,32 @@
     <script>
         let allDeals = [];
         let currentLang = 'es';
+
+        // --- TRANSLATIONS (Moved to top for global access) ---
+        const translations = {
+            es: {
+                home: 'Inicio', hot: 'Ofertas Hot', trends: 'Tendencias', favs: 'Favoritos', alerts: 'Alertas',
+                search: 'Buscar ofertas, productos, tiendas...',
+                join: 'UNIRSE AL CANAL',
+                all: 'Todo', tech: 'Tecnología', gamer: 'Gamer', fashion: 'Moda', home: 'Hogar', health: 'Salud',
+                view_deal: 'VER OFERTA', confidence: 'Confianza',
+                alerts_title: 'Configurar Alertas', alerts_subtitle: 'Recibe notificaciones instantáneas en Telegram',
+                save_alerts: 'GUARDAR PREFERENCIAS',
+                user_pro: 'Usuario Pro', member: 'Premium Member', saved: 'Ofertas Guardadas', savings: 'Ahorro Estimado',
+                settings: 'Configuración'
+            },
+            en: {
+                home: 'Home', hot: 'Hot Deals', trends: 'Trending', favs: 'Favorites', alerts: 'Alerts',
+                search: 'Search deals, products, stores...',
+                join: 'JOIN CHANNEL',
+                all: 'All', tech: 'Tech', gamer: 'Gamer', fashion: 'Fashion', home: 'Home', health: 'Health',
+                view_deal: 'VIEW DEAL', confidence: 'Confidence',
+                alerts_title: 'Configure Alerts', alerts_subtitle: 'Get instant notifications on Telegram',
+                save_alerts: 'SAVE PREFERENCES',
+                user_pro: 'Pro User', member: 'Premium Member', saved: 'Deals Saved', savings: 'Est. Savings',
+                settings: 'Settings'
+            }
+        };
 
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
@@ -700,7 +839,6 @@
                     : 0;
 
                 const storeClass = getStoreClass(deal.tienda);
-                const score = deal.score || Math.floor(Math.random() * (99 - 85 + 1) + 85);
                 const isFav = favorites.includes(deal.id);
 
                 // --- SMART IMAGE LOADING ---
@@ -719,20 +857,22 @@
 
                 const fallbackImg = `https://placehold.co/400x300/f8fafc/64748b?text=${deal.categoria || 'Oferta'}`;
 
+                // --- HEART ICON (Fortified) ---
+                const heartButton = `
+                <div id="fav-btn-${deal.id}" 
+                     onclick="window.toggleFavorite(event, '${deal.id}')" 
+                     class="heart-btn"
+                     style="position:absolute; bottom:15px; right:15px; background:white; width:50px; height:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 15px rgba(0,0,0,0.15); cursor:pointer; color:${isFav ? 'red' : '#1e293b'}; font-size:22px; z-index:100; transition: transform 0.2s;">
+                    <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                </div>`;
+
                 return `
-                <article class="deal-card">
+                <article class="deal-card" style="position:relative;">
                     <div class="image-container">
-                        <div class="badge-confidence">
-                            <i class="fa-solid fa-shield-check"></i> Confianza: ${score}%
-                        </div>
                         ${discount > 0 ? `<div class="badge-discount-circle">-${discount}%</div>` : ''}
                         <div class="badge-store-float ${storeClass}">${deal.tienda}</div>
                         
-                        <!-- HEART ICON -->
-                        <div id="fav-btn-${deal.id}" onclick="toggleFavorite(event, '${deal.id}')" 
-                             style="position:absolute; bottom:15px; right:15px; background:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.1); cursor:pointer; color:${isFav ? 'red' : '#1e293b'}; font-size:18px; z-index:20;">
-                            <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
-                        </div>
+                        ${heartButton}
 
                         <img src="${imgUrl}" alt="${deal.title}" onerror="this.src='${fallbackImg}'">
                     </div>
@@ -790,35 +930,61 @@
             return JSON.parse(localStorage.getItem('mb_favorites') || '[]');
         }
 
-        function toggleFavorite(e, id) {
-            e.stopPropagation();
-            e.preventDefault();
-            const favorites = getFavorites();
-            const index = favorites.indexOf(id);
-
-            if (index === -1) {
-                favorites.push(id);
-                showToast('❤️ Añadido a Favoritos');
-            } else {
-                favorites.splice(index, 1);
-                showToast('💔 Eliminado de Favoritos');
+        // Attached to window to guarantee global scope access
+        window.toggleFavorite = function (e, id) {
+            // STOP propagation immediately
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                e.stopImmediatePropagation();
             }
 
-            localStorage.setItem('mb_favorites', JSON.stringify(favorites));
+            try {
+                const favorites = getFavorites();
+                const index = favorites.indexOf(id);
+                const btn = document.getElementById(`fav - btn - ${id} `);
 
-            // Re-render if we are in favorites view
-            const activeNav = document.querySelector('.nav-item.active').innerText;
-            if (activeNav.includes('Favoritos')) {
-                showFavorites();
-            } else {
-                // Update specific heart icon
-                const btn = document.getElementById(`fav-btn-${id}`);
-                if (btn) btn.innerHTML = index === -1 ? '<i class="fa-solid fa-heart" style="color:red"></i>' : '<i class="fa-regular fa-heart"></i>';
+                // Click Animation
+                if (btn) {
+                    btn.style.transform = "scale(1.3)";
+                    setTimeout(() => btn.style.transform = "scale(1)", 200);
+                }
+
+                if (index === -1) {
+                    favorites.push(id);
+                    showToast('❤️ Saved / Guardado');
+                } else {
+                    favorites.splice(index, 1);
+                    showToast('💔 Removed / Eliminado');
+                }
+
+                localStorage.setItem('mb_favorites', JSON.stringify(favorites));
+
+                // UI Update Logic
+                // Safely get translations
+                const t = (translations && translations[currentLang]) ? translations[currentLang] : { favs: 'Favoritos' };
+                const activeNav = document.querySelector('.nav-item.active');
+
+                if (activeNav && activeNav.innerText.includes(t.favs)) {
+                    showFavorites(); // Re-render if in Favorites tab
+                } else if (btn) {
+                    // Toggle icon state visually
+                    const isNowFav = index === -1;
+                    btn.innerHTML = isNowFav
+                        ? '<i class="fa-solid fa-heart" style="color:red"></i>'
+                        : '<i class="fa-regular fa-heart"></i>';
+                    btn.style.color = isNowFav ? 'red' : '#1e293b';
+                }
+            } catch (err) {
+                console.error("Favorite Error:", err);
+                alert("Error saving favorite: " + err.message);
             }
-        }
+        };
 
         function showFavorites() {
-            setActiveNav('Favoritos');
+            const t = translations[currentLang];
+            setActiveNav(t.favs);
+
             const favIds = getFavorites();
             const favDeals = allDeals.filter(d => favIds.includes(d.id));
 
@@ -826,129 +992,184 @@
                 document.getElementById('grid').innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
                         <i class="fa-regular fa-heart" style="font-size: 40px; color: var(--text-muted); margin-bottom: 20px;"></i>
-                        <p>Aún no tienes favoritos guardados.</p>
-                        <button onclick="location.reload()" class="btn-view" style="max-width:200px; margin: 20px auto;">Explorar Ofertas</button>
+                        <p>${currentLang === 'es' ? 'Aún no tienes favoritos guardados.' : 'No favorites saved yet.'}</p>
+                        <button onclick="location.reload()" class="btn-view" style="max-width:200px; margin: 20px auto;">${currentLang === 'es' ? 'Explorar Ofertas' : 'Explore Deals'}</button>
                     </div>`;
             } else {
                 render(favDeals);
             }
         }
 
+
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'es' ? 'en' : 'es';
+            const t = translations[currentLang];
+
+            // Update Nav
+            document.querySelectorAll('.nav-item').forEach((el, index) => {
+                const keys = ['home', 'hot', 'trends', 'favs', 'alerts'];
+                if (keys[index]) el.childNodes[1].textContent = ' ' + t[keys[index]];
+            });
+
+            // Update Search
+            document.getElementById('search').placeholder = t.search;
+            document.querySelector('.btn-join').innerText = t.join;
+
+            // Update Categories
+            document.querySelectorAll('.cat-pill').forEach((el, index) => {
+                const keys = ['all', 'tech', 'gamer', 'fashion', 'home', 'health'];
+                if (keys[index]) el.childNodes[1].textContent = ' ' + t[keys[index]];
+            });
+
+            // Re-render deals to translate buttons
+            render(allDeals);
+        }
+
+        // --- HELPER FUNCTIONS ---
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast show';
+            toast.innerHTML = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function openModal(htmlContent) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `<div class="modal-container">${htmlContent}<button onclick="closeModal()" class="close-btn">&times;</button></div>`;
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.classList.add('active'), 10);
+            overlay.onclick = (e) => {
+                if (e.target === overlay) closeModal();
+            };
+        }
+
+        function closeModal() {
+            const overlay = document.querySelector('.modal-overlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                setTimeout(() => overlay.remove(), 300);
+            }
+        }
+
+        function resetHome() {
+            const t = translations[currentLang];
+            setActiveNav(t.home);
+
+            // Reset categories visual state
+            document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active'));
+            document.querySelector('.cat-pill[data-cat="all"]').classList.add('active'); // Highlight "All"
+
+            // Clear search
+            document.getElementById('search').value = '';
+
+            render(allDeals);
+        }
+
+        // --- UTILITIES ---
+        function setActiveNav(name) {
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                if (nav.innerText.includes(name)) {
+                    nav.classList.add('active');
+                } else {
+                    nav.classList.remove('active');
+                }
+            });
+        }
+
+        function filterByTrend(type) {
+            let filtered = [];
+            if (type === 'hot') {
+                setActiveNav(translations[currentLang].hot); // "Ofertas Hot" or "Hot Deals"
+                // Filter deals with > 40% discount
+                filtered = allDeals.filter(d => {
+                    const discount = d.price_official > d.price_offer
+                        ? (1 - d.price_offer / d.price_official) * 100
+                        : 0;
+                    return discount >= 40;
+                });
+            } else if (type === 'trends') {
+                setActiveNav(translations[currentLang].trends); // "Tendencias"
+                // Sort by clicks (simulated or real) or score
+                filtered = [...allDeals].sort((a, b) => b.clicks - a.clicks); // Assuming 'clicks' exists or sort by price desc
+            }
+            render(filtered);
+        }
+
+        // --- DARK MODE ---
+        document.getElementById('theme-toggle').onclick = () => {
+            document.body.classList.toggle('dark-mode');
+            const icon = document.querySelector('#theme-toggle i');
+
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+            }
+            localStorage.setItem('mb_dark_mode', document.body.classList.contains('dark-mode'));
+        };
+
         // --- ALERTS SYSTEM ---
         function showAlerts() {
-            setActiveNav('Alertas');
+            // Need to handle translation dynamically for nav highlight
+            const t = translations[currentLang];
+            setActiveNav(t.alerts);
+
+            const savedAlerts = JSON.parse(localStorage.getItem('mb_alerts_params') || '["price","tech"]');
+            const isChecked = (val) => savedAlerts.includes(val) ? 'checked' : '';
+
             const modalHtml = `
                 <div style="text-align:center;">
                     <i class="fa-solid fa-bell" style="font-size: 40px; color: var(--accent-orange); margin-bottom: 20px;"></i>
-                    <h2>Configurar Alertas</h2>
-                    <p style="color:var(--text-muted); margin-bottom:30px;">Recibe notificaciones instantáneas en Telegram</p>
+                    <h2>${t.alerts_title}</h2>
+                    <p style="color:var(--text-muted); margin-bottom:30px;">${t.alerts_subtitle}</p>
                     
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; text-align:left; margin-bottom:30px;">
-                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
-                            <input type="checkbox" checked> 🔥 Errores de Precio
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
+                            <input type="checkbox" value="price" ${isChecked('price')}> 🔥 Errores
                         </label>
-                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
-                            <input type="checkbox" checked> 💻 Tecnología
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
+                            <input type="checkbox" value="tech" ${isChecked('tech')}> 💻 ${t.tech}
                         </label>
-                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
-                            <input type="checkbox"> 👟 Moda
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
+                            <input type="checkbox" value="fashion" ${isChecked('fashion')}> 👟 ${t.fashion}
                         </label>
-                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center;">
-                            <input type="checkbox"> 🏠 Hogar
+                        <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
+                            <input type="checkbox" value="home" ${isChecked('home')}> 🏠 ${t.home}
                         </label>
                     </div>
 
-                    <a href="https://t.me/Masbarato_deals" target="_blank" class="btn-join" style="display:inline-block; width:100%;">
-                        ACTIVAR EN TELEGRAM <i class="fa-brands fa-telegram"></i>
+                    <button onclick="saveAlerts()" class="btn-view" style="width:100%; margin-bottom:10px;">${t.save_alerts}</button>
+                    
+                    <a href="https://t.me/Masbarato_deals" target="_blank" style="display:block; color:var(--primary); font-size:13px; text-decoration:none; margin-top:15px;">
+                        <i class="fa-brands fa-telegram"></i> Telegram Channel
                     </a>
                 </div>
             `;
             openModal(modalHtml);
         }
 
-        // --- USER PROFILE ---
-        function showUserProfile() {
-            const modalHtml = `
-                <div style="text-align:center;">
-                    <div style="width:80px; height:80px; margin:0 auto 20px; border-radius:50%; background:#e2e8f0; overflow:hidden;">
-                        <img src="https://ui-avatars.com/api/?name=Premium+Member&background=2563eb&color=fff&size=128" style="width:100%;">
-                    </div>
-                    <h2>Usuario Pro</h2>
-                    <div style="background:#f0fdf4; color:#166534; display:inline-block; padding:5px 15px; border-radius:100px; font-size:12px; font-weight:700; margin-bottom:20px;">
-                        MEMBRESÍA ACTIVA
-                    </div>
-                    
-                    <div style="display:flex; gap:15px; margin-bottom:30px;">
-                        <div style="flex:1; background:#f8fafc; padding:15px; border-radius:15px;">
-                            <div style="font-size:20px; font-weight:800; color:var(--primary);">12</div>
-                            <div style="font-size:11px; color:var(--text-muted);">Ofertas Guardadas</div>
-                        </div>
-                        <div style="flex:1; background:#f8fafc; padding:15px; border-radius:15px;">
-                            <div style="font-size:20px; font-weight:800; color:var(--accent-green);">$450</div>
-                            <div style="font-size:11px; color:var(--text-muted);">Ahorro Estimado</div>
-                        </div>
-                    </div>
-
-                    <button onclick="closeModal()" style="background:transparent; border:1px solid var(--border); padding:10px 20px; border-radius:10px; cursor:pointer;">Cerrar</button>
-                </div>
-            `;
-            openModal(modalHtml);
+        function saveAlerts() {
+            const checkboxes = document.querySelectorAll('.alert-option input:checked');
+            const values = Array.from(checkboxes).map(cb => cb.value);
+            localStorage.setItem('mb_alerts_params', JSON.stringify(values));
+            showToast('✅ Alertas guardadas correctamente');
+            setTimeout(closeModal, 1000);
         }
 
-        // --- FILTERS & UTILS ---
-        function setActiveNav(name) {
-            document.querySelectorAll('.nav-item').forEach(n => {
-                n.classList.remove('active');
-                if (n.innerText.includes(name)) n.classList.add('active');
-            });
+        // Initialize based on saved preferences
+        if (localStorage.getItem('mb_dark_mode') === 'true') {
+            document.body.classList.add('dark-mode');
+            document.querySelector('#theme-toggle i').classList.replace('fa-moon', 'fa-sun');
         }
 
-        function filterByTrend(type) {
-            if (type === 'hot') {
-                setActiveNav('Ofertas Hot');
-                render(allDeals.filter(d => (d.score || 0) > 90 || d.price_offer < 50));
-            } else if (type === 'trends') {
-                setActiveNav('Tendencias');
-                render([...allDeals].sort((a, b) => (b.clicks || 0) - (a.clicks || 0)));
-            } else {
-                setActiveNav('Inicio');
-                render(allDeals);
-            }
-        }
-
-        // --- MODAL UTILS ---
-        function openModal(content) {
-            let modal = document.getElementById('main-modal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'main-modal';
-                modal.className = 'modal-overlay';
-                modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-                modal.innerHTML = '<div class="modal-container" style="max-width:500px; margin:auto; background:white; padding:30px; border-radius:20px; position:relative;"></div>';
-                document.body.appendChild(modal);
-            }
-            modal.querySelector('.modal-container').innerHTML = `<span onclick="closeModal()" style="position:absolute; right:20px; top:20px; cursor:pointer; font-size:24px;">&times;</span>` + content;
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('main-modal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.style.cssText = `position:fixed; bottom:20px; right:20px; background:#0f172a; color:white; padding:12px 24px; border-radius:10px; z-index:9999; animation: slideUp 0.3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.2);`;
-            toast.innerText = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 3000);
-        }
-
-        // Update render to include heart button
-        /* We need to inject the heart button into the render loop */
-        const originalRender = render;
-        // ... (render function is updated below in next block)
-
+        // Start the application
+        init();
     </script>
 </body>
 
