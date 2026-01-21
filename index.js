@@ -18,32 +18,42 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
 
-// --- PROXY DE IMÁGENES (Bypass de bloqueos) ---
+// --- PROXY DE IMÁGENES (Bypass de bloqueos con Doble Capa) ---
 app.get('/api/proxy-image', async (req, res) => {
   const imageUrl = req.query.url;
   if (!imageUrl) return res.status(400).send('URL missing');
 
-  try {
-    const response = await axios({
+  const fetchImage = async (url) => {
+    return axios({
       method: 'get',
-      url: imageUrl,
+      url: url,
       responseType: 'stream',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Referer': 'https://www.google.com/'
       },
-      timeout: 8000
+      timeout: 10000
     });
+  };
 
+  try {
+    // Intento 1: Directo
+    const response = await fetchImage(imageUrl);
     res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=86400');
     response.data.pipe(res);
   } catch (error) {
-    // IMPORTANTE: Retornar 404 para que el frontend active su propia lógica de fallback
-    res.status(404).send('Image not found');
+    // Intento 2: Via Weserv (Bypass extremo)
+    try {
+      console.log(`⚠️ Proxy directo falló para ${imageUrl.substring(0, 40)}... reintentando vía Weserv`);
+      const weservUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}`;
+      const response = await fetchImage(weservUrl);
+      res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
+      response.data.pipe(res);
+    } catch (e) {
+      res.status(404).send('Image not found');
+    }
   }
 });
 
