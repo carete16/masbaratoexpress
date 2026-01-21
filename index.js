@@ -105,10 +105,22 @@ app.get('/go/:id', (req, res) => {
       LinkTransformer.transform(deal.original_link || deal.link).then(finalUrl => {
         // SEGURIDAD: Nunca enviar a Slickdeals
         if (finalUrl.includes('slickdeals.net')) {
-          console.log(`🔒 Redirección a Slickdeals bloqueada para: ${deal.title}`);
-          // Fallback inteligente: Buscar en Amazon con nuestro tag
-          const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
-          finalUrl = `https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`;
+          console.log(`🔒 Intento de Resolución Profunda para: ${deal.title}`);
+          const LinkResolver = require('./src/utils/LinkResolver');
+          LinkResolver.resolve(finalUrl).then(resolved => {
+            if (resolved && !resolved.includes('slickdeals.net')) {
+              return res.redirect(resolved);
+            }
+            // Fallback final: Buscar en Amazon con nuestro tag
+            const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
+            const fallbackUrl = `https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`;
+            res.redirect(fallbackUrl);
+          }).catch(() => {
+            const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
+            const fallbackUrl = `https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`;
+            res.redirect(fallbackUrl);
+          });
+          return;
         }
 
         // Asegurar protocolo

@@ -35,21 +35,40 @@ class DeepScraper {
                 headless: "new",
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security']
             });
-
             const page = await browser.newPage();
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
+            await page.setExtraHTTPHeaders({
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            });
 
-            // Configurar cookies para forzar USD y USA como región
-            if (targetUrl.includes('amazon.com')) {
-                await page.setCookie({
-                    name: 'sp-cdn',
-                    value: '"L5Z9:CO"', // Intento de forzar región, pero currency es más fiable
-                    domain: '.amazon.com'
-                });
+            // Forzar región USA en tiendas comunes
+            if (targetUrl.includes('nike.com')) {
+                await page.setCookie(
+                    { name: 'NIKE_COMMERCE_COUNTRY', value: 'US', domain: '.nike.com' },
+                    { name: 'NIKE_COMMERCE_LANG_LOCALE', value: 'en_US', domain: '.nike.com' },
+                    { name: 'preferred_location', value: 'US', domain: '.nike.com' }
+                );
+                // Si es nike.com pura, forzar US
+                if (!targetUrl.toLowerCase().includes('nike.com/us/')) {
+                    targetUrl = targetUrl.replace('nike.com/t/', 'nike.com/us/en_us/t/');
+                }
             }
 
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
+            if (targetUrl.includes('amazon.com')) {
+                await page.setCookie({ name: 'sp-cdn', value: '"L5Z9:CO"', domain: '.amazon.com' });
+            }
 
-            await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 45000 });
+            await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 50000 });
+
+            // Cerrar posibles modales de localización (Nike, etc)
+            try {
+                await page.evaluate(() => {
+                    const closeBtns = document.querySelectorAll('button[aria-label="Close"], .modal-close, .close-button, #hf_modal_close_btn');
+                    closeBtns.forEach(b => b.click());
+                });
+            } catch (e) { }
 
             const data = await page.evaluate(() => {
                 let offerPrice = 0;
@@ -70,6 +89,17 @@ class DeepScraper {
                 // Detector de stock
                 if (bodyText.includes('out of stock') || bodyText.includes('currently unavailable') || bodyText.includes('agotado')) {
                     isUnavailable = true;
+                }
+
+                // --- BYPASS SLICKDEALS (Si caemos en su landing en vez de redirigir) ---
+                if (window.location.hostname.includes('slickdeals.net')) {
+                    const seeDealBtn = document.querySelector('a.buyNow, a.seeDeal, .dealBuyButton, a[data-type="deal-button"]');
+                    if (seeDealBtn && (seeDealBtn.href || seeDealBtn.innerText.includes('See Deal'))) {
+                        if (seeDealBtn.href) {
+                            window.location.href = seeDealBtn.href;
+                            return { isRedirecting: true };
+                        }
+                    }
                 }
 
                 if (window.location.hostname.includes('amazon.com')) {
@@ -150,6 +180,21 @@ class DeepScraper {
                     image = document.querySelector('.ux-image-magnify__image--main')?.src || document.querySelector('#icImg')?.src;
                     isUnavailable = bodyText.includes('this item is out of stock') || bodyText.includes('ended');
                 }
+                else if (window.location.hostname.includes('nike.com')) {
+                    title = document.querySelector('#pdp_product_title')?.innerText || document.querySelector('h1')?.innerText;
+                    const op = document.querySelector('[data-test="product-price"]')?.innerText ||
+                        document.querySelector('.is--current-price')?.innerText;
+                    offerPrice = clean(op);
+
+                    const lp = document.querySelector('[data-test="product-price-reduced"]')?.innerText ||
+                        document.querySelector('.is--strikethrough')?.innerText;
+                    officialPrice = clean(lp);
+
+                    const nikeImg = document.querySelector('img[data-fade-in]') ||
+                        document.querySelector('.pdp-6-grid img') ||
+                        document.querySelector('picture img');
+                    image = nikeImg?.src || document.querySelector('meta[property="og:image"]')?.content;
+                }
 
                 // FALLBACK UNIVERSAL (Si los selectores fallan)
                 if (!image) {
@@ -166,6 +211,14 @@ class DeepScraper {
 
                 return { offerPrice, officialPrice, title, image, description, isUnavailable };
             });
+
+            // Manejar redirección interna (ej: Slickdeals button click)
+            if (data && data.isRedirecting) {
+                await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => { });
+                const nextUrl = page.url();
+                await browser.close();
+                return await this.scrape(nextUrl);
+            }
 
             await browser.close();
 

@@ -40,50 +40,49 @@ class ValidatorBot {
             else if (finalUrl.includes('ebay.com')) result.storeName = 'eBay';
             else if (finalUrl.includes('target.com')) result.storeName = 'Target';
 
-            // --- FILTRO ANTI-GENERICS ---
-            // Si el link final es un landing genérico (como 'Gold Box' o búsquedas), el scraper fallará.
-            // Si no detectamos un patrón de producto específico (/dp/, /ip/, /product/), lo rechazamos.
-            const isGeneric = finalUrl.match(/\/goldbox|\/deals|\/search|\/browse|\/category/i) && !finalUrl.match(/\/dp\/|\/ip\/|\/product\//i);
+            // --- FILTRO ANTI-GENERICS REFORZADO ---
+            // Evitamos que se publiquen búsquedas o categorías que no tienen una foto de producto clara.
+            const genericPatterns = [
+                /\/goldbox/i, /\/deals/i, /\/search/i, /\/browse/i, /\/category/i,
+                /\/t\/[^\/]+\/search/i, // Nike search
+                /\?s=/i, /\?k=/i, /\?q=/i // Query strings
+            ];
+
+            const isGeneric = genericPatterns.some(p => finalUrl.match(p)) && !finalUrl.match(/\/dp\/|\/ip\/|\/product\/|\/itm\//i);
 
             if (isGeneric) {
-                logger.warn(`🛑 ENLACE GENÉRICO DETECTADO: ${finalUrl}. Omitiendo validación por no ser un producto específico.`);
+                logger.warn(`🛑 ENLACE GENÉRICO BLOQUEADO: ${finalUrl}. Evitando publicación de resultados de búsqueda.`);
                 return result;
             }
-
-            // Aceptamos múltiples tiendas para diversificar monetización
 
             // 3. INTENTO DE VALIDACIÓN PROFUNDA (Puppeteer)
             const deepData = await DeepScraper.scrape(finalUrl);
 
-            if (deepData && deepData.offerPrice > 0) {
+            if (deepData && (deepData.offerPrice > 0 || (result.storeName !== 'Amazon' && opportunity.referencePrice > 0))) {
                 if (deepData.isUnavailable) {
-                    logger.warn(`❌ Producto AGOTADO o NO DISPONIBLE: ${opportunity.title}`);
+                    logger.warn(`❌ Producto AGOTADO: ${opportunity.title}`);
                     return result;
                 }
 
-                result.realPrice = deepData.offerPrice;
-                result.officialPrice = deepData.officialPrice || 0;
+                // SEGURIDAD DE IMAGEN: Si no hay imagen, el deal se ve mal.
+                // Forzamos que tenga imagen para tiendas que no sean Amazon (Amazon tiene fallback por ASIN)
+                const hasImage = deepData.image || opportunity.image;
+                if (!hasImage && result.storeName !== 'Amazon') {
+                    logger.warn(`🖼️ Deal omitido por FALTA DE IMAGEN: ${opportunity.title}`);
+                    return result;
+                }
+
+                result.realPrice = deepData.offerPrice || opportunity.referencePrice;
+                result.officialPrice = deepData.officialPrice || opportunity.msrp || 0;
                 result.hasStock = true;
                 result.isValid = true;
 
                 if (deepData.image) result.image = deepData.image;
                 if (deepData.title) result.title = deepData.title;
 
-                logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Stock: OK)`);
+                logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Imagen: ${result.image ? 'OK' : 'FALLBACK'})`);
             } else {
-                // --- FALLBACK: CONFIANZA EN RADAR (Para tiendas que bloquean bots) ---
-                logger.warn(`⚠️ Scraping profundo bloqueado para ${opportunity.title}.`);
-
-                if (result.storeName !== 'Amazon' && opportunity.referencePrice > 0) {
-                    logger.info(`🔄 Usando precio de referencia del Radar para ${result.storeName}: $${opportunity.referencePrice}`);
-                    result.realPrice = opportunity.referencePrice;
-                    result.officialPrice = opportunity.msrp || 0;
-                    result.hasStock = true;
-                    result.isValid = true;
-                } else if (finalUrl.includes('slickdeals.net/f/')) {
-                    logger.error(`❌ El link no se pudo resolver a una tienda real. Omitiendo.`);
-                    return result;
-                }
+                logger.warn(`⚠️ Validación fallida para ${opportunity.title}. No se pudo confirmar precio o stock.`);
             }
 
             return result;
