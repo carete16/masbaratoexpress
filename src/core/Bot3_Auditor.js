@@ -68,11 +68,18 @@ class PriceAuditorBot {
 
             // Si el precio es redondo o muy bajo (< $20), solemos confiar más
             if (price_offer < 20) score += 5;
-        } else if (savingsPercent < 10) {
-            report.isGoodDeal = false;
-            report.reason = `Ahorro real insuficiente (${savingsPercent}%). El filtro exige un mínimo del 10% para evitar "falsas ofertas".`;
-            return report;
+        } else {
+            // RELAJADO: Para tiendas TOP o si el score es alto, permitimos hasta un 5% de descuento real.
+            const isTopStore = ['Amazon', 'Best Buy', 'eBay', 'Walmart', 'Target'].includes(deal.tienda);
+            const minDiscount = isTopStore ? 5 : 10;
+
+            if (savingsPercent < minDiscount) {
+                report.isGoodDeal = false;
+                report.reason = `Ahorro real insuficiente (${savingsPercent}%). El filtro exige un mínimo del ${minDiscount}% para ${deal.tienda}.`;
+                return report;
+            }
         }
+
 
         // Bonus por tiendas top
         if (deal.tienda === 'Amazon' || deal.tienda === 'Best Buy' || deal.tienda === 'eBay') score += 10;

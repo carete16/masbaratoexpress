@@ -87,6 +87,12 @@ const saveDeal = (deal) => {
     return false;
   }
 
+  // --- SEGURIDAD ANTI-IMAGENES ROTAS ---
+  if (!deal.image || deal.image.includes('favicon') || deal.image.includes('placehold.co')) {
+    logger.warn(`🚫 BLOQUEO DE IMAGEN: Imagen inválida para "${deal.title}". Omitiendo.`);
+    return false;
+  }
+
   try {
     const stmt = db.prepare(`
         INSERT OR IGNORE INTO published_deals 

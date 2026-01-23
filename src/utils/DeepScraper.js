@@ -29,6 +29,7 @@ class DeepScraper {
         }
 
         logger.info(`🕵️ DEEP SCRAPER iniciando en: ${targetUrl}`);
+        console.log(`[Scraper] Navigating to: ${targetUrl}`);
         let browser;
         try {
             browser = await puppeteer.launch({
@@ -36,6 +37,7 @@ class DeepScraper {
                 args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security']
             });
             const page = await browser.newPage();
+            page.on('console', msg => console.log(`[Browser] ${msg.text()}`));
             await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
             await page.setExtraHTTPHeaders({
                 'Accept-Language': 'en-US,en;q=0.9',
@@ -93,15 +95,29 @@ class DeepScraper {
 
                 // --- BYPASS SLICKDEALS (Si caemos en su landing en vez de redirigir) ---
                 if (window.location.hostname.includes('slickdeals.net')) {
-                    const seeDealBtn = document.querySelector('a.buyNow, a.seeDeal, .dealBuyButton, a[data-type="deal-button"]');
-                    if (seeDealBtn && (seeDealBtn.href || seeDealBtn.innerText.includes('See Deal'))) {
+                    let seeDealBtn = document.querySelector('a.buyNow, a.seeDeal, .dealBuyButton, a[data-type="deal-button"], .buy-now-button, button.buyNow');
+
+                    if (!seeDealBtn) {
+                        // Buscar por texto si los selectores fallan
+                        const allButtons = Array.from(document.querySelectorAll('a, button'));
+                        seeDealBtn = allButtons.find(el => {
+                            const txt = el.innerText.toLowerCase();
+                            return txt.includes('see deal') || txt.includes('buy now') || txt.includes('get deal') || txt.includes('tienda');
+                        });
+                    }
+
+                    if (seeDealBtn) {
+                        console.log('[Scraper] Bypassing Slickdeals: Button found with text: ' + seeDealBtn.innerText);
                         if (seeDealBtn.href) {
                             window.location.href = seeDealBtn.href;
-                            return { isRedirecting: true };
+                        } else {
+                            seeDealBtn.click();
                         }
+                        return { isRedirecting: true };
+                    } else {
+                        console.log('[Scraper] Warning: No "See Deal" button found on Slickdeals page.');
                     }
                 }
-
                 if (window.location.hostname.includes('amazon.com')) {
                     title = document.querySelector('#productTitle')?.innerText.trim();
 
@@ -145,9 +161,13 @@ class DeepScraper {
                         description = aboutItem.substring(0, 400);
                     }
 
-                    if (!document.querySelector('#add-to-cart-button') && !document.querySelector('#buy-now-button')) {
+                    const buyButtons = document.querySelector('#add-to-cart-button, #buy-now-button, [name="submit.add-to-cart"], [name="submit.buy-now"], .a-button-stack');
+                    const hasBuyButton = buyButtons && buyButtons.offsetParent !== null;
+
+                    if (!hasBuyButton && !bodyText.includes('in stock') && !bodyText.includes('available')) {
                         isUnavailable = true;
                     }
+
                 }
                 else if (window.location.hostname.includes('walmart.com')) {
                     title = document.querySelector('h1')?.innerText;
@@ -209,7 +229,11 @@ class DeepScraper {
                         document.title;
                 }
 
-                return { offerPrice, officialPrice, title, image, description, isUnavailable };
+                if (image && (image.includes('favicon') || image.includes('slickdeals.net/favicon') || image.includes('logo'))) {
+                    image = "";
+                }
+
+                return { offerPrice, officialPrice, title, image, description, isUnavailable, finalUrl: window.location.href };
             });
 
             // Manejar redirección interna (ej: Slickdeals button click)

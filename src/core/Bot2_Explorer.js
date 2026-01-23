@@ -39,6 +39,16 @@ class ValidatorBot {
             else if (finalUrl.includes('bestbuy.com')) result.storeName = 'Best Buy';
             else if (finalUrl.includes('ebay.com')) result.storeName = 'eBay';
             else if (finalUrl.includes('target.com')) result.storeName = 'Target';
+            else if (finalUrl.includes('nike.com')) result.storeName = 'Nike';
+            else {
+                try {
+                    const domain = new URL(finalUrl).hostname.replace('www.', '');
+                    result.storeName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
+                } catch (e) {
+                    result.storeName = 'Tienda USA';
+                }
+            }
+
 
             // --- FILTRO ANTI-GENERICS REFORZADO ---
             // Evitamos que se publiquen búsquedas o categorías que no tienen una foto de producto clara.
@@ -58,19 +68,34 @@ class ValidatorBot {
             // 3. INTENTO DE VALIDACIÓN PROFUNDA (Puppeteer)
             const deepData = await DeepScraper.scrape(finalUrl);
 
+            if (deepData) {
+                if (deepData.finalUrl) result.finalUrl = deepData.finalUrl;
+
+                // Si después del scrape profundo seguimos en Slickdeals, bloqueamos.
+                if (result.finalUrl.includes('slickdeals.net')) {
+                    logger.warn(`🛑 SCRAPER TERMINÓ EN SLICKDEALS: ${result.finalUrl}. Omitiendo.`);
+                    return result;
+                }
+            }
+
             if (deepData && (deepData.offerPrice > 0 || (result.storeName !== 'Amazon' && opportunity.referencePrice > 0))) {
                 if (deepData.isUnavailable) {
                     logger.warn(`❌ Producto AGOTADO: ${opportunity.title}`);
                     return result;
                 }
 
-                // SEGURIDAD DE IMAGEN: Si no hay imagen, el deal se ve mal.
-                // Forzamos que tenga imagen para tiendas que no sean Amazon (Amazon tiene fallback por ASIN)
-                const hasImage = deepData.image || opportunity.image;
-                if (!hasImage && result.storeName !== 'Amazon') {
-                    logger.warn(`🖼️ Deal omitido por FALTA DE IMAGEN: ${opportunity.title}`);
+                // SEGURIDAD DE IMAGEN: No permitimos publicaciones "ciegas".
+                const finalImage = deepData.image || opportunity.image;
+                const isBadImage = !finalImage ||
+                    finalImage.includes('favicon') ||
+                    finalImage.includes('placehold.co') ||
+                    finalImage.includes('logo');
+
+                if (isBadImage) {
+                    logger.warn(`🖼️ Deal omitido por IMAGEN INVÁLIDA: "${opportunity.title}" | Img: ${finalImage || 'MISSING'}`);
                     return result;
                 }
+
 
                 result.realPrice = deepData.offerPrice || opportunity.referencePrice;
                 result.officialPrice = deepData.officialPrice || opportunity.msrp || 0;

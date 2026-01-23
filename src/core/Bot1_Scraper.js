@@ -15,7 +15,7 @@ class RadarBot {
     constructor() {
         this.sources = [
             { name: 'TechBargains', url: 'https://feeds.feedburner.com/Techbargains' },
-            { name: 'Slickdeals Frontpage', url: 'https://slickdeals.net/rss/p/frontpage.xml' },
+            { name: 'Slickdeals Frontpage', url: 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1' },
             { name: 'Slickdeals Nike', url: 'https://slickdeals.net/newsearch.php?q=nike&pp=20&sort=newest&rss=1' },
             { name: 'Slickdeals Apparel', url: 'https://slickdeals.net/f/apparel?rss=1' },
             { name: 'Hip2Save', url: 'https://hip2save.com/feed/' },
@@ -34,12 +34,11 @@ class RadarBot {
                 logger.info(`🔍 Escaneando: ${source.name}...`);
                 const response = await axios.get(source.url, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                        'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
-                        'Cache-Control': 'no-cache',
-                        'Referer': 'https://www.google.com/'
+                        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
+                        'Accept': '*/*',
+                        'Cache-Control': 'no-cache'
                     },
-                    timeout: 10000
+                    timeout: 15000
                 });
 
                 const feed = await parser.parseString(response.data);
@@ -149,7 +148,8 @@ class RadarBot {
     }
 
     validateReference(opp) {
-        return opp.title && opp.sourceLink && opp.referencePrice > 0;
+        // Permitimos que pasen sin precio inicial, el Validador (Bot 2) se encargará de buscarlo en la tienda.
+        return opp.title && opp.sourceLink;
     }
 }
 

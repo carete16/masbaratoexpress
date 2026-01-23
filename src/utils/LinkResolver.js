@@ -34,16 +34,29 @@ class LinkResolver {
         // 2. RESOLUCIÓN HTTP (Solo si lo anterior falla)
         try {
             const response = await axios.get(url, {
-                maxRedirects: 3,
-                timeout: 5000,
+                maxRedirects: 8,
+                timeout: 8000,
+                validateStatus: null, // No lanzar error en 403/404 para ver si hay redirs
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Referer': 'https://www.google.com/'
                 }
             });
+
+            // Si hay un refresh header o meta redirect
+            const refresh = response.headers['refresh'];
+            if (refresh) {
+                const match = refresh.match(/url=(.*)/i);
+                if (match && match[1]) return await this.resolve(match[1]);
+            }
+
             return response.request?.res?.responseUrl || response.config.url || url;
         } catch (error) {
             return url;
         }
+
     }
 }
 
