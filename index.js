@@ -158,8 +158,31 @@ app.post('/api/vote', (req, res) => {
 
 app.get('/api/comments/:id', (req, res) => {
   try {
-    const comments = db.prepare('SELECT * FROM comments WHERE deal_id = ? ORDER BY created_at ASC').all(req.params.id);
+    const { getComments } = require('./src/database/db');
+    const comments = getComments(req.params.id);
     res.json(comments);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/all-comments', (req, res) => {
+  try {
+    const comments = db.prepare(`
+      SELECT c.*, d.title as deal_title, d.image as deal_image 
+      FROM comments c 
+      JOIN published_deals d ON c.deal_id = d.id 
+      ORDER BY c.created_at DESC LIMIT 30
+    `).all();
+    res.json(comments);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/comments', (req, res) => {
+  const { dealId, author, text } = req.body;
+  if (!dealId || !text) return res.status(400).json({ error: 'Faltan campos' });
+  try {
+    const { addComment } = require('./src/database/db');
+    addComment(dealId, author, text);
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
