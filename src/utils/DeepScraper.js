@@ -59,7 +59,13 @@ class DeepScraper {
             }
 
             if (targetUrl.includes('amazon.com')) {
-                await page.setCookie({ name: 'sp-cdn', value: '"L5Z9:CO"', domain: '.amazon.com' });
+                // Forzamos cookies de EE.UU. de forma agresiva
+                await page.setCookie(
+                    { name: 'sp-cdn', value: '"L5Z9:US"', domain: '.amazon.com' },
+                    { name: 'i18n-prefs', value: 'USD', domain: '.amazon.com' },
+                    { name: 'lc-main', value: 'en_US', domain: '.amazon.com' },
+                    { name: 'skin', value: 'noskin', domain: '.amazon.com' }
+                );
             }
 
             await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 50000 });
@@ -82,8 +88,28 @@ class DeepScraper {
 
                 const clean = (txt) => {
                     if (!txt) return 0;
-                    const cleaned = txt.replace(/[^0-9,.]/g, '').replace(',', '');
-                    return parseFloat(cleaned) || 0;
+                    // Eliminar símbolos de moneda y espacios
+                    let raw = txt.replace(/[^0-9,.]/g, '').trim();
+
+                    // LÓGICA INTELIGENTE DE SEPARADORES:
+                    if (raw.includes('.') && raw.includes(',')) {
+                        const lastDot = raw.lastIndexOf('.');
+                        const lastComma = raw.lastIndexOf(',');
+                        if (lastDot > lastComma) { // Formato US: 1,234.56
+                            raw = raw.replace(/,/g, '');
+                        } else { // Formato EU/LATAM: 1.234,56
+                            raw = raw.replace(/\./g, '').replace(',', '.');
+                        }
+                    } else if (raw.includes(',')) { // Solo comas (ej: 19,99 o 1,000)
+                        const parts = raw.split(',');
+                        if (parts[parts.length - 1].length <= 2) {
+                            raw = raw.replace(',', '.');
+                        } else {
+                            raw = raw.replace(/,/g, '');
+                        }
+                    }
+
+                    return parseFloat(raw) || 0;
                 };
 
                 const bodyText = document.body.innerText.toLowerCase();
@@ -121,22 +147,23 @@ class DeepScraper {
                 if (window.location.hostname.includes('amazon.com')) {
                     title = document.querySelector('#productTitle')?.innerText.trim();
 
-                    const opElement = document.querySelector('.a-price .a-offscreen') ||
+                    const opElement = document.querySelector('#corePrice_feature_div .a-offscreen') ||
+                        document.querySelector('#corePriceDisplay_desktop_feature_div .a-offscreen') ||
+                        document.querySelector('.a-price .a-offscreen') ||
+                        document.querySelector('.apexPriceToPay .a-offscreen') ||
                         document.querySelector('#priceblock_ourprice') ||
-                        document.querySelector('#priceblock_dealprice') ||
-                        document.querySelector('.a-price-whole') ||
-                        document.querySelector('.priceToPay span.a-offscreen');
+                        document.querySelector('.a-price-whole');
 
                     let opText = opElement?.innerText || opElement?.textContent || "";
+                    console.log(`[Scraper] RAW Amazon Price Text: "${opText}"`);
                     if (!opText && document.querySelector('.a-price-whole')) {
                         opText = document.querySelector('.a-price-whole').innerText + '.' +
                             (document.querySelector('.a-price-fraction')?.innerText || '00');
                     }
                     offerPrice = clean(opText);
 
-                    if (offerPrice > 5000 && (title.toLowerCase().includes('lego') || title.toLowerCase().includes('toy'))) {
-                        offerPrice = offerPrice / 4000;
-                    }
+                    // --- ELIMINADA CONVERSIÓN COLOMBIA 4000 ---
+                    // No dividimos por 4000. Los precios deben ser reales en USD.
 
                     const lp = document.querySelector('.basisPrice .a-offscreen')?.innerText ||
                         document.querySelector('.a-price.a-text-price .a-offscreen')?.innerText;

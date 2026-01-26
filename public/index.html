@@ -939,9 +939,46 @@
 
         document.getElementById('search').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
-            const filtered = allDeals.filter(d => d.title.toLowerCase().includes(term));
+            if (term.length < 2) {
+                render(allDeals);
+                return;
+            }
+
+            const filtered = allDeals.filter(d =>
+                d.title.toLowerCase().includes(term) ||
+                (d.tienda && d.tienda.toLowerCase().includes(term))
+            );
+
             render(filtered);
+
+            if (filtered.length === 0 && term.length > 2) {
+                showExternalSearchPrompt(term);
+            }
         });
+
+        function showExternalSearchPrompt(term) {
+            const grid = document.getElementById('grid');
+            const amazonTag = 'masbaratodeal-20'; // Fallback
+
+            grid.innerHTML = `
+                <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: #f8fafc; border-radius: 30px; border: 2px dashed var(--border);">
+                    <div style="font-size: 50px; margin-bottom: 20px;">🔍</div>
+                    <h2 style="margin-bottom: 10px;">${currentLang === 'es' ? 'No encontramos ofertas locales para "' + term + '"' : 'No local deals found for "' + term + '"'}</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 30px;">
+                        ${currentLang === 'es' ? 'Pero podemos buscar en las mejores tiendas de USA por ti:' : 'But we can search the best USA stores for you:'}
+                    </p>
+                    
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <a href="https://www.amazon.com/s?k=${encodeURIComponent(term)}&tag=${amazonTag}" target="_blank" class="btn-view" style="background: #ff9900; color: black; min-width: 200px;">
+                            <i class="fa-brands fa-amazon"></i> ${currentLang === 'es' ? 'Buscar en Amazon' : 'Search on Amazon'}
+                        </a>
+                        <a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(term)}" target="_blank" class="btn-view" style="background: #e53238; color: white; min-width: 200px;">
+                            <i class="fa-brands fa-ebay"></i> ${currentLang === 'es' ? 'Buscar en eBay' : 'Search on eBay'}
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
 
         // --- FAVORITES SYSTEM ---
         function getFavorites() {
