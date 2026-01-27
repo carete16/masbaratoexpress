@@ -18,6 +18,8 @@ class RadarBot {
             { name: 'Slickdeals Frontpage', url: 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1' },
             { name: 'Slickdeals Nike', url: 'https://slickdeals.net/newsearch.php?q=nike&pp=20&sort=newest&rss=1' },
             { name: 'Slickdeals Apparel', url: 'https://slickdeals.net/f/apparel?rss=1' },
+            { name: 'eBay Shoes (Slickdeals)', url: 'https://slickdeals.net/newsearch.php?q=ebay+shoes&pp=20&sort=newest&rss=1' },
+            { name: 'eBay Refurbished (TechBargains)', url: 'https://www.techbargains.com/rss/category/ebay-refurbished' },
             { name: 'Hip2Save', url: 'https://hip2save.com/feed/' },
             { name: 'SneakerSteal', url: 'https://sneakersteal.com/feed/' },
             { name: 'DealNews Lifestyle', url: 'https://www.dealnews.com/c164/-/f/rss.html' },
