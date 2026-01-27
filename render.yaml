@@ -3,12 +3,12 @@ services:
     name: masbaratodeals-final
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: ./render-build.sh
     startCommand: node index.js
     envVars:
       - key: PORT
         value: 10000
       - key: NODE_VERSION
-        value: 18.16.0
+        value: 20.x
       - key: AMAZON_TAG
         value: masbaratodeal-20
