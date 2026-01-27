@@ -771,9 +771,6 @@
 
         <nav class="nav-menu">
             <a href="#" class="nav-item active" onclick="resetHome()"><i class="fa-solid fa-house"></i> Inicio</a>
-            <a href="#" class="nav-item" onclick="filterByTrend('hot')"><i class="fa-solid fa-fire"></i> Ofertas Hot</a>
-            <a href="#" class="nav-item" onclick="filterByTrend('trends')"><i class="fa-solid fa-chart-line"></i>
-                Tendencias</a>
             <a href="#" class="nav-item" onclick="showFavorites()"><i class="fa-solid fa-heart"></i> Favoritos</a>
             <a href="#" class="nav-item" onclick="showAlerts()"><i class="fa-solid fa-bell"></i> Alertas</a>
             <div style="height: 1px; background: var(--border); margin: 20px 0;"></div>
@@ -845,7 +842,7 @@
         // --- TRANSLATIONS (Moved to top for global access) ---
         const translations = {
             es: {
-                home: 'Inicio', hot: 'Ofertas Hot', trends: 'Tendencias', favs: 'Favoritos', alerts: 'Alertas',
+                home: 'Inicio', favs: 'Favoritos', alerts: 'Alertas',
                 search: 'Buscar ofertas, productos, tiendas...',
                 join: 'UNIRSE AL CANAL',
                 all: 'Todo', tech: 'Tecnología', gamer: 'Gamer', fashion: 'Moda', home: 'Hogar', health: 'Salud',
@@ -856,7 +853,7 @@
                 settings: 'Configuración'
             },
             en: {
-                home: 'Home', hot: 'Hot Deals', trends: 'Trending', favs: 'Favorites', alerts: 'Alerts',
+                home: 'Home', favs: 'Favorites', alerts: 'Alerts',
                 search: 'Search deals, products, stores...',
                 join: 'JOIN CHANNEL',
                 all: 'All', tech: 'Tech', gamer: 'Gamer', fashion: 'Fashion', home: 'Home', health: 'Health',
@@ -1122,7 +1119,7 @@
 
             // Update Nav
             document.querySelectorAll('.nav-item').forEach((el, index) => {
-                const keys = ['home', 'hot', 'trends', 'favs', 'alerts'];
+                const keys = ['home', 'favs', 'alerts'];
                 if (keys[index]) el.childNodes[1].textContent = ' ' + t[keys[index]];
             });
 
@@ -1224,24 +1221,6 @@
             });
         }
 
-        function filterByTrend(type) {
-            let filtered = [];
-            if (type === 'hot') {
-                setActiveNav(translations[currentLang].hot); // "Ofertas Hot" or "Hot Deals"
-                // Filter deals with > 40% discount
-                filtered = allDeals.filter(d => {
-                    const discount = d.price_official > d.price_offer
-                        ? (1 - d.price_offer / d.price_official) * 100
-                        : 0;
-                    return discount >= 40;
-                });
-            } else if (type === 'trends') {
-                setActiveNav(translations[currentLang].trends); // "Tendencias"
-                // Sort by clicks (simulated or real) or score
-                filtered = [...allDeals].sort((a, b) => b.clicks - a.clicks); // Assuming 'clicks' exists or sort by price desc
-            }
-            render(filtered);
-        }
 
         // --- DARK MODE ---
         document.getElementById('theme-toggle').onclick = () => {
