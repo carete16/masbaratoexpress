@@ -814,6 +814,21 @@
             <button class="cat-pill" data-cat="Salud"><i class="fa-solid fa-heart-pulse"></i> Salud</button>
         </div>
 
+        <!-- NEWSLETTER SECTION -->
+        <div class="newsletter-section"
+            style="margin: 20px; padding: 40px; background: var(--bg-sidebar); border-radius: 30px; border: 1px solid var(--border); text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 20px;">📧</div>
+            <h2 style="font-size: 24px; font-weight: 800; margin-bottom: 10px;">¡No te pierdas ningún Bombazo!</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px;">Únete a nuestra lista VIP y recibe las 10 mejores
+                ofertas de la semana (incluyendo eBay Refurbished) directamente en tu email.</p>
+            <form id="newsletter-form" style="display: flex; gap: 10px; max-width: 500px; margin: 0 auto;">
+                <input type="email" id="newsletter-email" placeholder="Tu mejor email..." required
+                    style="flex: 1; padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); outline: none; font-weight: 500;">
+                <button type="submit" class="btn-view" style="width: auto; padding: 0 30px;">SUSCRIBIRME</button>
+            </form>
+            <p id="newsletter-msg" style="margin-top: 15px; font-size: 13px; font-weight: 700; display: none;"></p>
+        </div>
+
         <div class="deal-grid" id="grid">
             <!-- Loading Skeletons or Message -->
             <div style="grid-column: 1/-1; text-align: center; padding: 100px 0;">
@@ -1124,6 +1139,34 @@
             // Re-render deals to translate buttons
             render(allDeals);
         }
+
+        // --- NEWSLETTER FORM ---
+        document.getElementById('newsletter-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailField = document.getElementById('newsletter-email');
+            const msg = document.getElementById('newsletter-msg');
+            const email = emailField.value;
+
+            try {
+                const res = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (res.ok) {
+                    msg.style.color = 'var(--accent-green)';
+                    msg.innerText = '✅ ¡Suscripción exitosa! Te avisaremos de los bombazos.';
+                    emailField.value = '';
+                } else {
+                    msg.style.color = 'var(--accent-red)';
+                    msg.innerText = '❌ Error al suscribirse. Inténtalo de nuevo.';
+                }
+                msg.style.display = 'block';
+            } catch (err) {
+                console.error(err);
+            }
+        });
 
         // --- HELPER FUNCTIONS ---
         function showToast(msg) {

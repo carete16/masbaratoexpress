@@ -114,6 +114,19 @@ app.get('/api/deals', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 1.5. SUSCRIPCIÓN NEWSLETTER
+app.post('/api/subscribe', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
+  try {
+    const { addSubscriber } = require('./src/database/db');
+    addSubscriber(email);
+    res.json({ success: true, message: '¡Gracias por suscribirte!' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // 2. REDIRECTOR INTELIGENTE (PÚBLICO)
 app.get('/go/:id', (req, res) => {
   try {

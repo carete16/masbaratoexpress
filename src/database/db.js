@@ -61,10 +61,24 @@ try {
     )
   `);
 
+  // --- TABLA DE SUSCRIPTORES ---
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS subscribers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT UNIQUE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      status TEXT DEFAULT 'active'
+    )
+  `);
+
 } catch (error) {
   logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
   db = new Database(':memory:');
 }
+
+const addSubscriber = (email) => {
+  return db.prepare('INSERT OR IGNORE INTO subscribers (email) VALUES (?)').run(email);
+};
 
 const voteUp = (id) => {
   return db.prepare('UPDATE published_deals SET votes_up = votes_up + 1, score = score + 5 WHERE id = ?').run(id);
@@ -148,4 +162,4 @@ const isRecentlyPublished = (link, title = '') => {
   }
 };
 
-module.exports = { db, saveDeal, isRecentlyPublished, registerClick, voteUp, addComment, getComments };
+module.exports = { db, saveDeal, isRecentlyPublished, registerClick, voteUp, addComment, getComments, addSubscriber };
