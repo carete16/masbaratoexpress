@@ -12,20 +12,20 @@ async function sendWeeklyNewsletter() {
         logger.info('📧 Iniciando envío de newsletter semanal...');
 
         // Obtener suscriptores activos
-        const subscribers = db.prepare('SELECT email FROM newsletter_subscribers WHERE active = 1').all();
+        const subscribers = db.prepare("SELECT email FROM subscribers WHERE status = 'active'").all();
 
         if (subscribers.length === 0) {
             logger.info('No hay suscriptores activos.');
             return;
         }
 
-        // Obtener top 10 ofertas de la semana (últimos 7 días)
+        // Obtener top 10 ofertas de la semana (con los mejores descuentos y clics)
         const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const topDeals = db.prepare(`
-            SELECT title, price_offer, price_official, tienda, link, clicks 
+            SELECT title, price_offer, price_official, tienda, link, image, clicks 
             FROM published_deals 
             WHERE posted_at > ? 
-            ORDER BY clicks DESC 
+            ORDER BY clicks DESC, score DESC
             LIMIT 10
         `).all(weekAgo);
 
@@ -69,14 +69,17 @@ function generateEmailHTML(deals) {
         return `
         <tr>
             <td style="padding: 20px; border-bottom: 1px solid #eee;">
-                <h3 style="margin: 0 0 10px 0; color: #333;">${index + 1}. ${deal.title}</h3>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <img src="${deal.image}" alt="${deal.title}" style="max-width: 200px; max-height: 150px; border-radius: 8px;">
+                </div>
+                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 18px;">${index + 1}. ${deal.title}</h3>
                 <p style="margin: 5px 0; color: #666;">
-                    <strong style="color: #ff4d4d; font-size: 24px;">$${deal.price_offer}</strong>
+                    <strong style="color: #2563eb; font-size: 24px;">$${deal.price_offer}</strong>
                     ${deal.price_official > 0 ? `<span style="text-decoration: line-through; color: #999; margin-left: 10px;">$${deal.price_official}</span>` : ''}
-                    ${discount > 0 ? `<span style="background: #ff4d4d; color: white; padding: 2px 8px; border-radius: 4px; margin-left: 10px; font-size: 12px;">-${discount}%</span>` : ''}
+                    ${discount > 0 ? `<span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; margin-left: 10px; font-size: 12px; font-weight: bold;">-${discount}%</span>` : ''}
                 </p>
-                <p style="margin: 5px 0; color: #888; font-size: 14px;">🏪 ${deal.tienda || 'USA Store'} | 👥 ${deal.clicks} personas vieron esta oferta</p>
-                <a href="${deal.link}" style="display: inline-block; margin-top: 10px; padding: 12px 24px; background: #ff4d4d; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">VER OFERTA</a>
+                <p style="margin: 5px 0; color: #888; font-size: 13px;">🏪 ${deal.tienda || 'Masbarato Deals'} | 🔥 ${deal.clicks} personas interesadas</p>
+                <a href="https://masbaratodeals.onrender.com/go/${deal.id}" style="display: inline-block; margin-top: 15px; padding: 12px 24px; background: #2563eb; color: white; text-decoration: none; border-radius: 10px; font-weight: bold; width: 80%; text-align: center;">🔥 COMPRAR AHORA</a>
             </td>
         </tr>
         `;
@@ -94,22 +97,22 @@ function generateEmailHTML(deals) {
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
         <tr>
             <td align="center" style="padding: 40px 20px;">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
                     <!-- Header -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #ff4d4d, #ff7675); padding: 40px 20px; text-align: center;">
-                            <h1 style="margin: 0; color: white; font-size: 32px;">🔥 +BARATO DEALS</h1>
-                            <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">Top 10 Ofertas de la Semana</p>
+                        <td style="background: linear-gradient(135deg, #2563eb, #7c3aed); padding: 50px 20px; text-align: center;">
+                            <h1 style="margin: 0; color: white; font-size: 36px; font-weight: 900; letter-spacing: -1px;">+BARATO DEALS</h1>
+                            <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 18px; font-weight: 500;">🚀 Los Bombazos de la Semana</p>
                         </td>
                     </tr>
                     
                     <!-- Intro -->
                     <tr>
-                        <td style="padding: 30px 20px; text-align: center; background-color: #fafafa;">
-                            <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6;">
-                                ¡Hola! 👋<br>
-                                Estas son las <strong>10 ofertas más populares</strong> de esta semana.<br>
-                                Miles de personas ya las aprovecharon. ¡No te quedes atrás!
+                        <td style="padding: 40px 30px; text-align: center; background-color: #ffffff;">
+                            <h2 style="color: #0f172a; margin: 0 0 15px 0; font-size: 22px;">¡Hola, Smart Shopper! 👋</h2>
+                            <p style="margin: 0; color: #64748b; font-size: 16px; line-height: 1.6;">
+                                Nuestra IA ha seleccionado las <strong>ofertas con mayor ahorro</strong> de los últimos 7 días.<br>
+                                ¡Aprovéchalas antes de que se agoten!
                             </p>
                         </td>
                     </tr>
@@ -119,23 +122,23 @@ function generateEmailHTML(deals) {
                     
                     <!-- CTA -->
                     <tr>
-                        <td style="padding: 40px 20px; text-align: center; background-color: #fafafa;">
-                            <h3 style="margin: 0 0 15px 0; color: #333;">¿Quieres más ofertas?</h3>
-                            <a href="https://masbaratodeals-net.onrender.com" style="display: inline-block; padding: 14px 32px; background: #ff4d4d; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Ver Todas las Ofertas</a>
-                            <p style="margin: 20px 0 0 0; color: #888; font-size: 14px;">
-                                O únete a nuestro canal de Telegram: 
-                                <a href="https://t.me/Masbarato_deals" style="color: #229ED9; text-decoration: none;">@Masbarato_deals</a>
+                        <td style="padding: 50px 30px; text-align: center; background-color: #f8fafc;">
+                            <h3 style="margin: 0 0 20px 0; color: #0f172a; font-size: 20px;">¿Buscas algo más?</h3>
+                            <a href="https://masbaratodeals.onrender.com" style="display: inline-block; padding: 16px 40px; background: linear-gradient(to right, #2563eb, #7c3aed); color: white; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 18px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);">Ver todas las ofertas en vivo</a>
+                            <p style="margin: 30px 0 0 0; color: #64748b; font-size: 14px;">
+                                O recibe alertas al segundo en Telegram: 
+                                <a href="https://t.me/Masbarato_deals" style="color: #2563eb; text-decoration: none; font-weight: bold;">@Masbarato_deals</a>
                             </p>
                         </td>
                     </tr>
                     
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 30px 20px; text-align: center; background-color: #333; color: #999; font-size: 12px;">
-                            <p style="margin: 0 0 10px 0;">© 2026 +BARATO DEALS - Cazadores de ofertas profesionales</p>
+                        <td style="padding: 40px 20px; text-align: center; background-color: #0f172a; color: #94a3b8; font-size: 12px;">
+                            <p style="margin: 0 0 10px 0;">© 2026 +BARATO DEALS - Ahorro inteligente garantizado</p>
                             <p style="margin: 0;">
-                                <a href="https://masbaratodeals-net.onrender.com" style="color: #ff4d4d; text-decoration: none;">Sitio Web</a> | 
-                                <a href="#" style="color: #999; text-decoration: none;">Cancelar suscripción</a>
+                                <a href="https://masbaratodeals.onrender.com" style="color: #38bdf8; text-decoration: none; font-weight: 500;">Página Web Oficial</a> | 
+                                <a href="#" style="color: #64748b; text-decoration: none;">Dejar de recibir estos emails</a>
                             </p>
                         </td>
                     </tr>

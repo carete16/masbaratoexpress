@@ -100,10 +100,20 @@ class TelegramNotifier {
                     photoBuffer = await this.downloadImage(deal.image);
                 }
 
-                let caption = `<b>${deal.title}</b>\n\n${deal.viralContent || ''}`;
+                // --- FORMATO DE ALERTA RELÁMPAGO (MONETIZACIÓN AGRESIVA) ---
+                const discount = deal.price_official > deal.price_offer
+                    ? Math.round((1 - deal.price_offer / deal.price_official) * 100)
+                    : 0;
+
+                let alertHeader = "";
+                if (discount >= 70) {
+                    alertHeader = "🚨🚨 <b>¡ALERTA DE ERROR DE PRECIO / LIQUIDACIÓN!</b> 🚨🚨\n\n";
+                    deal.viralContent = (deal.viralContent || "") + "\n\n⚠️ <b>ESTO VA A VOLAR:</b> Aprovecha ahora antes de que corrijan el precio.";
+                }
+
+                let caption = `${alertHeader}<b>${deal.title}</b>\n\n${deal.viralContent || ''}`;
                 if (deal.coupon) caption += `\n\n🎟️ <b>CUPÓN:</b> <code>${deal.coupon}</code>`;
 
-                // Asegurar que el link esté presente para facturar
                 const inlineKeyboard = {
                     reply_markup: {
                         inline_keyboard: [

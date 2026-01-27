@@ -247,6 +247,24 @@ app.get('/api/admin/pending', authMiddleware, (req, res) => {
 });
 
 // 7. PUBLICACIÓN MANUAL (ADMIN)
+app.get('/api/admin/stats', authMiddleware, (req, res) => {
+  try {
+    const totalDeals = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
+    const subscribers = db.prepare('SELECT COUNT(*) as count FROM subscribers').get().count;
+    const clicks = db.prepare('SELECT SUM(clicks) as count FROM published_deals').get().count || 0;
+    const last24h = db.prepare("SELECT COUNT(*) as count FROM published_deals WHERE posted_at > datetime('now', '-24 hours')").get().count;
+    const stores = db.prepare('SELECT tienda, COUNT(*) as count FROM published_deals GROUP BY tienda ORDER BY count DESC LIMIT 5').all();
+
+    res.json({
+      total: totalDeals,
+      subscribers: subscribers,
+      clicks: clicks,
+      last24h: last24h,
+      stores: stores
+    });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
   const { url, price } = req.body;
   try {
