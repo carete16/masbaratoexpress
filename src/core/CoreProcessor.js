@@ -5,6 +5,9 @@ class CoreProcessor {
     constructor() {
         this.interval = 15 * 60 * 1000;
         this.dailyLimit = 500;
+        this.lastCycle = null;
+        this.lastSuccess = null;
+        this.status = 'Iniciando...';
     }
 
     async processDeal(opp) {
@@ -101,9 +104,13 @@ class CoreProcessor {
         const runCycle = async () => {
             if (isRunning) return;
 
+            this.lastCycle = new Date().toISOString();
+            this.status = 'Escaneando...';
+
             const todayStats = db.prepare("SELECT COUNT(*) as total FROM published_deals WHERE date(posted_at) = date('now')").get();
             if (todayStats.total >= this.dailyLimit) {
                 logger.info(`⏹️ Límite diario alcanzado (${this.dailyLimit}). Deteniendo ciclo.`);
+                this.status = 'Límite diario alcanzado';
                 return;
             }
 
@@ -114,6 +121,7 @@ class CoreProcessor {
                 logger.info(`📊 Balance de Categorías: ${JSON.stringify(balance)}`);
 
                 const opportunities = await Radar.getMarketOpportunities();
+                this.status = `Procesando ${opportunities.length} ofertas...`;
 
                 // Priorizar oportunidades de categorías con menos representación
                 const prioritized = opportunities.sort((a, b) => {
@@ -126,10 +134,15 @@ class CoreProcessor {
 
                 for (let opp of prioritized) {
                     const success = await this.processDeal(opp);
-                    if (success) await new Promise(r => setTimeout(r, 8000));
+                    if (success) {
+                        this.lastSuccess = new Date().toISOString();
+                        await new Promise(r => setTimeout(r, 8000));
+                    }
                 }
+                this.status = 'Dormido (Intervalo)';
             } catch (e) {
                 logger.error(`Error ciclo: ${e.message}`);
+                this.status = `Error: ${e.message}`;
             }
             isRunning = false;
         };

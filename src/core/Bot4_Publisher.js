@@ -130,6 +130,14 @@ class TelegramNotifier {
                 }
             }
 
+            // 4. INTENTAR ENVÍO A REDES SOCIALES (FB/IG)
+            try {
+                const SocialPublisher = require('./Bot5_SocialPublisher');
+                await SocialPublisher.publish(deal);
+            } catch (socialErr) {
+                logger.warn(`⚠️ Social Error (omitido): ${socialErr.message}`);
+            }
+
             return true;
         } catch (error) {
             logger.error(`Error crítico en Publisher: ${error.message}`);

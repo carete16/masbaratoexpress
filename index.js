@@ -13,6 +13,26 @@ app.use(express.static('public')); // Servir estáticos principal
 app.use(express.static(path.join(__dirname, 'src/web/public'))); // Fallback
 app.use(express.json());
 
+// --- RUTA DE ESTADO (MONITOREO) ---
+app.get('/api/status', (req, res) => {
+  try {
+    const lastDeal = db.prepare('SELECT title, posted_at, tienda FROM published_deals ORDER BY posted_at DESC LIMIT 1').get();
+    const count24h = db.prepare("SELECT COUNT(*) as total FROM published_deals WHERE posted_at > datetime('now', '-1 day')").get();
+
+    res.json({
+      online: true,
+      bot_status: CoreProcessor.status,
+      last_cycle: CoreProcessor.lastCycle,
+      last_success: CoreProcessor.lastSuccess,
+      last_deal: lastDeal,
+      deals_24h: count24h.total,
+      time: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- ROUTES PARA PÁGINAS ---
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin.html'));

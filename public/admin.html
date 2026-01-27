@@ -276,6 +276,27 @@
     </header>
 
     <div class="container">
+        <!-- BOT HEALTH & STATUS -->
+        <div id="bot-status-bar"
+            style="background: var(--card-bg); padding: 20px; border-radius: 20px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div id="status-indicator"
+                    style="width: 12px; height: 12px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px var(--success);">
+                </div>
+                <div>
+                    <p style="font-size: 14px; font-weight: 700;">Estado del Bot: <span id="status-text"
+                            style="color: var(--primary);">Escaneando...</span></p>
+                    <p style="font-size: 11px; color: var(--text-muted);">Último ciclo: <span
+                            id="last-cycle">--:--</span> | Éxito: <span id="last-success">--:--</span></p>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <p style="font-size: 14px; font-weight: 700;">24h: <span id="status-24h" style="color: white">0</span>
+                    ofertas</p>
+                <a href="/api/status" target="_blank"
+                    style="font-size: 10px; color: var(--primary); text-decoration: none;">Ver JSON de logs</a>
+            </div>
+        </div>
         <!-- BLOQUE DE INYECCIÓN MANUAL -->
         <div
             style="background: var(--primary-gradient); padding: 30px; border-radius: 30px; margin-bottom: 50px; box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);">
@@ -314,6 +335,34 @@
             document.getElementById('login-overlay').style.display = 'none';
             loadPending();
             loadRecent();
+            updateBotHealth();
+            setInterval(updateBotHealth, 30000); // Actualizar cada 30 segundos
+        }
+
+        async function updateBotHealth() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                document.getElementById('status-text').innerText = data.bot_status || 'En espera';
+                document.getElementById('status-24h').innerText = data.deals_24h || 0;
+
+                const formatTime = (iso) => iso ? new Date(iso).toLocaleTimeString() : '--:--';
+                document.getElementById('last-cycle').innerText = formatTime(data.last_cycle);
+                document.getElementById('last-success').innerText = formatTime(data.last_success);
+
+                const indicator = document.getElementById('status-indicator');
+                if (data.online) {
+                    indicator.style.background = 'var(--success)';
+                    indicator.style.boxShadow = '0 0 10px var(--success)';
+                } else {
+                    indicator.style.background = 'var(--danger)';
+                    indicator.style.boxShadow = '0 0 10px var(--danger)';
+                }
+            } catch (e) {
+                document.getElementById('status-text').innerText = 'Servidor desconectado';
+                document.getElementById('status-indicator').style.background = 'var(--danger)';
+            }
         }
 
         async function login() {

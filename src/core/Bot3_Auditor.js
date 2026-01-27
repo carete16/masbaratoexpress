@@ -39,7 +39,7 @@ class PriceAuditorBot {
             .trim();
 
         // 2. CÁLCULOS DE PRECISIÓN
-        if (price_offer <= 0 || price_offer > 5000) { // Bloqueo de precios basura o regionales
+        if (price_offer <= 0 || price_offer > 5000) {
             report.isGoodDeal = false;
             report.reason = 'Precio fuera de rango lógico para ofertas';
             return report;
@@ -49,79 +49,64 @@ class PriceAuditorBot {
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
         report.discount = savingsPercent;
 
-        // 4. ALGORITMO DE PUNTUACIÓN (Confidence Score 0-100)
-        let score = 50; // Base
+        // 3. DEFINICIÓN DE MARCAS TOP Y DISEÑADOR (PRIORIDAD DE EL USER)
+        const topBrands = /iphone|apple|nike|adidas|reebok|puma|samsung|sony|nintendo|playstation|xbox|ps5|rtx|nvidia|ryzen|intel|gafas|sunglasses|ray-ban|oakley|gucci|prada|seiko|rolex|casio|fossil|gaming|lego|stanley/i;
+        const isTopBrand = topBrands.test(lowTitle);
 
-        // 3. FILTRO DE CALIDAD: "SOLO DESCUENTOS"
-        if (price_official > 0 && savingsPercent < 10) {
+        // 4. ALGORITMO DE FILTRADO SEGÚN REGLAS DEL USUARIO
+        // Regla: Descuento > 30% generalmente, pero más flexible si es marca conocida.
+        const minSavings = isTopBrand ? 20 : 30; // 20% para Apple/Nike, 30% para el resto.
+
+        if (price_official > 0 && savingsPercent < minSavings) {
             report.isGoodDeal = false;
-            report.reason = `Descuento insuficiente (${savingsPercent}%). Mínimo 10% requerido.`;
+            report.reason = `Ahorro insuficiente. Marca TOP requiere 20%, genérica 30%. Oferta actual: ${savingsPercent}%.`;
             return report;
         }
 
+        // Alerta especial: Si no hay MSRP (precio oficial), solo dejamos pasar Marcas Top o Tiendas Top.
         if (price_official <= 0) {
-            // RELAJADO: Si es Amazon, permitimos que pase aunque no veamos el MSRP en el scraping,
-            // siempre que el Radar lo haya marcado con potencial.
-            // Antes lo rechazábamos, ahora bajamos el score para ser cautos.
-            score -= 15;
-            report.quality = 'Opportunistic';
-
-            // Si el precio es redondo o muy bajo (< $20), solemos confiar más
-            if (price_offer < 20) score += 5;
-        } else {
-            // RELAJADO: Para tiendas TOP o si el score es alto, permitimos hasta un 5% de descuento real.
-            const isTopStore = ['Amazon', 'Best Buy', 'eBay', 'Walmart', 'Target'].includes(deal.tienda);
-            const minDiscount = isTopStore ? 5 : 10;
-
-            if (savingsPercent < minDiscount) {
+            const isTopStore = ['Amazon', 'Best Buy', 'Nike', 'Adidas', 'Walmart'].includes(deal.tienda);
+            if (!isTopBrand && !isTopStore) {
                 report.isGoodDeal = false;
-                report.reason = `Ahorro real insuficiente (${savingsPercent}%). El filtro exige un mínimo del ${minDiscount}% para ${deal.tienda}.`;
+                report.reason = 'Oferta genérica sin precio de referencia (MSRP) verificado.';
                 return report;
             }
         }
 
-
-        // Bonus por tiendas top
-        if (deal.tienda === 'Amazon' || deal.tienda === 'Best Buy' || deal.tienda === 'eBay') score += 10;
-
-        // --- BONUS POR MARCAS TOP (Prioridad Máxima) ---
-        const topBrands = /iphone|apple|nike|adidas|reebok|puma|samsung|sony|nintendo|playstation|lego/i;
-        if (topBrands.test(deal.title)) {
-            score += 20;
-            report.quality = 'TopBrand';
-            if (!report.badge) report.badge = 'MARCA TOP';
-        }
+        // 5. ASIGNACIÓN DE PUNTUACIÓN (Confidence Score 0-100)
+        let score = 50;
+        if (isTopBrand) score += 25;
+        if (savingsPercent >= 50) score += 25;
+        if (['Amazon', 'Best Buy', 'Nike'].includes(deal.tienda)) score += 10;
 
         report.confidenceScore = Math.min(score, 100);
 
-        // 5. ASIGNACIÓN DE BADGES PREMIUM
-        if (savingsPercent >= 60) {
-            report.badge = 'LIQUIDACIÓN';
-            report.quality = 'Epic';
-        } else if (savingsPercent >= 40) {
-            report.badge = 'SUPER PRECIO';
+        // 6. ASIGNACIÓN DE BADGES PREMIUM
+        if (isTopBrand && savingsPercent >= 20) {
+            report.badge = 'MARCA TOP ⭐';
             report.quality = 'Premium';
-        } else if (savingsPercent >= 20) {
-            report.badge = 'OFERTA VERIFICADA';
-            report.quality = 'Good';
+        } else if (savingsPercent >= 50) {
+            report.badge = 'LIQUIDACIÓN CRAZY 📉';
+            report.quality = 'Epic';
+        } else if (savingsPercent >= 35) {
+            report.badge = 'SUPER OFERTA 🔥';
+            report.quality = 'Gold';
         } else {
-            report.badge = 'PRECIO BAJO';
+            report.badge = 'OFERTA VERIFICADA';
         }
 
-        // 6. CATEGORIZACIÓN SEMÁNTICA AVANZADA
-        const t = title.toLowerCase();
-        if (t.match(/laptop|tv|computer|monitor|ssd|drive|tech|gadget|iphone|samsung|galaxy|phone|ipad|tablet/)) deal.categoria = 'Tecnología';
-        else if (t.match(/shoe|sneaker|shirt|pants|jacket|dress|nike|adidas|clothing|watch/)) deal.categoria = 'Moda';
-        else if (t.match(/tool|drill|saw|hammer|dewalt|milwaukee|makita/)) deal.categoria = 'Herramientas';
-        else if (t.match(/cooker|fryer|pot|knife|kitchen|home|table|furniture|vacuum|dyson/)) deal.categoria = 'Hogar';
-        else if (t.match(/ps5|xbox|gaming|switch|game|nintendo|controller/)) deal.categoria = 'Gamer';
-        else if (t.match(/vitamin|protein|gym|fitness|makeup|skin|beauty/)) deal.categoria = 'Salud';
+        // 7. CATEGORIZACIÓN SEMÁNTICA (Mantenida y refinada)
+        const t = deal.title.toLowerCase();
+        if (t.match(/laptop|tv|computer|monitor|ssd|drive|tech|gadget|iphone|samsung|galaxy|phone|ipad|tablet|apple watch/)) deal.categoria = 'Tecnología';
+        else if (t.match(/shoe|sneaker|nike|adidas|reebok|puma|clothing|watch|gafas|sunglasses|reloj/)) deal.categoria = 'Moda';
+        else if (t.match(/ps5|xbox|gaming|switch|game|nintendo|controller|rtx|gpu|cpu|monitor gaming/)) deal.categoria = 'Gamer';
+        else if (t.match(/cooker|fryer|pot|kitchen|home|furniture|vacuum|stanley|lego/)) deal.categoria = 'Hogar';
         else deal.categoria = 'General';
 
         deal.badge = report.badge;
         deal.score = report.confidenceScore;
 
-        logger.info(`✅ Auditoría completa: Score ${report.confidenceScore} | Discount ${savingsPercent}%`);
+        logger.info(`✅ Auditoría completa: Score ${report.confidenceScore} | Discount ${savingsPercent}% | Categoría: ${deal.categoria}`);
         return report;
     }
 }
