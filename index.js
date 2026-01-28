@@ -259,6 +259,7 @@ app.get('/api/admin/stats', authMiddleware, (req, res) => {
       total: totalDeals,
       subscribers: subscribers,
       clicks: clicks,
+      earnings: (clicks * 0.05).toFixed(2), // Estimación conservadora: $0.05 por click
       last24h: last24h,
       stores: stores
     });

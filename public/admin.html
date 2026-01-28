@@ -296,10 +296,20 @@
             </div>
             <div
                 style="background: var(--card-bg); padding: 25px; border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">💵 INGRESOS (EST.)</div>
+                <div id="stat-earnings" style="font-size: 32px; font-weight: 800; color: #10b981;">$0.00</div>
+            </div>
+            <div
+                style="background: var(--card-bg); padding: 25px; border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.1); text-align: center;">
                 <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">🏛️ TOTAL HISTÓRICO</div>
                 <div id="stat-total" style="font-size: 32px; font-weight: 800;">0</div>
             </div>
         </div>
+        <p
+            style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: -30px; margin-bottom: 40px;">
+            ⚠️ <i>Los ingresos son una estimación basada en clics ($0.05/click). Consulta tus paneles de <b>Amazon
+                    Associates</b> y <b>Sovrn</b> para datos reales.</i>
+        </p>
 
         <!-- BOT HEALTH & STATUS -->
         <div id="bot-status-bar"
@@ -376,6 +386,7 @@
 
                 document.getElementById('stat-subscribers').innerText = data.subscribers || 0;
                 document.getElementById('stat-clicks').innerText = data.clicks || 0;
+                document.getElementById('stat-earnings').innerText = '$' + (data.earnings || '0.00');
                 document.getElementById('stat-24h').innerText = data.last24h || 0;
                 document.getElementById('stat-total').innerText = data.total || 0;
             } catch (e) {
