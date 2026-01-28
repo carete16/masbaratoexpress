@@ -54,12 +54,12 @@ class PriceAuditorBot {
         const isTopBrand = topBrands.test(lowTitle);
 
         // 4. ALGORITMO DE FILTRADO SEGÚN REGLAS DEL USUARIO
-        // Regla: Descuento > 30% generalmente, pero más flexible si es marca conocida.
-        const minSavings = isTopBrand ? 20 : 30; // 20% para Apple/Nike, 30% para el resto.
+        // Regla: Bajamos el umbral para aumentar el volumen de ofertas.
+        const minSavings = isTopBrand ? 10 : 15; // 10% para Apple/Nike, 15% para el resto.
 
         if (price_official > 0 && savingsPercent < minSavings) {
             report.isGoodDeal = false;
-            report.reason = `Ahorro insuficiente. Marca TOP requiere 20%, genérica 30%. Oferta actual: ${savingsPercent}%.`;
+            report.reason = `Ahorro insuficiente. Marca TOP requiere 10%, genérica 15%. Oferta actual: ${savingsPercent}%.`;
             return report;
         }
 

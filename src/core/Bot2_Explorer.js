@@ -107,7 +107,15 @@ class ValidatorBot {
 
                 logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Imagen: ${result.image ? 'OK' : 'FALLBACK'})`);
             } else {
-                logger.warn(`⚠️ Validación fallida para ${opportunity.title}. No se pudo confirmar precio o stock.`);
+                // --- FALLBACK: SI EL SCRAPE PROFUNDO FALLA PERO TENEMOS INFO ---
+                if (opportunity.referencePrice > 0 && opportunity.image && !['Amazon', 'Walmart'].includes(result.storeName)) {
+                    logger.info(`⚠️ Falló DeepScrape pero tenemos info de RSS. Procediendo como fallback.`);
+                    result.realPrice = opportunity.referencePrice;
+                    result.hasStock = true;
+                    result.isValid = true;
+                } else {
+                    logger.warn(`⚠️ Validación totalmente fallida para ${opportunity.title}.`);
+                }
             }
 
             return result;

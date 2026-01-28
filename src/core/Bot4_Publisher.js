@@ -136,7 +136,11 @@ class TelegramNotifier {
                     }
                     logger.info(`📢 Notificado en Telegram con botón de compra.`);
                 } catch (tgErr) {
-                    logger.warn(`⚠️ Telegram Error (omitido): ${tgErr.message}`);
+                    if (tgErr.message.includes('401')) {
+                        logger.error(`🚨 ERROR CRÍTICO TELEGRAM: TOKEN INVÁLIDO (401). El bot no puede publicar. Por favor, actualiza TELEGRAM_BOT_TOKEN en .env`);
+                    } else {
+                        logger.warn(`⚠️ Telegram Error (omitido): ${tgErr.message}`);
+                    }
                 }
             }
 
