@@ -202,7 +202,12 @@ class DeepScraper {
                         document.querySelector('[itemprop="price"]')?.content;
                     offerPrice = clean(op);
 
+<<<<<<< HEAD
                     const lp = document.querySelector('.price--was')?.innerText || document.querySelector('[data-testid="list-price"]')?.innerText;
+=======
+                    const lp = document.querySelector('[data-testid="list-price"]')?.innerText ||
+                        document.querySelector('.price--was')?.innerText;
+>>>>>>> origin/experimental-features
                     officialPrice = clean(lp);
 
                     image = document.querySelector('[data-testid="main-image-container"] img')?.src;
@@ -212,11 +217,51 @@ class DeepScraper {
                     description = walmartDesc.substring(0, 400);
                 }
                 else if (window.location.hostname.includes('ebay.com')) {
+<<<<<<< HEAD
                     title = document.querySelector('.x-item-title__mainTitle span')?.innerText || document.querySelector('#itemTitle')?.innerText;
                     const op = document.querySelector('.x-price-primary span')?.innerText ||
                         document.querySelector('.display-price')?.innerText ||
                         document.querySelector('#prcIsum')?.innerText;
                     offerPrice = clean(op);
+=======
+                    title = document.querySelector('.x-item-title__mainTitle span')?.innerText;
+                    const op = document.querySelector('.x-price-primary span')?.innerText;
+                    offerPrice = clean(op);
+
+                    const lp = document.querySelector('.x-additional-info__text-strike span')?.innerText ||
+                        document.querySelector('.ux-textspans--STRIKETHROUGH')?.innerText;
+                    officialPrice = clean(lp);
+
+                    image = document.querySelector('.ux-image-magnify__image--main')?.src || document.querySelector('#icImg')?.src;
+                    isUnavailable = bodyText.includes('this item is out of stock') || bodyText.includes('ended');
+                }
+                else if (window.location.hostname.includes('bestbuy.com')) {
+                    title = document.querySelector('.heading-container h1')?.innerText;
+                    const op = document.querySelector('.priceView-customer-price span')?.innerText;
+                    offerPrice = clean(op);
+                    const listP = document.querySelector('.pricing-price__regular-price')?.innerText;
+                    officialPrice = clean(listP);
+                    image = document.querySelector('.main-media-container img')?.src;
+                    isUnavailable = bodyText.includes('sold out') || bodyText.includes('unavailable');
+                }
+                else if (window.location.hostname.includes('target.com')) {
+                    title = document.querySelector('[data-test="product-title"]')?.innerText;
+                    const op = document.querySelector('[data-test="product-price"]')?.innerText;
+                    offerPrice = clean(op);
+                    const listP = document.querySelector('[data-test="reg-price-strike"]') || document.querySelector('.h-text-strikethrough');
+                    officialPrice = clean(listP?.innerText);
+                    image = document.querySelector('[data-test="product-image"] img')?.src;
+                    isUnavailable = bodyText.includes('out of stock') || bodyText.includes('sold out');
+                }
+                else if (window.location.hostname.includes('newegg.com')) {
+                    title = document.querySelector('.product-title')?.innerText;
+                    const op = document.querySelector('.price-current strong')?.innerText;
+                    const opCents = document.querySelector('.price-current sup')?.innerText;
+                    offerPrice = clean(`${op}${opCents}`);
+                    image = document.querySelector('.product-view-img-container img')?.src;
+                    isUnavailable = bodyText.includes('out of stock') || bodyText.includes('sold out');
+                }
+>>>>>>> origin/experimental-features
 
                     const lp = document.querySelector('.ux-textspans--STRIKETHROUGH')?.innerText ||
                         document.querySelector('.x-additional-info__text-strike span')?.innerText ||

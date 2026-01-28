@@ -49,6 +49,7 @@ class PriceAuditorBot {
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
         report.discount = savingsPercent;
 
+<<<<<<< HEAD
         // 3. DEFINICIÓN DE MARCAS TOP Y DISEÑADOR (PRIORIDAD DE EL USER)
         const topBrands = /iphone|apple|nike|adidas|reebok|puma|samsung|sony|nintendo|playstation|xbox|ps5|rtx|nvidia|ryzen|intel|gafas|sunglasses|ray-ban|oakley|gucci|prada|seiko|rolex|casio|fossil|gaming|lego|stanley/i;
         const isTopBrand = topBrands.test(lowTitle);
@@ -60,6 +61,18 @@ class PriceAuditorBot {
         if (price_official > 0 && savingsPercent < minSavings) {
             report.isGoodDeal = false;
             report.reason = `Ahorro insuficiente. Marca TOP requiere 10%, genérica 15%. Oferta actual: ${savingsPercent}%.`;
+=======
+        // 3. FILTRO DE CALIDAD ESTRICTO: SOLO DESCUENTOS REALES
+        if (price_official <= 0) {
+            report.isGoodDeal = false;
+            report.reason = 'Sin precio oficial de referencia. No se puede verificar descuento.';
+            return report;
+        }
+
+        if (savingsPercent < 15) {
+            report.isGoodDeal = false;
+            report.reason = `Ahorro insuficiente (${savingsPercent}%). El estándar mínimo es 15%.`;
+>>>>>>> origin/experimental-features
             return report;
         }
 

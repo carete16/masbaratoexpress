@@ -15,6 +15,7 @@ class RadarBot {
     constructor() {
         this.sources = [
             { name: 'TechBargains', url: 'https://feeds.feedburner.com/Techbargains' },
+<<<<<<< HEAD
             { name: 'Slickdeals Frontpage', url: 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1' },
             { name: 'Slickdeals Nike', url: 'https://slickdeals.net/newsearch.php?q=nike&pp=20&sort=newest&rss=1' },
             { name: 'Slickdeals Apparel', url: 'https://slickdeals.net/f/apparel?rss=1' },
@@ -24,6 +25,11 @@ class RadarBot {
             { name: 'SneakerSteal', url: 'https://sneakersteal.com/feed/' },
             { name: 'DealNews Lifestyle', url: 'https://www.dealnews.com/c164/-/f/rss.html' },
             { name: 'BensBargains', url: 'https://bensbargains.com/categories/all/rss/' }
+=======
+            { name: 'Slickdeals Hot', url: 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1' },
+            { name: 'DealNews', url: 'https://www.dealnews.com/c142/c234/-/f/rss.html' },
+            { name: 'BensBargains', url: 'https://bensbargains.com/category/all/rss/' }
+>>>>>>> origin/experimental-features
         ];
     }
 
@@ -36,11 +42,17 @@ class RadarBot {
                 logger.info(`🔍 Escaneando: ${source.name}...`);
                 const response = await axios.get(source.url, {
                     headers: {
+<<<<<<< HEAD
                         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1',
                         'Accept': '*/*',
                         'Cache-Control': 'no-cache'
                     },
                     timeout: 15000
+=======
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    },
+                    timeout: 10000
+>>>>>>> origin/experimental-features
                 });
 
                 const feed = await parser.parseString(response.data);
@@ -67,7 +79,11 @@ class RadarBot {
         const uniqueOpps = [];
         const seen = new Set();
         for (const opp of allOpportunities) {
+<<<<<<< HEAD
             const key = (opp.title || '').substring(0, 30).toLowerCase();
+=======
+            const key = opp.title.substring(0, 30).toLowerCase();
+>>>>>>> origin/experimental-features
             if (!seen.has(key)) {
                 seen.add(key);
                 uniqueOpps.push(opp);
@@ -83,13 +99,18 @@ class RadarBot {
             const title = item.title || '';
             const link = item.link || item.guid || '';
 
+<<<<<<< HEAD
             // 1. Extraer Precio (TechBargains suele tenerlo al final)
+=======
+            // 1. Extraer Precio del Título (Busca patrones como $99, 99.99, etc)
+>>>>>>> origin/experimental-features
             let priceOffer = 0;
-            const priceMatch = title.match(/\$(\d+\.?\d*)/);
+            const priceMatch = title.match(/\$(\d{1,5}(?:\.\d{2})?)/);
             if (priceMatch) {
                 priceOffer = parseFloat(priceMatch[1]);
             }
 
+<<<<<<< HEAD
             // 2. Extraer Tienda
             let storeName = item.vendorname || 'Oferta USA Store';
             const lowTitle = title.toLowerCase();
@@ -116,12 +137,26 @@ class RadarBot {
             }
 
             // 3. Extraer Imagen
+=======
+            // 2. Extraer Tienda (TechBargains tiene vendorname, otros no)
+            let storeName = item.vendorname || 'USA Store';
+            if (storeName === 'Global') {
+                if (title.toLowerCase().includes('amazon')) storeName = 'Amazon';
+                else if (title.toLowerCase().includes('walmart')) storeName = 'Walmart';
+                else if (title.toLowerCase().includes('ebay')) storeName = 'eBay';
+                else if (title.toLowerCase().includes('target')) storeName = 'Target';
+                else if (title.toLowerCase().includes('best buy')) storeName = 'Best Buy';
+            }
+
+            // 3. Extraer Imagen (TechBargains tiene imagelink, otros usan la descripción)
+>>>>>>> origin/experimental-features
             let imageUrl = item.imagelink || '';
             if (!imageUrl && item.content) {
                 const imgMatch = item.content.match(/src="([^"]+\.(?:jpg|png|jpeg|webp)[^"]*)"/i);
                 if (imgMatch) imageUrl = imgMatch[1];
             }
 
+<<<<<<< HEAD
             // 4. Categorización
             let category = 'General';
             if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|gpu|keyboard|mouse|headphone|earbud|tablet|phone|iphone|apple|ipad|macbook|smartwatch/)) category = 'Tecnología';
@@ -129,6 +164,18 @@ class RadarBot {
             else if (lowTitle.match(/shoe|shirt|pant|watch|dress|bag|nike|adidas|reebok|puma|sneaker|clothing|apparel|under armour/)) category = 'Moda';
             else if (lowTitle.match(/vacuum|cooker|fryer|coffee|bed|furniture|kitchen/)) category = 'Hogar';
 
+=======
+            // 4. Categorización Automática (Basada en palabras clave)
+            let category = 'General';
+            const lowTitle = title.toLowerCase();
+            if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|gpu|keyboard|mouse|headphone|earbud|tablet|phone/)) category = 'Tecnología';
+            else if (lowTitle.match(/ps5|xbox|nintendo|switch|game|steam|controller|rtx|gaming/)) category = 'Gamer';
+            else if (lowTitle.match(/shoe|shirt|pant|watch|dress|bag|nike|adidas/)) category = 'Moda';
+            else if (lowTitle.match(/vacuum|cooker|fryer|coffee|bed|furniture|kitchen/)) category = 'Hogar';
+            else if (lowTitle.match(/supplement|protein|vitamin|gym|exercise|teeth/)) category = 'Salud';
+
+            // Limpiar el título quitando el precio al final y la tienda si estorba
+>>>>>>> origin/experimental-features
             const cleanTitle = title.replace(/\s*\$\d+\.?\d*\s*$/, '').trim();
 
             return {
