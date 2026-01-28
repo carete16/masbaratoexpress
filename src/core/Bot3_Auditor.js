@@ -49,7 +49,6 @@ class PriceAuditorBot {
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
         report.discount = savingsPercent;
 
-<<<<<<< HEAD
         // 3. DEFINICIÓN DE MARCAS TOP Y DISEÑADOR (PRIORIDAD DE EL USER)
         const topBrands = /iphone|apple|nike|adidas|reebok|puma|samsung|sony|nintendo|playstation|xbox|ps5|rtx|nvidia|ryzen|intel|gafas|sunglasses|ray-ban|oakley|gucci|prada|seiko|rolex|casio|fossil|gaming|lego|stanley/i;
         const isTopBrand = topBrands.test(lowTitle);
@@ -61,24 +60,12 @@ class PriceAuditorBot {
         if (price_official > 0 && savingsPercent < minSavings) {
             report.isGoodDeal = false;
             report.reason = `Ahorro insuficiente. Marca TOP requiere 10%, genérica 15%. Oferta actual: ${savingsPercent}%.`;
-=======
-        // 3. FILTRO DE CALIDAD ESTRICTO: SOLO DESCUENTOS REALES
-        if (price_official <= 0) {
-            report.isGoodDeal = false;
-            report.reason = 'Sin precio oficial de referencia. No se puede verificar descuento.';
-            return report;
-        }
-
-        if (savingsPercent < 15) {
-            report.isGoodDeal = false;
-            report.reason = `Ahorro insuficiente (${savingsPercent}%). El estándar mínimo es 15%.`;
->>>>>>> origin/experimental-features
             return report;
         }
 
         // Alerta especial: Si no hay MSRP (precio oficial), solo dejamos pasar Marcas Top o Tiendas Top.
         if (price_official <= 0) {
-            const isTopStore = ['Amazon', 'Best Buy', 'Nike', 'Adidas', 'Walmart'].includes(deal.tienda);
+            const isTopStore = ['Amazon', 'Best Buy', 'Nike', 'Adidas', 'Walmart', 'Target', 'Newegg'].includes(deal.tienda);
             if (!isTopBrand && !isTopStore) {
                 report.isGoodDeal = false;
                 report.reason = 'Oferta genérica sin precio de referencia (MSRP) verificado.';
@@ -95,7 +82,7 @@ class PriceAuditorBot {
         report.confidenceScore = Math.min(score, 100);
 
         // 6. ASIGNACIÓN DE BADGES PREMIUM
-        if (isTopBrand && savingsPercent >= 20) {
+        if (isTopBrand && savingsPercent >= 10) {
             report.badge = 'MARCA TOP ⭐';
             report.quality = 'Premium';
         } else if (savingsPercent >= 50) {
@@ -114,6 +101,7 @@ class PriceAuditorBot {
         else if (t.match(/shoe|sneaker|nike|adidas|reebok|puma|clothing|watch|gafas|sunglasses|reloj/)) deal.categoria = 'Moda';
         else if (t.match(/ps5|xbox|gaming|switch|game|nintendo|controller|rtx|gpu|cpu|monitor gaming/)) deal.categoria = 'Gamer';
         else if (t.match(/cooker|fryer|pot|kitchen|home|furniture|vacuum|stanley|lego/)) deal.categoria = 'Hogar';
+        else if (t.match(/supplement|protein|vitamin|gym|exercise|teeth/)) deal.categoria = 'Salud';
         else deal.categoria = 'General';
 
         deal.badge = report.badge;

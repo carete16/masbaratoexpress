@@ -44,10 +44,16 @@ class AIProcessor {
         }
 
         // Agregar encabezado con precio
-        let formatted = `🔥 [${storeName}] ${deal.title} – $${deal.price_offer}\n\n`;
+        let formatted = `🔥 [${storeName}] ${deal.title}\n`;
+
+        if (deal.coupon) {
+            formatted += `🎟️ APLICA CUPÓN: ${deal.coupon}\n`;
+        }
+
+        formatted += `💰 PRECIO: $${deal.price_offer}\n\n`;
 
         if (discount > 0) {
-            formatted += `💰 AHORRO DEL ${discount}% - Precio original: $${deal.price_official}\n\n`;
+            formatted += `📉 AHORRO DEL ${discount}% - Antes: $${deal.price_official}\n\n`;
         }
 
         formatted += clean;
@@ -57,21 +63,30 @@ class AIProcessor {
     }
 
     generateProfessionalDescription(deal, discount, storeName) {
-        let desc = `🔥 [${storeName}] ${deal.title} – $${deal.price_offer}\n\n`;
+        let desc = `🔥 [${storeName}] ${deal.title}\n`;
+
+        if (deal.coupon) {
+            desc += `🎟️ APLICA CUPÓN: ${deal.coupon}\n`;
+        }
+
+        desc += `💰 PRECIO: $${deal.price_offer}\n\n`;
 
         if (discount > 0) {
-            desc += `💰 AHORRA ${discount}% - Precio especial de $${deal.price_offer} `;
-            desc += `(antes $${deal.price_official})\n\n`;
+            desc += `💰 AHORRA ${discount}% - Antes: $${deal.price_official}\n\n`;
         }
 
         // Descripción profesional basada en el título
-        desc += `${deal.title} representa una oportunidad excepcional en el mercado actual. `;
+        desc += `${deal.title} representa una excelente oportunidad en ${storeName}. `;
 
         if (discount >= 30) {
             desc += `Con un descuento del ${discount}%, este es uno de los mejores precios disponibles. `;
         }
 
-        desc += `Producto verificado y en stock en ${storeName}.\n\n`;
+        if (deal.coupon) {
+            desc += `Asegúrate de aplicar el cupón ${deal.coupon} al finalizar tu compra. `;
+        }
+
+        desc += `Producto verificado y en stock.\n\n`;
 
         // Beneficios genéricos
         desc += `✅ Producto auténtico\n`;
