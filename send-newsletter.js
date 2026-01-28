@@ -40,20 +40,45 @@ async function sendWeeklyNewsletter() {
         logger.info(`📊 ${subscribers.length} suscriptores`);
         logger.info(`🔥 ${topDeals.length} ofertas destacadas`);
 
-        // Aquí integrarías con un servicio de email como SendGrid, Mailgun, etc.
-        // Por ahora, solo mostramos el contenido
-        console.log('\n--- CONTENIDO DEL EMAIL ---');
-        console.log(emailContent);
-        console.log('--- FIN DEL EMAIL ---\n');
+        // --- CONFIGURACIÓN DE ENVÍO REAL ---
+        const nodemailer = require('nodemailer');
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
 
-        // Notificar en Telegram que se envió newsletter
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+            logger.warn('⚠️ No hay credenciales de email en .env. Solo se mostrará el contenido en consola.');
+            console.log('\n--- CONTENIDO DEL EMAIL ---');
+            console.log(emailContent);
+        } else {
+            logger.info('🚀 Enviando emails...');
+            for (const sub of subscribers) {
+                try {
+                    await transporter.sendMail({
+                        from: `"+BARATO DEALS" <${process.env.EMAIL_USER}>`,
+                        to: sub.email,
+                        subject: '🔥 TOP 10: Chollos de la Semana que no puedes perderte',
+                        html: emailContent
+                    });
+                    logger.info(`✅ Enviado a: ${sub.email}`);
+                } catch (e) {
+                    logger.error(`❌ Error enviando a ${sub.email}: ${e.message}`);
+                }
+            }
+        }
+
+        // Notificar en Telegram que se procesó la newsletter
         const bot = TelegramNotifier.bot;
         await bot.telegram.sendMessage(
             process.env.TELEGRAM_CHANNEL_ID,
-            `📧 Newsletter semanal enviada a ${subscribers.length} suscriptores con ${topDeals.length} ofertas destacadas.`
+            `📧 Newsletter semanal procesada para ${subscribers.length} suscriptores.`
         );
 
-        logger.info('✅ Newsletter enviada exitosamente');
+        logger.info('✅ Proceso de Newsletter completado');
 
     } catch (error) {
         logger.error(`Error enviando newsletter: ${error.message}`);
