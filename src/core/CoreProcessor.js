@@ -19,8 +19,8 @@ class CoreProcessor {
         const crypto = require('crypto');
 
         try {
-            // Evitar duplicados
-            if (isRecentlyPublished(opp.sourceLink, opp.title)) {
+            // Evitar duplicados (Omitir si es manual)
+            if (!opp.isManual && isRecentlyPublished(opp.sourceLink, opp.title)) {
                 logger.info(`⏭️ Duplicado omitido: ${opp.title}`);
                 return false;
             }
@@ -46,7 +46,7 @@ class CoreProcessor {
             };
 
             const audit = await Auditor.audit(dealData);
-            if (!audit.isGoodDeal) {
+            if (!audit.isGoodDeal && !opp.isManual) {
                 logger.warn(`📉 Auditoría rechazada: ${opp.title} | Razón: ${audit.reason || 'Descuento insuficiente'}`);
                 return false;
             }

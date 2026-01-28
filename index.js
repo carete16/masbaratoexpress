@@ -270,8 +270,10 @@ app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
   try {
     const success = await CoreProcessor.processDeal({
       sourceLink: url,
-      title: 'Manual Order',
-      price_offer: parseFloat(price) || 0
+      title: 'Manual Order', // El bot buscará el título real
+      price_offer: parseFloat(price) || 0,
+      referencePrice: parseFloat(price) || 0,
+      isManual: true
     });
 
     if (success) {

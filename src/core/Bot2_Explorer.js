@@ -78,7 +78,9 @@ class ValidatorBot {
                 }
             }
 
-            if (deepData && (deepData.offerPrice > 0 || (result.storeName !== 'Amazon' && opportunity.referencePrice > 0))) {
+            const providedPrice = opportunity.price_offer || opportunity.referencePrice;
+
+            if (deepData && (deepData.offerPrice > 0 || (result.storeName !== 'Amazon' && providedPrice > 0))) {
                 if (deepData.isUnavailable) {
                     logger.warn(`❌ Producto AGOTADO: ${opportunity.title}`);
                     return result;
@@ -91,13 +93,13 @@ class ValidatorBot {
                     finalImage.includes('placehold.co') ||
                     finalImage.includes('logo');
 
-                if (isBadImage) {
+                if (isBadImage && !opportunity.isManual) {
                     logger.warn(`🖼️ Deal omitido por IMAGEN INVÁLIDA: "${opportunity.title}" | Img: ${finalImage || 'MISSING'}`);
                     return result;
                 }
 
 
-                result.realPrice = deepData.offerPrice || opportunity.referencePrice;
+                result.realPrice = deepData.offerPrice || providedPrice;
                 result.officialPrice = deepData.officialPrice || opportunity.msrp || 0;
                 result.hasStock = true;
                 result.isValid = true;
@@ -108,11 +110,36 @@ class ValidatorBot {
                 logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Imagen: ${result.image ? 'OK' : 'FALLBACK'})`);
             } else {
                 // --- FALLBACK: SI EL SCRAPE PROFUNDO FALLA PERO TENEMOS INFO ---
-                if (opportunity.referencePrice > 0 && opportunity.image && !['Amazon', 'Walmart'].includes(result.storeName)) {
-                    logger.info(`⚠️ Falló DeepScrape pero tenemos info de RSS. Procediendo como fallback.`);
-                    result.realPrice = opportunity.referencePrice;
+                const canUseFallback = (providedPrice > 0) && (opportunity.image || opportunity.isManual);
+
+                if (canUseFallback && (opportunity.isManual || !['Amazon', 'Walmart'].includes(result.storeName))) {
+                    logger.info(`⚠️ Falló DeepScrape pero ${opportunity.isManual ? 'es MANUAL' : 'tenemos info de RSS'}. Procediendo con datos proporcionados.`);
+                    result.realPrice = providedPrice;
                     result.hasStock = true;
                     result.isValid = true;
+
+                    // Si no tenemos título real, intentar extraerlo del URL
+                    if (!result.title || result.title === 'Manual Order') {
+                        try {
+                            const urlObj = new URL(result.finalUrl);
+                            const pathParts = urlObj.pathname.split('/');
+                            // Amazon: /Product-Title/dp/ASIN
+                            const dpIndex = pathParts.findIndex(p => p.toLowerCase() === 'dp');
+                            if (dpIndex > 0 && pathParts[dpIndex - 1]) {
+                                result.title = decodeURIComponent(pathParts[dpIndex - 1]).replace(/-/g, ' ').substring(0, 80);
+                            } else if (pathParts[1] && pathParts[1] !== 'dp' && pathParts[1] !== 'ip') {
+                                result.title = decodeURIComponent(pathParts[1]).replace(/-/g, ' ').substring(0, 80);
+                            }
+                        } catch (e) { }
+                    }
+
+                    // Si es manual y no hay imagen, intentar una imagen genérica si es Amazon
+                    if (!result.image && opportunity.sourceLink.includes('amazon.com')) {
+                        const asinMatch = opportunity.sourceLink.match(/\/dp\/([A-Z0-9]{10})/i) || opportunity.sourceLink.match(/\/gp\/product\/([A-Z0-9]{10})/i);
+                        if (asinMatch) {
+                            result.image = `https://images-na.ssl-images-amazon.com/images/P/${asinMatch[1]}.01.LZZZZZZZ.jpg`;
+                        }
+                    }
                 } else {
                     logger.warn(`⚠️ Validación totalmente fallida para ${opportunity.title}.`);
                 }
