@@ -516,6 +516,7 @@
             line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             height: 2.8em;
@@ -570,24 +571,63 @@
             box-shadow: 0 8px 20px var(--primary-glow);
         }
 
-        /* --- MOBILE NAV --- */
+        /* --- MOBILE & PREMIUM LAYOUT --- */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            z-index: 1500;
+            padding: 10px 10px 30px;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: 0.3s;
+            width: 25%;
+        }
+
+        .bottom-nav-item i {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
         .mobile-header {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             padding: 15px 20px;
             z-index: 1100;
             border-bottom: 1px solid var(--border);
             justify-content: space-between;
             align-items: center;
-        }
-
-        .menu-toggle {
-            font-size: 24px;
-            cursor: pointer;
         }
 
         @media (max-width: 1024px) {
@@ -601,42 +641,76 @@
 
             main {
                 margin-left: 0;
-                padding-top: 80px;
+                padding: 100px 15px 120px;
             }
 
             .mobile-header {
                 display: flex;
             }
 
-            .deal-grid {
-                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-                gap: 20px;
+            .bottom-nav {
+                display: flex;
             }
-        }
 
-        @media (max-width: 768px) {
-            .top-bar {
-                flex-direction: column;
-                align-items: stretch;
+            .deal-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .deal-card {
+                border-radius: 20px;
+            }
+
+            .deal-title {
+                font-size: 14px;
+                height: 3.2em;
+            }
+
+            .price-now {
+                font-size: 18px;
+            }
+
+            .image-container {
+                height: 180px;
+                padding: 15px;
             }
 
             .btn-join {
                 display: none;
             }
 
-            /* Horizontal scrolling on mobile as before but premium look */
+            .top-bar {
+                margin-bottom: 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
             .deal-grid {
-                display: flex;
-                overflow-x: auto;
-                scroll-snap-type: x mandatory;
-                padding: 10px 0 30px;
-                gap: 15px;
+                grid-template-columns: 1fr;
             }
 
-            .deal-card {
-                min-width: 280px;
-                scroll-snap-align: center;
+            .logo-text {
+                font-size: 18px;
             }
+
+            .cat-pill {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+
+            .brand-radar>div {
+                min-width: 120px;
+            }
+        }
+
+        body.dark-mode .bottom-nav {
+            background: rgba(30, 41, 59, 0.85);
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body.dark-mode .mobile-header {
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
         }
 
         /* --- MODAL & TOAST --- */
@@ -1344,9 +1418,36 @@
         // Start the application
         init();
     </script>
+    <!-- BOTTOM NAV FOR MOBILE -->
+    <div class="bottom-nav">
+        <a href="#" class="bottom-nav-item active" onclick="resetHome(); updateBottomNav(this)">
+            <i class="fa-solid fa-house"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="showFavorites(); updateBottomNav(this)">
+            <i class="fa-solid fa-heart"></i>
+            <span>Favoritos</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="document.getElementById('search').focus(); updateBottomNav(this)">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Buscar</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="showAlerts(); updateBottomNav(this)">
+            <i class="fa-solid fa-bell"></i>
+            <span>Alertas</span>
+        </a>
+    </div>
+
+    <script>
+        function updateBottomNav(clickedEl) {
+            document.querySelectorAll('.bottom-nav-item').forEach(item => item.classList.remove('active'));
+            clickedEl.classList.add('active');
+        }
+    </script>
+
     <!-- FLOATING TG -->
     <a href="https://t.me/Masbarato_deals" target="_blank"
-        style="position: fixed; bottom: 30px; right: 30px; background: #229ED9; color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 25px rgba(34, 158, 217, 0.4); z-index: 2000; transition: 0.3s; text-decoration: none;"
+        style="position: fixed; bottom: 100px; right: 20px; background: #229ED9; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 25px rgba(34, 158, 217, 0.4); z-index: 1400; transition: 0.3s; text-decoration: none;"
         onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
         <i class="fa-brands fa-telegram"></i>
     </a>
