@@ -1154,29 +1154,167 @@
         let allDeals = [];
         let currentLang = 'es';
 
-        // --- TRANSLATIONS (Moved to top for global access) ---
+        // --- COMPLETE TRANSLATIONS SYSTEM ---
         const translations = {
             es: {
-                home: 'Inicio', favs: 'Favoritos', alerts: 'Alertas',
+                // Navigation
+                home: 'Inicio',
+                favs: 'Favoritos',
+                alerts: 'Alertas',
+                search_nav: 'Buscar',
+
+                // Search & Filters
                 search: 'Buscar ofertas, productos, tiendas...',
                 join: 'UNIRSE AL CANAL',
-                all: 'Todo', tech: 'Tecnología', gamer: 'Gamer', fashion: 'Moda', home: 'Hogar', health: 'Salud',
-                view_deal: 'VER OFERTA', confidence: 'Confianza',
-                alerts_title: 'Configurar Alertas', alerts_subtitle: 'Recibe notificaciones instantáneas en Telegram',
+
+                // Categories
+                all: 'Todo',
+                tech: 'Tecnología',
+                gamer: 'Gamer',
+                fashion: 'Moda',
+                home_cat: 'Hogar',
+                health: 'Salud',
+
+                // Brand Radar
+                nike_deals: 'Nike Deals',
+                apple_vip: 'Apple VIP',
+                ebay_refurb: 'eBay Refurb',
+                amazon_picks: 'Amazon Picks',
+
+                // Newsletter
+                newsletter_emoji: '📧',
+                newsletter_title: '¡No te pierdas ningún Bombazo!',
+                newsletter_subtitle: 'Únete a nuestra lista VIP y recibe las 10 mejores ofertas de la semana (incluyendo eBay Refurbished) directamente en tu email.',
+                newsletter_placeholder: 'Tu mejor email...',
+                newsletter_button: 'SUSCRIBIRME',
+                newsletter_success: '✅ ¡Suscripción exitosa! Te avisaremos de los bombazos.',
+                newsletter_error: '❌ Error al suscribirse. Inténtalo de nuevo.',
+
+                // Trust Bar
+                trust_secure: 'COMPRA 100% SEGURA',
+                trust_verified: 'TIENDAS VERIFICADAS',
+                trust_encrypted: 'DATOS ENCRIPTADOS',
+
+                // Deal Cards
+                view_deal: 'VER OFERTA',
+                confidence: 'Confianza',
+
+                // Loading & Empty States
+                loading: 'Cargando gangas premium...',
+                no_deals: 'No se encontraron ofertas.',
+                no_favorites: 'Aún no tienes favoritos guardados.',
+                explore_deals: 'Explorar Ofertas',
+
+                // Search Results
+                no_local_deals: 'No encontramos ofertas locales para',
+                search_external: 'Pero podemos buscar en las mejores tiendas de USA por ti:',
+                search_amazon: 'Buscar en Amazon',
+                search_ebay: 'Buscar en eBay',
+
+                // Favorites
+                saved_toast: '❤️ Guardado',
+                removed_toast: '💔 Eliminado',
+
+                // Alerts Modal
+                alerts_title: 'Configurar Alertas',
+                alerts_subtitle: 'Recibe notificaciones instantáneas en Telegram',
+                alerts_price: '🔥 Errores de Precio',
+                alerts_tech: '💻 Tecnología',
+                alerts_fashion: '👟 Moda',
+                alerts_home: '🏠 Hogar',
                 save_alerts: 'GUARDAR PREFERENCIAS',
-                user_pro: 'Usuario Pro', member: 'Premium Member', saved: 'Ofertas Guardadas', savings: 'Ahorro Estimado',
-                settings: 'Configuración'
+                alerts_saved: '✅ Alertas guardadas correctamente',
+                telegram_channel: 'Canal de Telegram',
+
+                // User Profile
+                user_pro: 'Usuario Pro',
+                member: 'Premium Member',
+                saved_deals: 'Ofertas Guardadas',
+                savings: 'Ahorro Estimado',
+                settings: 'Configuración',
+
+                // Mobile Header
+                logo_text: '+BARATO DEALS'
             },
             en: {
-                home: 'Home', favs: 'Favorites', alerts: 'Alerts',
+                // Navigation
+                home: 'Home',
+                favs: 'Favorites',
+                alerts: 'Alerts',
+                search_nav: 'Search',
+
+                // Search & Filters
                 search: 'Search deals, products, stores...',
                 join: 'JOIN CHANNEL',
-                all: 'All', tech: 'Tech', gamer: 'Gamer', fashion: 'Fashion', home: 'Home', health: 'Health',
-                view_deal: 'VIEW DEAL', confidence: 'Confidence',
-                alerts_title: 'Configure Alerts', alerts_subtitle: 'Get instant notifications on Telegram',
+
+                // Categories
+                all: 'All',
+                tech: 'Tech',
+                gamer: 'Gaming',
+                fashion: 'Fashion',
+                home_cat: 'Home',
+                health: 'Health',
+
+                // Brand Radar
+                nike_deals: 'Nike Deals',
+                apple_vip: 'Apple VIP',
+                ebay_refurb: 'eBay Refurb',
+                amazon_picks: 'Amazon Picks',
+
+                // Newsletter
+                newsletter_emoji: '📧',
+                newsletter_title: 'Don\'t Miss Any Hot Deal!',
+                newsletter_subtitle: 'Join our VIP list and receive the top 10 deals of the week (including eBay Refurbished) directly in your email.',
+                newsletter_placeholder: 'Your best email...',
+                newsletter_button: 'SUBSCRIBE',
+                newsletter_success: '✅ Successfully subscribed! We\'ll notify you of the best deals.',
+                newsletter_error: '❌ Subscription error. Please try again.',
+
+                // Trust Bar
+                trust_secure: '100% SECURE PURCHASE',
+                trust_verified: 'VERIFIED STORES',
+                trust_encrypted: 'ENCRYPTED DATA',
+
+                // Deal Cards
+                view_deal: 'VIEW DEAL',
+                confidence: 'Confidence',
+
+                // Loading & Empty States
+                loading: 'Loading premium deals...',
+                no_deals: 'No deals found.',
+                no_favorites: 'No favorites saved yet.',
+                explore_deals: 'Explore Deals',
+
+                // Search Results
+                no_local_deals: 'No local deals found for',
+                search_external: 'But we can search the best USA stores for you:',
+                search_amazon: 'Search on Amazon',
+                search_ebay: 'Search on eBay',
+
+                // Favorites
+                saved_toast: '❤️ Saved',
+                removed_toast: '💔 Removed',
+
+                // Alerts Modal
+                alerts_title: 'Configure Alerts',
+                alerts_subtitle: 'Get instant notifications on Telegram',
+                alerts_price: '🔥 Price Errors',
+                alerts_tech: '💻 Technology',
+                alerts_fashion: '👟 Fashion',
+                alerts_home: '🏠 Home',
                 save_alerts: 'SAVE PREFERENCES',
-                user_pro: 'Pro User', member: 'Premium Member', saved: 'Deals Saved', savings: 'Est. Savings',
-                settings: 'Settings'
+                alerts_saved: '✅ Alerts saved successfully',
+                telegram_channel: 'Telegram Channel',
+
+                // User Profile
+                user_pro: 'Pro User',
+                member: 'Premium Member',
+                saved_deals: 'Saved Deals',
+                savings: 'Est. Savings',
+                settings: 'Settings',
+
+                // Mobile Header
+                logo_text: '+CHEAP DEALS'
             }
         };
 
@@ -1328,22 +1466,23 @@
 
         function showExternalSearchPrompt(term) {
             const grid = document.getElementById('grid');
-            const amazonTag = 'masbaratodeal-20'; // Fallback
+            const amazonTag = 'masbaratodeal-20';
+            const t = translations[currentLang];
 
             grid.innerHTML = `
                 <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: #f8fafc; border-radius: 30px; border: 2px dashed var(--border);">
                     <div style="font-size: 50px; margin-bottom: 20px;">🔍</div>
-                    <h2 style="margin-bottom: 10px;">${currentLang === 'es' ? 'No encontramos ofertas locales para "' + term + '"' : 'No local deals found for "' + term + '"'}</h2>
+                    <h2 style="margin-bottom: 10px;">${t.no_local_deals} "${term}"</h2>
                     <p style="color: var(--text-muted); margin-bottom: 30px;">
-                        ${currentLang === 'es' ? 'Pero podemos buscar en las mejores tiendas de USA por ti:' : 'But we can search the best USA stores for you:'}
+                        ${t.search_external}
                     </p>
                     
                     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                         <a href="https://www.amazon.com/s?k=${encodeURIComponent(term)}&tag=${amazonTag}" target="_blank" class="btn-view" style="background: #ff9900; color: black; min-width: 200px;">
-                            <i class="fa-brands fa-amazon"></i> ${currentLang === 'es' ? 'Buscar en Amazon' : 'Search on Amazon'}
+                            <i class="fa-brands fa-amazon"></i> ${t.search_amazon}
                         </a>
                         <a href="https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(term)}" target="_blank" class="btn-view" style="background: #e53238; color: white; min-width: 200px;">
-                            <i class="fa-brands fa-ebay"></i> ${currentLang === 'es' ? 'Buscar en eBay' : 'Search on eBay'}
+                            <i class="fa-brands fa-ebay"></i> ${t.search_ebay}
                         </a>
                     </div>
                 </div>
@@ -1365,9 +1504,10 @@
             }
 
             try {
+                const t = translations[currentLang];
                 const favorites = getFavorites();
                 const index = favorites.indexOf(id);
-                const btn = document.getElementById(`fav - btn - ${id} `);
+                const btn = document.getElementById(`fav-btn-${id}`);
 
                 // Click Animation
                 if (btn) {
@@ -1377,17 +1517,15 @@
 
                 if (index === -1) {
                     favorites.push(id);
-                    showToast('❤️ Saved / Guardado');
+                    showToast(t.saved_toast);
                 } else {
                     favorites.splice(index, 1);
-                    showToast('💔 Removed / Eliminado');
+                    showToast(t.removed_toast);
                 }
 
                 localStorage.setItem('mb_favorites', JSON.stringify(favorites));
 
                 // UI Update Logic
-                // Safely get translations
-                const t = (translations && translations[currentLang]) ? translations[currentLang] : { favs: 'Favoritos' };
                 const activeNav = document.querySelector('.nav-item.active');
 
                 if (activeNav && activeNav.innerText.includes(t.favs)) {
@@ -1417,8 +1555,8 @@
                 document.getElementById('grid').innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
                         <i class="fa-regular fa-heart" style="font-size: 40px; color: var(--text-muted); margin-bottom: 20px;"></i>
-                        <p>${currentLang === 'es' ? 'Aún no tienes favoritos guardados.' : 'No favorites saved yet.'}</p>
-                        <button onclick="location.reload()" class="btn-view" style="max-width:200px; margin: 20px auto;">${currentLang === 'es' ? 'Explorar Ofertas' : 'Explore Deals'}</button>
+                        <p>${t.no_favorites}</p>
+                        <button onclick="location.reload()" class="btn-view" style="max-width:200px; margin: 20px auto;">${t.explore_deals}</button>
                     </div>`;
             } else {
                 render(favDeals);
@@ -1431,21 +1569,75 @@
             currentLang = currentLang === 'es' ? 'en' : 'es';
             const t = translations[currentLang];
 
-            // Update Nav
+            // === NAVIGATION ===
             document.querySelectorAll('.nav-item').forEach((el, index) => {
                 const keys = ['home', 'favs', 'alerts'];
-                if (keys[index]) el.childNodes[1].textContent = ' ' + t[keys[index]];
+                if (keys[index] && el.childNodes[1]) {
+                    el.childNodes[1].textContent = ' ' + t[keys[index]];
+                }
             });
 
-            // Update Search
-            document.getElementById('search').placeholder = t.search;
-            document.querySelector('.btn-join').innerText = t.join;
+            // === SEARCH BAR ===
+            const searchInput = document.getElementById('search');
+            if (searchInput) searchInput.placeholder = t.search;
 
-            // Update Categories
+            // === JOIN BUTTON ===
+            const joinBtn = document.querySelector('.btn-join');
+            if (joinBtn) joinBtn.innerText = t.join;
+
+            // === CATEGORIES ===
+            const categoryKeys = ['all', 'tech', 'gamer', 'fashion', 'home_cat', 'health'];
             document.querySelectorAll('.cat-pill').forEach((el, index) => {
-                const keys = ['all', 'tech', 'gamer', 'fashion', 'home', 'health'];
-                if (keys[index]) el.childNodes[1].textContent = ' ' + t[keys[index]];
+                if (categoryKeys[index] && el.childNodes[1]) {
+                    el.childNodes[1].textContent = ' ' + t[categoryKeys[index]];
+                }
             });
+
+            // === BRAND RADAR ===
+            const brandRadar = document.querySelectorAll('.brand-radar span');
+            if (brandRadar[0]) brandRadar[0].textContent = t.nike_deals;
+            if (brandRadar[1]) brandRadar[1].textContent = t.apple_vip;
+            if (brandRadar[2]) brandRadar[2].textContent = t.ebay_refurb;
+            if (brandRadar[3]) brandRadar[3].textContent = t.amazon_picks;
+
+            // === NEWSLETTER SECTION ===
+            const newsletterSection = document.querySelector('.newsletter-section');
+            if (newsletterSection) {
+                const title = newsletterSection.querySelector('h2');
+                const subtitle = newsletterSection.querySelector('p');
+                const emailInput = document.getElementById('newsletter-email');
+                const submitBtn = newsletterSection.querySelector('button[type="submit"]');
+
+                if (title) title.textContent = t.newsletter_title;
+                if (subtitle) subtitle.textContent = t.newsletter_subtitle;
+                if (emailInput) emailInput.placeholder = t.newsletter_placeholder;
+                if (submitBtn) submitBtn.textContent = t.newsletter_button;
+            }
+
+            // === TRUST BAR ===
+            const trustItems = document.querySelectorAll('.trust-bar > div');
+            if (trustItems[0]) trustItems[0].childNodes[1].textContent = ' ' + t.trust_secure;
+            if (trustItems[1]) trustItems[1].childNodes[1].textContent = ' ' + t.trust_verified;
+            if (trustItems[2]) trustItems[2].childNodes[1].textContent = ' ' + t.trust_encrypted;
+
+            // === BOTTOM NAVIGATION (Mobile) ===
+            const bottomNavItems = document.querySelectorAll('.bottom-nav-item span');
+            if (bottomNavItems[0]) bottomNavItems[0].textContent = t.home;
+            if (bottomNavItems[1]) bottomNavItems[1].textContent = t.favs;
+            if (bottomNavItems[2]) bottomNavItems[2].textContent = t.search_nav;
+            if (bottomNavItems[3]) bottomNavItems[3].textContent = t.alerts;
+
+            // === USER PROFILE ===
+            const userName = document.querySelector('.user-name');
+            const userStatus = document.querySelector('.user-status');
+            if (userName) userName.textContent = t.user_pro;
+            if (userStatus) userStatus.textContent = t.member;
+
+            // === MOBILE HEADER LOGO ===
+            const mobileHeaderLogo = document.querySelector('.mobile-header .logo-text');
+            if (mobileHeaderLogo) {
+                mobileHeaderLogo.innerHTML = t.logo_text.replace('DEALS', '<span>DEALS</span>');
+            }
 
             // Re-render deals to translate buttons
             render(allDeals);
@@ -1454,6 +1646,7 @@
         // --- NEWSLETTER FORM ---
         document.getElementById('newsletter-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const t = translations[currentLang];
             const emailField = document.getElementById('newsletter-email');
             const msg = document.getElementById('newsletter-msg');
             const email = emailField.value;
@@ -1467,11 +1660,11 @@
 
                 if (res.ok) {
                     msg.style.color = 'var(--accent-green)';
-                    msg.innerText = '✅ ¡Suscripción exitosa! Te avisaremos de los bombazos.';
+                    msg.innerText = t.newsletter_success;
                     emailField.value = '';
                 } else {
                     msg.style.color = 'var(--accent-red)';
-                    msg.innerText = '❌ Error al suscribirse. Inténtalo de nuevo.';
+                    msg.innerText = t.newsletter_error;
                 }
                 msg.style.display = 'block';
             } catch (err) {
@@ -1561,7 +1754,6 @@
 
         // --- ALERTS SYSTEM ---
         function showAlerts() {
-            // Need to handle translation dynamically for nav highlight
             const t = translations[currentLang];
             setActiveNav(t.alerts);
 
@@ -1576,23 +1768,23 @@
                     
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; text-align:left; margin-bottom:30px;">
                         <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
-                            <input type="checkbox" value="price" ${isChecked('price')}> 🔥 Errores
+                            <input type="checkbox" value="price" ${isChecked('price')}> ${t.alerts_price}
                         </label>
                         <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
-                            <input type="checkbox" value="tech" ${isChecked('tech')}> 💻 ${t.tech}
+                            <input type="checkbox" value="tech" ${isChecked('tech')}> ${t.alerts_tech}
                         </label>
                         <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
-                            <input type="checkbox" value="fashion" ${isChecked('fashion')}> 👟 ${t.fashion}
+                            <input type="checkbox" value="fashion" ${isChecked('fashion')}> ${t.alerts_fashion}
                         </label>
                         <label style="background:#f8fafc; padding:15px; border-radius:12px; display:flex; gap:10px; align-items:center; cursor:pointer;" class="alert-option">
-                            <input type="checkbox" value="home" ${isChecked('home')}> 🏠 ${t.home}
+                            <input type="checkbox" value="home" ${isChecked('home')}> ${t.alerts_home}
                         </label>
                     </div>
 
                     <button onclick="saveAlerts()" class="btn-view" style="width:100%; margin-bottom:10px;">${t.save_alerts}</button>
                     
                     <a href="https://t.me/Masbarato_deals" target="_blank" style="display:block; color:var(--primary); font-size:13px; text-decoration:none; margin-top:15px;">
-                        <i class="fa-brands fa-telegram"></i> Telegram Channel
+                        <i class="fa-brands fa-telegram"></i> ${t.telegram_channel}
                     </a>
                 </div>
             `;
@@ -1600,10 +1792,11 @@
         }
 
         function saveAlerts() {
+            const t = translations[currentLang];
             const checkboxes = document.querySelectorAll('.alert-option input:checked');
             const values = Array.from(checkboxes).map(cb => cb.value);
             localStorage.setItem('mb_alerts_params', JSON.stringify(values));
-            showToast('✅ Alertas guardadas correctamente');
+            showToast(t.alerts_saved);
             setTimeout(closeModal, 1000);
         }
 
