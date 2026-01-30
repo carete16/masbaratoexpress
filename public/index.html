@@ -571,135 +571,333 @@
             box-shadow: 0 8px 20px var(--primary-glow);
         }
 
-        /* --- MOBILE & PREMIUM LAYOUT --- */
+        /* --- MOBILE-FIRST LAYOUT (DEFAULT) --- */
+
+        /* MOBILE BOTTOM NAV - Always visible on mobile */
         .bottom-nav {
-            display: none;
+            display: flex;
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid var(--border);
             z-index: 1500;
-            padding: 10px 10px 30px;
+            padding: 12px 10px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
             justify-content: space-around;
             align-items: center;
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
         }
 
         .bottom-nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             color: var(--text-muted);
             text-decoration: none;
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             width: 25%;
+            padding: 8px 0;
+            border-radius: 12px;
         }
 
         .bottom-nav-item i {
-            font-size: 20px;
-            margin-bottom: 2px;
+            font-size: 24px;
+            margin-bottom: 3px;
         }
 
         .bottom-nav-item.active {
             color: var(--primary);
-            transform: translateY(-2px);
+            background: rgba(37, 99, 235, 0.1);
+            transform: translateY(-3px);
         }
 
+        /* MOBILE HEADER - Always visible on mobile */
         .mobile-header {
-            display: none;
+            display: flex;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             padding: 15px 20px;
+            padding-top: max(15px, env(safe-area-inset-top));
             z-index: 1100;
             border-bottom: 1px solid var(--border);
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
         }
 
-        @media (max-width: 1024px) {
-            aside {
-                transform: translateX(-100%);
-            }
+        .menu-toggle {
+            font-size: 22px;
+            cursor: pointer;
+            padding: 8px;
+            color: var(--text-main);
+        }
 
-            aside.open {
+        /* SIDEBAR - Hidden by default on mobile */
+        aside {
+            transform: translateX(-100%);
+        }
+
+        aside.open {
+            transform: translateX(0);
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+        }
+
+        /* MAIN CONTENT - Optimized for mobile */
+        main {
+            margin-left: 0;
+            padding: 80px 15px 100px;
+            width: 100%;
+        }
+
+        /* DEAL GRID - Single column for mobile (optimal for scrolling) */
+        .deal-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        /* DEAL CARDS - Optimized for mobile touch */
+        .deal-card {
+            border-radius: 24px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .deal-card:active {
+            transform: scale(0.98);
+        }
+
+        .deal-title {
+            font-size: 15px;
+            line-height: 1.5;
+            height: auto;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            min-height: 4em;
+        }
+
+        .price-now {
+            font-size: 22px;
+        }
+
+        .price-was {
+            font-size: 15px;
+        }
+
+        .image-container {
+            height: 220px;
+            padding: 20px;
+        }
+
+        /* BUTTONS - Larger for touch */
+        .btn-view {
+            padding: 16px;
+            font-size: 14px;
+            min-height: 50px;
+        }
+
+        .action-btn {
+            width: 48px;
+            height: 48px;
+            font-size: 18px;
+        }
+
+        /* CATEGORIES - Optimized scroll */
+        .cat-pill {
+            padding: 12px 20px;
+            font-size: 14px;
+            min-height: 44px;
+        }
+
+        /* SEARCH - Larger for mobile */
+        .search-input {
+            padding: 16px 16px 16px 50px;
+            font-size: 16px;
+            /* Prevents zoom on iOS */
+            min-height: 50px;
+        }
+
+        /* BRAND RADAR - Better mobile scroll */
+        .brand-radar>div {
+            min-width: 130px;
+            padding: 18px;
+        }
+
+        /* TOP BAR - Simplified for mobile */
+        .top-bar {
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .search-wrapper {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .top-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        .btn-join {
+            display: none;
+            /* Hidden on mobile, use bottom nav instead */
+        }
+
+        /* NEWSLETTER - Mobile optimized */
+        .newsletter-section form {
+            flex-direction: column !important;
+        }
+
+        .newsletter-section input {
+            width: 100% !important;
+        }
+
+        .newsletter-section button {
+            width: 100% !important;
+        }
+
+        /* TRUST BAR - Stack on mobile */
+        .trust-bar {
+            flex-direction: column !important;
+            gap: 15px !important;
+        }
+
+        /* FLOATING TELEGRAM BUTTON - Adjusted for mobile nav */
+        .floating-tg {
+            bottom: 110px !important;
+            right: 15px !important;
+            width: 50px !important;
+            height: 50px !important;
+        }
+
+        /* ============================================ */
+        /* DESKTOP ADAPTATIONS (min-width: 1025px) */
+        /* ============================================ */
+        @media (min-width: 1025px) {
+
+            /* Show sidebar, hide mobile elements */
+            aside {
                 transform: translateX(0);
             }
 
-            main {
-                margin-left: 0;
-                padding: 100px 15px 120px;
-            }
-
             .mobile-header {
-                display: flex;
-            }
-
-            .bottom-nav {
-                display: flex;
-            }
-
-            .deal-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-            }
-
-            .deal-card {
-                border-radius: 20px;
-            }
-
-            .deal-title {
-                font-size: 14px;
-                height: 3.2em;
-            }
-
-            .price-now {
-                font-size: 18px;
-            }
-
-            .image-container {
-                height: 180px;
-                padding: 15px;
-            }
-
-            .btn-join {
                 display: none;
             }
 
+            .bottom-nav {
+                display: none;
+            }
+
+            /* Desktop layout */
+            main {
+                margin-left: var(--sidebar-width);
+                padding: 30px 5%;
+            }
+
+            /* Multi-column grid for desktop */
+            .deal-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 30px;
+            }
+
+            /* Desktop card sizing */
+            .deal-card {
+                border-radius: 30px;
+            }
+
+            .deal-title {
+                font-size: 16px;
+                height: 2.8em;
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+            }
+
+            .image-container {
+                height: 250px;
+                padding: 30px;
+            }
+
+            .price-now {
+                font-size: 24px;
+            }
+
+            /* Desktop top bar */
             .top-bar {
-                margin-bottom: 25px;
+                flex-direction: row;
+                margin-bottom: 40px;
+            }
+
+            .search-wrapper {
+                max-width: 600px;
+            }
+
+            .btn-join {
+                display: flex;
+            }
+
+            /* Desktop buttons */
+            .btn-view {
+                padding: 14px;
+                font-size: 13px;
+                min-height: auto;
+            }
+
+            .action-btn {
+                width: 45px;
+                height: 45px;
+            }
+
+            /* Desktop newsletter */
+            .newsletter-section form {
+                flex-direction: row !important;
+            }
+
+            .newsletter-section input {
+                flex: 1 !important;
+            }
+
+            .newsletter-section button {
+                width: auto !important;
+            }
+
+            /* Desktop trust bar */
+            .trust-bar {
+                flex-direction: row !important;
+                gap: 40px !important;
+            }
+
+            /* Desktop floating button */
+            .floating-tg {
+                bottom: 100px !important;
+                right: 20px !important;
+                width: 55px !important;
+                height: 55px !important;
             }
         }
 
-        @media (max-width: 480px) {
+        /* TABLET ADJUSTMENTS (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
             .deal-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
             }
 
-            .logo-text {
-                font-size: 18px;
-            }
-
-            .cat-pill {
-                padding: 8px 16px;
-                font-size: 13px;
-            }
-
-            .brand-radar>div {
-                min-width: 120px;
+            main {
+                padding: 90px 25px 110px;
             }
         }
 
@@ -1446,8 +1644,8 @@
     </script>
 
     <!-- FLOATING TG -->
-    <a href="https://t.me/Masbarato_deals" target="_blank"
-        style="position: fixed; bottom: 100px; right: 20px; background: #229ED9; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 10px 25px rgba(34, 158, 217, 0.4); z-index: 1400; transition: 0.3s; text-decoration: none;"
+    <a href="https://t.me/Masbarato_deals" target="__blank" class="floating-tg"
+        style="position: fixed; bottom: 110px; right: 15px; background: #229ED9; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 10px 25px rgba(34, 158, 217, 0.4); z-index: 1400; transition: 0.3s; text-decoration: none;"
         onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
         <i class="fa-brands fa-telegram"></i>
     </a>
