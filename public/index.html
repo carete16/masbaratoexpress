@@ -1112,6 +1112,16 @@
             <button class="cat-pill" data-cat="Salud"><i class="fa-solid fa-heart-pulse"></i> Salud</button>
         </div>
 
+        <!-- HUNTER DISCLAIMER BANNER -->
+        <div class="hunter-banner"
+            style="margin: 20px; padding: 15px; background: linear-gradient(to right, #e0f2fe, #f0f9ff); border: 1px solid #bae6fd; border-radius: 12px; display: flex; gap: 15px; align-items: center;">
+            <div style="font-size: 24px;">🛡️</div>
+            <p style="font-size: 13px; color: #0369a1; line-height: 1.4; margin: 0; font-weight: 500;">
+                🎯 Somos Cazadores de Ofertas: Rastreamos los precios más bajos, pero la compra la realizas directamente
+                en la tienda oficial (Amazon, eBay, etc.) para tu total seguridad.
+            </p>
+        </div>
+
         <!-- NEWSLETTER SECTION -->
         <div class="newsletter-section"
             style="margin: 20px; padding: 40px; background: var(--bg-sidebar); border-radius: 30px; border: 1px solid var(--border); text-align: center;">
@@ -1193,17 +1203,18 @@
                 newsletter_success: '✅ ¡Suscripción exitosa! Te avisaremos de los bombazos.',
                 newsletter_error: '❌ Error al suscribirse. Inténtalo de nuevo.',
 
-                // Trust Bar
-                trust_secure: 'COMPRA 100% SEGURA',
-                trust_verified: 'TIENDAS VERIFICADAS',
-                trust_encrypted: 'DATOS ENCRIPTADOS',
+                // Trust Bar & Disclaimer
+                trust_secure: 'COMPRA SEGURA EN TIENDA OFICIAL',
+                trust_verified: 'TE REDIRIGIMOS AL PROVEEDOR',
+                trust_encrypted: 'NOSOTROS NO VENDEMOS',
+                hunter_banner: '🎯 Somos Cazadores de Ofertas: Rastreamos los precios más bajos, pero la compra la realizas directamente en la tienda oficial (Amazon, eBay, etc.) para tu total seguridad.',
 
                 // Deal Cards
-                view_deal: 'VER OFERTA',
+                view_deal: 'IR A LA TIENDA',
                 confidence: 'Confianza',
 
                 // Loading & Empty States
-                loading: 'Cargando gangas premium...',
+                loading: 'Rastreando las mejores ofertas en tiempo real...',
                 no_deals: 'No se encontraron ofertas.',
                 no_favorites: 'Aún no tienes favoritos guardados.',
                 explore_deals: 'Explorar Ofertas',
@@ -1273,17 +1284,18 @@
                 newsletter_success: '✅ Successfully subscribed! We\'ll notify you of the best deals.',
                 newsletter_error: '❌ Subscription error. Please try again.',
 
-                // Trust Bar
-                trust_secure: '100% SECURE PURCHASE',
-                trust_verified: 'VERIFIED STORES',
-                trust_encrypted: 'ENCRYPTED DATA',
+                // Trust Bar & Disclaimer
+                trust_secure: 'SECURE BUY AT OFFICIAL STORE',
+                trust_verified: 'WE REDIRECT TO VENDOR',
+                trust_encrypted: 'WE DO NOT SELL',
+                hunter_banner: '🎯 We are Deal Hunters: We track the lowest prices, but you buy directly from the official store (Amazon, eBay, etc.) for your total safety.',
 
                 // Deal Cards
-                view_deal: 'VIEW DEAL',
+                view_deal: 'GO TO STORE',
                 confidence: 'Confidence',
 
                 // Loading & Empty States
-                loading: 'Loading premium deals...',
+                loading: 'Tracking best deals in real time...',
                 no_deals: 'No deals found.',
                 no_favorites: 'No favorites saved yet.',
                 explore_deals: 'Explore Deals',
@@ -1622,6 +1634,10 @@
             if (trustItems[0]) trustItems[0].childNodes[1].textContent = ' ' + t.trust_secure;
             if (trustItems[1]) trustItems[1].childNodes[1].textContent = ' ' + t.trust_verified;
             if (trustItems[2]) trustItems[2].childNodes[1].textContent = ' ' + t.trust_encrypted;
+
+            // === HUNTER BANNER ===
+            const hunterBanner = document.querySelector('.hunter-banner p');
+            if (hunterBanner) hunterBanner.textContent = t.hunter_banner;
 
             // === BOTTOM NAVIGATION (Mobile) ===
             const bottomNavItems = document.querySelectorAll('.bottom-nav-item span');

@@ -3,7 +3,7 @@ const { db, isRecentlyPublished } = require('../database/db');
 
 class CoreProcessor {
     constructor() {
-        this.interval = 15 * 60 * 1000;
+        this.interval = 3 * 60 * 1000;
         this.dailyLimit = 500;
         this.lastCycle = null;
         this.lastSuccess = null;
