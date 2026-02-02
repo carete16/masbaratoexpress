@@ -1069,7 +1069,10 @@
                 <input type="text" id="search" class="search-input" placeholder="Buscar ofertas, productos, tiendas...">
             </div>
             <div class="top-actions">
-                <div class="action-btn" onclick="toggleLanguage()"><i class="fa-solid fa-globe"></i></div>
+                <div class="action-btn lang-toggle" id="lang-toggle-btn" onclick="toggleLanguage()"
+                    style="width: auto; padding: 0 15px; font-weight: 800; font-size: 13px; font-family: monospace;">ES
+                    <span style="opacity:0.3">|</span> <span style="opacity:0.5">EN</span>
+                </div>
                 <div class="action-btn" id="theme-toggle"><i class="fa-solid fa-moon"></i></div>
                 <a href="https://t.me/Masbarato_deals" target="_blank" class="btn-join">UNIRSE AL CANAL</a>
             </div>
@@ -1413,7 +1416,7 @@
                         
                         <div class="card-footer">
                             <a href="/go/${deal.id}" target="_blank" class="btn-view">
-                                VER OFERTA <i class="fa-solid fa-chevron-right"></i>
+                                ${translations[currentLang].view_deal} <i class="fa-solid fa-chevron-right"></i>
                             </a>
                         </div>
                     </div>
@@ -1637,6 +1640,16 @@
             const mobileHeaderLogo = document.querySelector('.mobile-header .logo-text');
             if (mobileHeaderLogo) {
                 mobileHeaderLogo.innerHTML = t.logo_text.replace('DEALS', '<span>DEALS</span>');
+            }
+
+            // === LANGUAGE BUTTON UPDATE ===
+            const langBtn = document.getElementById('lang-toggle-btn');
+            if (langBtn) {
+                if (currentLang === 'es') {
+                    langBtn.innerHTML = 'ES <span style="opacity:0.3">|</span> <span style="opacity:0.5">EN</span>';
+                } else {
+                    langBtn.innerHTML = '<span style="opacity:0.5">ES</span> <span style="opacity:0.3">|</span> EN';
+                }
             }
 
             // Re-render deals to translate buttons
