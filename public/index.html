@@ -1426,10 +1426,7 @@
                             <span class="price-now">$${deal.price_offer}</span>
                         </div>
                         
-                        <div class="card-footer" style="gap: 8px;">
-                            <button onclick="shareDeal('${deal.title.replace(/'/g, "\\'")}', '${deal.price_offer}', '${deal.id}')" class="btn-share" style="background: #25D366; color: white; border: none; border-radius: 12px; width: 45px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer;">
-                                <i class="fa-brands fa-whatsapp"></i>
-                            </button>
+                        <div class="card-footer">
                             <a href="/go/${deal.id}" target="_blank" class="btn-view">
                                 ${translations[currentLang].view_deal} <i class="fa-solid fa-chevron-right"></i>
                             </a>
@@ -1673,13 +1670,6 @@
 
             // Re-render deals to translate buttons
             render(allDeals);
-        }
-
-        // === VIRAL SHARING FUNCTION ===
-        function shareDeal(title, price, id) {
-            const text = `🔥 ¡Mira este precio! 😱\n\n${title}\n💰 Solo: $${price}\n\n👉 Corre antes que se agote: https://masbaratodeals.onrender.com/go/${id}`;
-            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
         }
 
         // --- NEWSLETTER FORM ---
