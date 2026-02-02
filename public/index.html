@@ -9,10 +9,10 @@
     <!-- SEO Meta Tags -->
     <title>Masbarato Deals - Ofertas y Promociones de USA | Descuentos Amazon, Walmart, Best Buy</title>
     <meta name="description"
-        content="Las mejores ofertas y promociones de Estados Unidos en un solo lugar. Descuentos diarios en Amazon, Walmart, Best Buy, eBay y más. Ahorra hasta 90% en tecnología, moda, hogar y electrónica.">
+        content="Rastreamos en tiempo real los errores de precio y mejores ofertas de Amazon, eBay y Tiendas USA. ¡Únete a la comunidad de ahorro más rápida!">
     <meta name="keywords"
-        content="ofertas usa, promociones estados unidos, deals usa, descuentos amazon, ofertas walmart, cupones usa, black friday, cyber monday, ofertas tecnologia, descuentos online">
-    <meta name="author" content="Masbarato Deals">
+        content="ofertas amazon, errores de precio, chollos usa, black friday, ofertas flash, descuentos">
+    <meta name="author" content="MasbaratoDeals Team">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://masbarato-deals.onrender.com">
 
@@ -1426,7 +1426,10 @@
                             <span class="price-now">$${deal.price_offer}</span>
                         </div>
                         
-                        <div class="card-footer">
+                        <div class="card-footer" style="gap: 8px;">
+                            <button onclick="shareDeal('${deal.title.replace(/'/g, "\\'")}', '${deal.price_offer}', '${deal.id}')" class="btn-share" style="background: #25D366; color: white; border: none; border-radius: 12px; width: 45px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer;">
+                                <i class="fa-brands fa-whatsapp"></i>
+                            </button>
                             <a href="/go/${deal.id}" target="_blank" class="btn-view">
                                 ${translations[currentLang].view_deal} <i class="fa-solid fa-chevron-right"></i>
                             </a>
@@ -1670,6 +1673,13 @@
 
             // Re-render deals to translate buttons
             render(allDeals);
+        }
+
+        // === VIRAL SHARING FUNCTION ===
+        function shareDeal(title, price, id) {
+            const text = `🔥 ¡Mira este precio! 😱\n\n${title}\n💰 Solo: $${price}\n\n👉 Corre antes que se agote: https://masbaratodeals.onrender.com/go/${id}`;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
         }
 
         // --- NEWSLETTER FORM ---
