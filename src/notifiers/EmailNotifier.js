@@ -34,7 +34,7 @@ class EmailNotifier {
                         <li><b>Total Histórico:</b> ${stats.total_published}</li>
                     </ul>
                     <hr>
-                    <p>Consulta el dashboard completo en: <a href="http://localhost:3000">Dashboard Local</a></p>
+                    <p>Consulta el dashboard completo en: <a href="${process.env.BASE_URL || 'https://masbaratoexpress.onrender.com'}">Dashboard Masbarato</a></p>
                 `
             };
 
