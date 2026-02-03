@@ -143,11 +143,11 @@ app.get('/api/deals/express', async (req, res) => {
 
 // 1.5. SUSCRIPCIÓN NEWSLETTER
 app.post('/api/subscribe', async (req, res) => {
-  const { email, name, phone } = req.body;
+  const { email, name, phone, telegram } = req.body;
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'Email inválido' });
   try {
     const { addSubscriber } = require('./src/database/db');
-    addSubscriber(email, name, phone);
+    addSubscriber(email, name, phone, telegram);
     res.json({ success: true, message: '¡Bienvenido al Club VIP!' });
   } catch (e) {
     res.status(500).json({ error: e.message });

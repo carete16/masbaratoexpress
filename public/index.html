@@ -718,8 +718,11 @@
                             <input type="tel" id="vipPhone" class="vip-input" placeholder="WhatsApp" required>
                         </div>
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-6">
                         <input type="email" id="vipEmail" class="vip-input" placeholder="Correo Electrónico" required>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" id="vipTelegram" class="vip-input" placeholder="Telegram @usuario" required>
                     </div>
                     <div class="col-12">
                         <button type="submit" class="btn-vip w-100" id="btnJoin">
@@ -955,7 +958,8 @@
             const data = {
                 name: document.getElementById('vipName').value,
                 phone: document.getElementById('vipCode').value + ' ' + document.getElementById('vipPhone').value,
-                email: document.getElementById('vipEmail').value
+                email: document.getElementById('vipEmail').value,
+                telegram: document.getElementById('vipTelegram').value
             };
 
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';

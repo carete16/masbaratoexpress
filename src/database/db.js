@@ -68,6 +68,7 @@ try {
       email TEXT UNIQUE,
       name TEXT,
       phone TEXT,
+      telegram TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       status TEXT DEFAULT 'active'
     )
@@ -76,14 +77,15 @@ try {
   // Migraciones para suscriptores
   try { db.exec("ALTER TABLE subscribers ADD COLUMN name TEXT"); } catch (e) { }
   try { db.exec("ALTER TABLE subscribers ADD COLUMN phone TEXT"); } catch (e) { }
+  try { db.exec("ALTER TABLE subscribers ADD COLUMN telegram TEXT"); } catch (e) { }
 
 } catch (error) {
   logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
   db = new Database(':memory:');
 }
 
-const addSubscriber = (email, name = '', phone = '') => {
-  return db.prepare('INSERT OR REPLACE INTO subscribers (email, name, phone) VALUES (?, ?, ?)').run(email, name, phone);
+const addSubscriber = (email, name = '', phone = '', telegram = '') => {
+  return db.prepare('INSERT OR REPLACE INTO subscribers (email, name, phone, telegram) VALUES (?, ?, ?, ?)').run(email, name, phone, telegram);
 };
 
 const voteUp = (id) => {
