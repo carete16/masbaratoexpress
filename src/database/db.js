@@ -66,18 +66,24 @@ try {
     CREATE TABLE IF NOT EXISTS subscribers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE,
+      name TEXT,
+      phone TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       status TEXT DEFAULT 'active'
     )
   `);
+
+  // Migraciones para suscriptores
+  try { db.exec("ALTER TABLE subscribers ADD COLUMN name TEXT"); } catch (e) { }
+  try { db.exec("ALTER TABLE subscribers ADD COLUMN phone TEXT"); } catch (e) { }
 
 } catch (error) {
   logger.error(`❌ Error Crítico DB: ${error.message}. Usando base de datos temporal.`);
   db = new Database(':memory:');
 }
 
-const addSubscriber = (email) => {
-  return db.prepare('INSERT OR IGNORE INTO subscribers (email) VALUES (?)').run(email);
+const addSubscriber = (email, name = '', phone = '') => {
+  return db.prepare('INSERT OR REPLACE INTO subscribers (email, name, phone) VALUES (?, ?, ?)').run(email, name, phone);
 };
 
 const voteUp = (id) => {

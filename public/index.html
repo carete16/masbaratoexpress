@@ -428,13 +428,73 @@
             padding-left: 20px;
         }
 
-        .trust-badge-footer {
-            background: #f8fafc;
-            border: 1px dashed #cbd5e1;
-            padding: 15px;
+        .vip-section {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e293b 100%);
+            border-radius: 30px;
+            padding: 60px 40px;
+            color: white;
+            text-align: center;
+            margin: 60px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -12px rgba(15, 23, 42, 0.4);
+        }
+
+        .vip-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .vip-form {
+            max-width: 600px;
+            margin: 30px auto 0;
+            display: grid;
+            gap: 15px;
+        }
+
+        .vip-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px 20px;
             border-radius: 12px;
-            margin-top: 30px;
-            display: inline-block;
+            color: white;
+            width: 100%;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .vip-input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: var(--secondary);
+        }
+
+        .vip-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-vip {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-vip:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            filter: brightness(1.1);
         }
 
         /* --- MOBILE LAYOUT --- */
@@ -578,6 +638,35 @@
                 <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
                 <p style="margin-top:10px;">Buscando las mejores ofertas Express...</p>
             </div>
+        </div>
+
+        <!-- VIP REGISTRATION -->
+        <div class="vip-section">
+            <div class="hero-badge" style="background: var(--secondary); margin: 0 auto 20px;">EXCLUSIVO COLOMBIA</div>
+            <h2 class="fw-900 mb-3" style="font-size: 2.5rem; letter-spacing: -1px;">ÚNETE AL CLUB VIP</h2>
+            <p class="mb-5 opacity-75" style="font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Recibe primero las
+                ofertas flash, cupones exclusivos e importaciones premium directamente en tu correo y WhatsApp.</p>
+
+            <form class="vip-form" id="vipForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <input type="text" id="vipName" class="vip-input" placeholder="Tu Nombre Completo" required>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="tel" id="vipPhone" class="vip-input" placeholder="WhatsApp (Ej: 301...)" required>
+                    </div>
+                    <div class="col-12">
+                        <input type="email" id="vipEmail" class="vip-input" placeholder="Correo Electrónico" required>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn-vip w-100" id="btnJoin">
+                            ¡QUIERO SER VIP! <i class="fa-solid fa-crown ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <p class="mt-4 small opacity-50"><i class="fa-solid fa-lock me-2"></i>Tus datos están protegidos por nuestra
+                política de privacidad.</p>
         </div>
         <div
             style="max-width: 800px; margin: 40px auto; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: left;">
@@ -789,6 +878,41 @@
         window.onclick = function (event) {
             if (event.target == document.getElementById('legalModal')) closeLegal();
         }
+
+        // VIP FORM LOGIC
+        document.getElementById('vipForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnJoin');
+            const data = {
+                name: document.getElementById('vipName').value,
+                phone: document.getElementById('vipPhone').value,
+                email: document.getElementById('vipEmail').value
+            };
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('👑 ¡BIENVENIDO AL CLUB VIP! Ya estás en nuestra lista de prioridad.');
+                    document.getElementById('vipForm').reset();
+                } else {
+                    alert('⚠️ ' + result.error);
+                }
+            } catch (err) {
+                alert('⚠️ Error al registrarse. Intenta más tarde.');
+            } finally {
+                btn.innerHTML = '¡QUIERO SER VIP! <i class="fa-solid fa-crown ms-2"></i>';
+                btn.disabled = false;
+            }
+        });
 
         fetchDeals();
     </script>
