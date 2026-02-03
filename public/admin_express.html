@@ -256,7 +256,13 @@
             const trm = dolarOp - 300;
             document.getElementById('dolar-op-header-val').innerText = `$${dolarOp}`;
             document.getElementById('trm-header-val').innerText = `$${trm}`;
-            loadData();
+
+            // Re-renderizar los items existentes sin recargar del servidor para no perder cambios locales
+            const cards = document.querySelectorAll('.card-deal');
+            cards.forEach(card => {
+                const id = card.getAttribute('data-id');
+                if (id) updateLive(id);
+            });
         }
 
         async function fetchTRM() {
@@ -270,6 +276,27 @@
                     refreshView();
                 }
             } catch (e) { console.warn("No se pudo auto-obtener TRM, usando predeterminado."); }
+        }
+
+        function estimateWeight(title, category) {
+            title = title.toLowerCase();
+            category = category.toLowerCase();
+
+            if (title.includes('laptop') || title.includes('portátil') || title.includes('macbook')) return 5.5;
+            if (title.includes('watch') || title.includes('reloj') || title.includes('wearable')) return 1.2;
+            if (title.includes('shoe') || title.includes('tenis') || title.includes('sneaker') || title.includes('nike') || title.includes('adidas')) return 3.5;
+            if (title.includes('headphone') || title.includes('audífono') || title.includes('airpod') || title.includes('bud')) return 1.5;
+            if (title.includes('phone') || title.includes('celular') || title.includes('iphone') || title.includes('pixel')) return 1.5;
+            if (title.includes('tablet') || title.includes('ipad')) return 2.5;
+            if (title.includes('camera') || title.includes('cámara')) return 3.0;
+            if (title.includes('monitor')) return 12.0;
+            if (title.includes('mouse') || title.includes('teclado') || title.includes('keyboard')) return 2.0;
+
+            if (category.includes('electrónica')) return 4.0;
+            if (category.includes('lifestyle')) return 3.0;
+            if (category.includes('relojes')) return 1.2;
+
+            return 2.5; // Default moderado
         }
 
         async function loadData() {
@@ -326,10 +353,17 @@
             }
 
             items.forEach(item => {
-                const weightReal = parseFloat(item.weight) || 2.5;
+                let weightReal = parseFloat(item.weight);
+                const category = item.categoria || 'General';
+
+                // Si el peso es el default o no existe, estimar
+                if (!weightReal || weightReal === 2.5) {
+                    weightReal = estimateWeight(item.title, category);
+                }
+
                 const priceUSD = parseFloat(item.price_offer) || 0;
                 const calc = calculateFinal(priceUSD, weightReal);
-                const store = item.tienda || 'Amazon';
+                const currentRate = parseFloat(document.getElementById('globalRate').value) || 6;
 
                 const card = document.createElement('div');
                 card.className = 'card card-deal mb-4';
@@ -371,10 +405,10 @@
                                         <span id="ship-val-${item.id}" class="fw-bold text-muted">+$${calc.shipUSD.toFixed(2)} USD</span>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="small text-muted fw-bold">Peson Real (Lbs):</span> 
+                                        <span class="small text-muted fw-bold">Peso Real (Lbs):</span> 
                                         <div class="d-flex align-items-center gap-2">
-                                            <input type="number" id="weight-${item.id}" class="form-control form-control-sm text-end w-25 border-info" value="${weightReal}" onkeyup="updateLive('${item.id}')" onchange="updateLive('${item.id}')">
-                                            <span class="small">+1lb: <strong id="ship-cost-val-${item.id}" class="text-primary">$${calc.shipUSD.toFixed(2)} USD</strong></span>
+                                            <input type="number" id="weight-${item.id}" step="0.1" class="form-control form-control-sm text-end w-25 border-info" value="${weightReal}" onkeyup="updateLive('${item.id}')" onchange="updateLive('${item.id}')">
+                                            <span class="small" style="font-size: 0.75rem;"><span id="rate-label-${item.id}">$${currentRate}</span>/lb + 1lb extra (<span id="final-weight-${item.id}">${calc.lbsFinal}</span> lbs): <strong id="ship-cost-val-${item.id}" class="text-primary">$${calc.shipUSD.toFixed(2)} USD</strong></span>
                                         </div>
                                     </div>
                                 </div>
@@ -409,6 +443,7 @@
                         </div>
                     </div>
                 `;
+                card.setAttribute('data-id', item.id);
                 container.appendChild(card);
             });
         }
@@ -430,7 +465,11 @@
                 });
 
                 const finalPrice = priceTyped || analysis.data.price;
-                const finalWeight = weightTyped || analysis.data.weight;
+                let finalWeight = weightTyped || analysis.data.weight;
+
+                if (!finalWeight || finalWeight == 2.5) {
+                    finalWeight = estimateWeight(analysis.data.title || '', 'General');
+                }
 
                 // 2. Enviar a procesar con los datos extraídos
                 const res = await axios.post(`${API_URL}/admin/express/manual-post`, {
@@ -458,6 +497,7 @@
         function updateLive(id) {
             const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
             const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
+            const rate = parseFloat(document.getElementById('globalRate').value) || 6;
             const calc = calculateFinal(p, w);
 
             document.getElementById(`cop-display-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
@@ -465,8 +505,9 @@
             document.getElementById(`profit-val-${id}`).innerText = `+$${calc.profitVal.toFixed(2)} USD`;
             document.getElementById(`tax-val-${id}`).innerText = `+$${calc.taxUSD.toFixed(2)} USD`;
             document.getElementById(`ship-val-${id}`).innerText = `+$${calc.shipUSD.toFixed(2)} USD`;
-            document.getElementById(`final-weight-${id}`).innerText = `${calc.lbsFinal}`;
-            document.getElementById(`ship-cost-val-${id}`).innerText = `$${calc.shipUSD.toFixed(2)}`;
+            document.getElementById(`final-weight-${id}`).innerText = calc.lbsFinal;
+            document.getElementById(`rate-label-${id}`).innerText = `$${rate}`;
+            document.getElementById(`ship-cost-val-${id}`).innerText = `$${calc.shipUSD.toFixed(2)} USD`;
             document.getElementById(`display-price-${id}`).innerText = `$${p.toFixed(2)} USD`;
         }
 
