@@ -11,6 +11,9 @@ class TelegramNotifier {
             'Tecnología': process.env.CHANNEL_TECH || process.env.TELEGRAM_CHANNEL_ID,
             'Hogar': process.env.CHANNEL_HOGAR || process.env.TELEGRAM_CHANNEL_ID,
             'Moda': process.env.CHANNEL_MODA || process.env.TELEGRAM_CHANNEL_ID,
+            'Relojes': process.env.CHANNEL_MODA || process.env.TELEGRAM_CHANNEL_ID,
+            'PC Components': process.env.CHANNEL_TECH || process.env.TELEGRAM_CHANNEL_ID,
+            'Sneakers': process.env.CHANNEL_MODA || process.env.TELEGRAM_CHANNEL_ID,
             'default': process.env.TELEGRAM_CHANNEL_ID
         };
     }
@@ -85,6 +88,8 @@ class TelegramNotifier {
                     coupon: deal.coupon,
                     badge: deal.badge,
                     score: deal.score,
+                    status: deal.status || 'published',
+                    price_cop: deal.price_cop || 0,
                     is_historic_low: deal.is_historic_low
                 });
                 logger.info(`💾 Deal guardado en la Web: ${deal.title}`);
@@ -94,6 +99,12 @@ class TelegramNotifier {
 
             // 3. INTENTAR ENVÍO A TELEGRAM (SI HAY TOKEN)
             if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_BOT_TOKEN !== 'tu_token_aqui') {
+
+                // --- SEGURIDAD: No publicar pendientes ---
+                if (deal.status === 'pending_express') {
+                    logger.info(`⏳ Oferta guardada en pendiente (Express) - No se envía a Telegram aún.`);
+                    return true;
+                }
                 const channelId = this.channels[deal.categoria] || this.channels['default'];
                 let photoBuffer = null;
                 if (deal.image && !deal.image.includes('.svg') && !deal.image.includes('placehold.co')) {
@@ -112,7 +123,16 @@ class TelegramNotifier {
                 }
 
                 let caption = `${alertHeader}<b>${deal.title}</b>\n\n${deal.viralContent || ''}`;
-                if (deal.coupon) caption += `\n\n🎟️ <b>CUPÓN:</b> <code>${deal.coupon}</code>`;
+
+                // --- LOGICA EXPRESS (PRECIO COP) ---
+                if (deal.price_cop > 0) {
+                    const copFormatted = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(deal.price_cop);
+                    caption += `\n\n🇨🇴 <b>PRECIO FINAL COLOMBIA: ${copFormatted}</b>`;
+                    caption += `\n📦 <i>Envío Gratis e Impuestos Incluidos</i>`;
+                    caption += `\n🚀 <a href="https://masbaratoexpress.onrender.com/">Ver en Masbarato Express</a>`;
+                } else if (deal.coupon) {
+                    caption += `\n\n🎟️ <b>CUPÓN:</b> <code>${deal.coupon}</code>`;
+                }
 
                 const inlineKeyboard = {
                     reply_markup: {

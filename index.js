@@ -38,6 +38,14 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin.html'));
 });
 
+app.get('/express', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/express.html'));
+});
+
+app.get('/admin-express', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/admin_express.html'));
+});
+
 // --- PROXY DE IMÁGENES (Bypass de bloqueos con Doble Capa) ---
 app.get('/api/proxy-image', async (req, res) => {
   const imageUrl = req.query.url;
@@ -105,6 +113,25 @@ app.get('/api/deals', async (req, res) => {
     const deals = db.prepare('SELECT * FROM published_deals ORDER BY posted_at DESC LIMIT 50').all();
 
     // Transformar links en tiempo real para asegurar que el tag esté presente
+    const transformedDeals = await Promise.all(deals.map(async (deal) => {
+      deal.link = await LinkTransformer.transform(deal.original_link || deal.link);
+      return deal;
+    }));
+
+    res.json(transformedDeals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 1.1 OBTENER OFERTAS EXPRESS
+app.get('/api/deals/express', async (req, res) => {
+  try {
+    const deals = db.prepare(`
+        SELECT * FROM published_deals 
+        WHERE status IN ('published', 'expired') 
+        AND (price_cop > 0 OR categoria IN ('Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables'))
+        ORDER BY posted_at DESC LIMIT 50
+    `).all();
+
     const transformedDeals = await Promise.all(deals.map(async (deal) => {
       deal.link = await LinkTransformer.transform(deal.original_link || deal.link);
       return deal;
@@ -246,6 +273,58 @@ app.get('/api/admin/pending', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 6.5 PENDIENTES EXPRESS (ADMIN)
+app.get('/api/admin/express/pending', authMiddleware, (req, res) => {
+  try {
+    const deals = db.prepare("SELECT * FROM published_deals WHERE status = 'pending_express' ORDER BY posted_at DESC").all();
+    res.json(deals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 6.5.1 PUBLICADAS EXPRESS (ADMIN)
+app.get('/api/admin/express/published', authMiddleware, (req, res) => {
+  try {
+    const deals = db.prepare(`
+        SELECT * FROM published_deals 
+        WHERE status IN ('published', 'expired') 
+        AND (price_cop > 0 OR categoria IN ('Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables') OR title LIKE '%Express%')
+        ORDER BY posted_at DESC LIMIT 50
+    `).all();
+    res.json(deals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 6.5.2 FINALIZAR OFERTA (ADMIN)
+app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.prepare("UPDATE published_deals SET status = 'expired' WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 6.6 APROBAR EXPRESS (ADMIN)
+app.post('/api/admin/express/approve', authMiddleware, async (req, res) => {
+  const { id, price_cop, price_offer, title, weight, categoria } = req.body;
+  try {
+    const updated = db.prepare(`
+        UPDATE published_deals 
+        SET status = 'published', price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?
+        WHERE id = ?
+    `).run(price_cop || 0, price_offer || 0, title, weight || 0, categoria || 'General', id);
+
+    if (updated.changes > 0) {
+      // Enviar a Telegram inmediatamente
+      const deal = db.prepare('SELECT * FROM published_deals WHERE id = ?').get(id);
+      const Publisher = require('./src/core/Bot4_Publisher');
+      // El publisher ahora tiene la lógica para ver el price_cop y enviarlo bonito
+      await Publisher.sendOffer(deal);
+    }
+
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // 7. PUBLICACIÓN MANUAL (ADMIN)
 app.get('/api/admin/stats', authMiddleware, (req, res) => {
   try {
@@ -282,6 +361,51 @@ app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
     } else {
       res.status(400).json({ error: 'El bot rechazó la oferta (stock, precio o duplicado)' });
     }
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 7.5 PUBLICACIÓN MANUAL EXPRESS (ADMIN)
+app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
+  const { url, price, weight, category } = req.body;
+  try {
+    let cat = 'General';
+    if (category === 'relojes') cat = 'Relojes';
+    if (category === 'pc') cat = 'PC Components';
+    if (category === 'tenis') cat = 'Sneakers';
+
+    const success = await CoreProcessor.processDeal({
+      sourceLink: url,
+      title: 'Manual Express Order',
+      price_offer: price ? parseFloat(price) : null,
+      weight: weight ? parseFloat(weight) : null,
+      categoria: cat,
+      isManual: true,
+      status: 'pending_express'
+    });
+
+    if (success) {
+      res.json({ success: true, message: 'Enviado a cola de aprobación Express' });
+    } else {
+      res.status(400).json({ error: 'El bot rechazó la oferta.' });
+    }
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 7.6 ANALIZAR LINK (ADMIN)
+app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL requerida' });
+  try {
+    const Validator = require('./src/core/Bot2_Explorer');
+    const result = await Validator.validate({ sourceLink: url, title: 'Analysis', isManual: true });
+    res.json({
+      title: result.title,
+      price: result.realPrice,
+      image: result.image,
+      weight: result.weight || 0,
+      store: result.storeName,
+      url: result.finalUrl
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

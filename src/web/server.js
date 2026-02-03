@@ -230,7 +230,7 @@ app.post('/api/delete-deal', (req, res) => {
 app.get('/sitemap.xml', (req, res) => {
     try {
         const deals = db.prepare('SELECT id, posted_at FROM published_deals ORDER BY posted_at DESC LIMIT 100').all();
-        const baseUrl = 'https://masbaratodeals-net.onrender.com';
+        const baseUrl = 'https://masbaratoexpress.onrender.com';
 
         let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

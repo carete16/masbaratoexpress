@@ -25,38 +25,53 @@ class CoreProcessor {
                 return false;
             }
 
-            // 2. VALIDACIÓN OBLIGATORIA (Tienda Origen)
-            const validation = await Validator.validate(opp);
-            if (!validation.isValid) {
-                logger.warn(`❌ Validación fallida (isValid=false): ${opp.title}`);
-                return false;
+            // 2. VALIDACIÓN (Reducida para manuales)
+            let validation;
+            try {
+                validation = await Validator.validate(opp);
+            } catch (vErr) {
+                if (opp.isManual) {
+                    validation = { isValid: true, hasStock: true, realPrice: opp.price_offer || 0, finalUrl: opp.sourceLink };
+                } else throw vErr;
             }
-            if (!validation.hasStock) {
-                logger.warn(`❌ Producto sin Stock: ${opp.title}`);
+
+            if (!validation.isValid && !opp.isManual) {
+                logger.warn(`❌ Validación fallida (isValid=false): ${opp.title}`);
                 return false;
             }
 
             // 3. AUDITORÍA (Verificación de Ganga)
             const dealData = {
-                title: opp.title,
+                title: validation.title || opp.title,
                 price_offer: validation.realPrice,
                 price_official: validation.officialPrice || 0,
                 image: validation.image || opp.image,
-                tienda: validation.storeName || opp.tienda
+                tienda: validation.storeName || opp.tienda,
+                categoria: opp.categoria || 'General',
+                status: opp.status || 'published',
+                weight: (opp.weight !== undefined && opp.weight !== null) ? opp.weight : (validation.weight || 0)
             };
 
+            // --- FILTRO EXPRESS (OFERTAS BIEN DEFINIDAS) ---
+            const expressCats = ['Relojes', 'PC Components', 'Sneakers', 'General'];
+            if (opp.status === 'pending_express' || (expressCats.includes(dealData.categoria) && !opp.isManual)) {
+                logger.info(`🛡️ Oferta Express detectada: ${dealData.title}. Enviando a cola de aprobación.`);
+                dealData.status = 'pending_express';
+            }
+
+            // Auditoría solo falla para automáticos
             const audit = await Auditor.audit(dealData);
             if (!audit.isGoodDeal && !opp.isManual) {
                 logger.warn(`📉 Auditoría rechazada: ${opp.title} | Razón: ${audit.reason || 'Descuento insuficiente'}`);
                 return false;
             }
 
-            // 4. GENERACIÓN DE CONTENIDO EDITORIAL (100% Original)
+            // 4. GENERACIÓN DE CONTENIDO EDITORIAL
             logger.info(`✍️ Generando contenido editorial para: ${opp.title}`);
             const editorial = await AI.generateViralContent(dealData);
             dealData.viralContent = editorial.content;
 
-            // 5. MONETIZACIÓN
+            // 5. MONETIZACIÓN (Limpieza de links externos e inyección propia)
             const monetizedLink = await LinkTransformer.transform(validation.finalUrl || opp.sourceLink, dealData);
             dealData.link = monetizedLink;
             dealData.original_link = validation.finalUrl || opp.sourceLink;
@@ -66,7 +81,7 @@ class CoreProcessor {
 
             const success = await Publisher.sendOffer(dealData);
             if (success) {
-                logger.info(`🏆 POST PUBLICADO: ${opp.title}`);
+                logger.info(`🏆 POST PROCESADO: ${opp.title}`);
                 return true;
             }
             return false;
@@ -80,59 +95,41 @@ class CoreProcessor {
     getCategoryBalance() {
         const categories = ['Tecnología', 'Moda', 'Hogar', 'Gamer', 'Salud'];
         const counts = {};
-
         categories.forEach(cat => {
             const result = db.prepare('SELECT COUNT(*) as count FROM published_deals WHERE categoria = ?').get(cat);
             counts[cat] = result.count;
         });
-
         return counts;
     }
 
     needsCategory(categoria) {
         const balance = this.getCategoryBalance();
         const minCount = Math.min(...Object.values(balance));
-        return balance[categoria] <= minCount + 2; // Priorizar categorías con menos ofertas
+        return balance[categoria] <= minCount + 2;
     }
 
     async start() {
         const Radar = require('./Bot1_Scraper');
         logger.info('🏛️ ARQUITECTURA EDITORIAL ACTIVADA');
-        logger.info('📊 Sistema de Diversificación de Categorías: ACTIVO');
 
         let isRunning = false;
         const runCycle = async () => {
             if (isRunning) return;
-
             this.lastCycle = new Date().toISOString();
             this.status = 'Escaneando...';
 
             const todayStats = db.prepare("SELECT COUNT(*) as total FROM published_deals WHERE date(posted_at) = date('now')").get();
             if (todayStats.total >= this.dailyLimit) {
-                logger.info(`⏹️ Límite diario alcanzado (${this.dailyLimit}). Deteniendo ciclo.`);
                 this.status = 'Límite diario alcanzado';
                 return;
             }
 
             isRunning = true;
             try {
-                // Mostrar balance actual
-                const balance = this.getCategoryBalance();
-                logger.info(`📊 Balance de Categorías: ${JSON.stringify(balance)}`);
-
                 const opportunities = await Radar.getMarketOpportunities();
                 this.status = `Procesando ${opportunities.length} ofertas...`;
 
-                // Priorizar oportunidades de categorías con menos representación
-                const prioritized = opportunities.sort((a, b) => {
-                    const catA = a.categoria || 'General';
-                    const catB = b.categoria || 'General';
-                    const needsA = this.needsCategory(catA) ? 1 : 0;
-                    const needsB = this.needsCategory(catB) ? 1 : 0;
-                    return needsB - needsA;
-                });
-
-                for (let opp of prioritized) {
+                for (let opp of opportunities) {
                     const success = await this.processDeal(opp);
                     if (success) {
                         this.lastSuccess = new Date().toISOString();

@@ -4,7 +4,7 @@
 const { db } = require('./src/database/db');
 const fs = require('fs');
 
-const baseUrl = 'https://masbarato-deals.onrender.com';
+const baseUrl = 'https://masbaratoexpress.onrender.com';
 
 // Generar sitemap.xml
 let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -20,7 +20,7 @@ let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 // Agregar las últimas 500 ofertas al sitemap
 const deals = db.prepare('SELECT id, posted_at FROM published_deals ORDER BY posted_at DESC LIMIT 500').all();
 deals.forEach(deal => {
-    sitemap += `  <url>
+  sitemap += `  <url>
     <loc>${baseUrl}/go/${deal.id}</loc>
     <lastmod>${deal.posted_at.split(' ')[0]}</lastmod>
     <changefreq>daily</changefreq>

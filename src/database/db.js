@@ -31,25 +31,26 @@ try {
         clicks INTEGER DEFAULT 0,
         description TEXT,
         coupon TEXT,
-        status TEXT DEFAULT 'published', -- 'published', 'pending', 'rejected'
+        status TEXT DEFAULT 'published',
         posted_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-  // --- MIGRACIONES AUTOMÁTICAS (SAFE ADD COLUMN) ---
+  // --- MIGRACIONES AUTOMÁTICAS ---
   try { db.exec("ALTER TABLE published_deals ADD COLUMN original_link TEXT"); } catch (e) { }
   try { db.exec("CREATE INDEX IF NOT EXISTS idx_original_link ON published_deals(original_link)"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN description TEXT"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN coupon TEXT"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN status TEXT DEFAULT 'published'"); } catch (e) { }
-  try { db.exec("UPDATE published_deals SET status = 'published' WHERE status IS NULL"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN is_historic_low BOOLEAN DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN score INTEGER DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN votes_up INTEGER DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN votes_down INTEGER DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN comment_count INTEGER DEFAULT 0"); } catch (e) { }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN price_cop REAL DEFAULT 0"); } catch (e) { }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN weight REAL DEFAULT 0"); } catch (e) { }
 
-  // --- TABLA DE COMENTARIOS ---
+  // --- TABLAS EXTRA ---
   db.exec(`
     CREATE TABLE IF NOT EXISTS comments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,7 +62,6 @@ try {
     )
   `);
 
-  // --- TABLA DE SUSCRIPTORES ---
   db.exec(`
     CREATE TABLE IF NOT EXISTS subscribers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -95,23 +95,28 @@ const getComments = (dealId) => {
 };
 
 const saveDeal = (deal) => {
-  // --- SEGURIDAD ANTI-VALORES LOCOS (Protección Moneda Regional) ---
-  if (deal.price_offer > 5000 && !deal.title.toLowerCase().includes('car') && !deal.title.toLowerCase().includes('house')) {
-    logger.warn(`🚫 BLOQUEO DE SEGURIDAD: Intentando guardar precio sospechoso ($${deal.price_offer}) para "${deal.title}". Omitiendo.`);
-    return false;
-  }
+  const isPending = deal.status === 'pending_express';
 
-  // --- SEGURIDAD ANTI-IMAGENES ROTAS ---
-  if (!deal.image || deal.image.includes('favicon') || deal.image.includes('placehold.co')) {
-    logger.warn(`🚫 BLOQUEO DE IMAGEN: Imagen inválida para "${deal.title}". Omitiendo.`);
-    return false;
+  // --- SEGURIDAD RELAJADA PARA PENDIENTES ---
+  if (!isPending) {
+    if (deal.price_offer > 10000 && !deal.title?.toLowerCase().includes('car')) {
+      logger.warn(`🚫 BLOQUEO: Precio sospechoso ($${deal.price_offer}) para "${deal.title}".`);
+      return false;
+    }
+    if (!deal.image || deal.image.includes('favicon') || deal.image.includes('placehold.co')) {
+      logger.warn(`🚫 BLOQUEO: Imagen inválida.`);
+      return false;
+    }
+  } else {
+    // Si es pendiente y no tiene imagen, poner una por defecto para que no falle el insert
+    if (!deal.image) deal.image = 'https://placehold.co/400?text=Masbarato+Express';
   }
 
   try {
     const stmt = db.prepare(`
-        INSERT OR IGNORE INTO published_deals 
-        (id, link, original_link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status, badge)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT OR REPLACE INTO published_deals 
+        (id, link, original_link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status, price_cop, weight)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
     return stmt.run(
       deal.id,
@@ -125,10 +130,11 @@ const saveDeal = (deal) => {
       deal.categoria || 'Oferta',
       deal.description || '',
       deal.coupon || null,
-      (deal.is_historic_low || deal.badge === 'Mínimo Histórico') ? 1 : 0,
+      (deal.is_historic_low) ? 1 : 0,
       deal.score || 0,
-      'published',
-      deal.badge || null
+      deal.status || 'published',
+      deal.price_cop || 0,
+      deal.weight || 0
     );
   } catch (e) {
     logger.error(`Error guardando: ${e.message}`);
@@ -136,30 +142,20 @@ const saveDeal = (deal) => {
 };
 
 const registerClick = (dealId) => {
-  try {
-    db.prepare("UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?").run(dealId);
-  } catch (e) {
-    logger.error(`Error click: ${e.message}`);
-  }
+  try { db.prepare("UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?").run(dealId); } catch (e) { }
 };
 
 const isRecentlyPublished = (link, title = '') => {
   try {
-    // Check by original link (primary)
     const byOrig = db.prepare(`SELECT * FROM published_deals WHERE (original_link = ? OR link = ?) AND posted_at > datetime('now', '-168 hours')`);
     if (byOrig.get(link, link)) return true;
-
-    // Check by title (secondary)
     if (title) {
       const cleanTitle = title.toLowerCase().trim().substring(0, 45);
       const byTitle = db.prepare(`SELECT * FROM published_deals WHERE LOWER(SUBSTR(title, 1, 45)) = ? AND posted_at > datetime('now', '-168 hours')`);
       if (byTitle.get(cleanTitle)) return true;
     }
-
     return false;
-  } catch (e) {
-    return false;
-  }
+  } catch (e) { return false; }
 };
 
 module.exports = { db, saveDeal, isRecentlyPublished, registerClick, voteUp, addComment, getComments, addSubscriber };

@@ -137,9 +137,16 @@ class RadarBot {
             }
 
             let category = 'General';
-            if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|gpu|keyboard|mouse|headphone|earbud|tablet|phone|iphone|apple|ipad|macbook|smartwatch/)) category = 'Tecnología';
-            else if (lowTitle.match(/ps5|xbox|nintendo|switch|game|steam|controller|rtx|gaming/)) category = 'Gamer';
-            else if (lowTitle.match(/shoe|shirt|pant|watch|dress|bag|nike|adidas|reebok|puma|sneaker|clothing|apparel|under armour/)) category = 'Moda';
+
+            // --- CATEGORIZACIÓN EXPRESS (Alta Prioridad) ---
+            if (lowTitle.match(/watch|seiko|casio|citizen|tissot|garmin|reloj/)) category = 'Relojes';
+            else if (lowTitle.match(/rtx|gtx|radeon|rx \d000|graphics card|gpu|motherboard|z790|b650|am5|lga1700|processor|ryzen|intel core|ddr5|ddr4|ram kit|samsung 990|wd black sn850/)) category = 'PC Components';
+            else if (lowTitle.match(/jordan|dunk|yeezy|air max|ultraboost|new balance|asics|on cloud|sneaker|retro high|og/)) category = 'Sneakers';
+
+            // --- CATEGORIZACIÓN ESTÁNDAR ---
+            else if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|keyboard|mouse|headphone|earbud|tablet|phone|iphone|apple|ipad|macbook/)) category = 'Tecnología';
+            else if (lowTitle.match(/ps5|xbox|nintendo|switch|game|steam|controller|console/)) category = 'Gamer';
+            else if (lowTitle.match(/shoe|shirt|pant|dress|bag|hoodie|jacket|clothing|apparel|under armour|adidas|nike|puma/)) category = 'Moda';
             else if (lowTitle.match(/vacuum|cooker|fryer|coffee|bed|furniture|kitchen/)) category = 'Hogar';
             else if (lowTitle.match(/supplement|protein|vitamin|gym|exercise|teeth/)) category = 'Salud';
 

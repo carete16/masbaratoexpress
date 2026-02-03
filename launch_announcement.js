@@ -27,7 +27,7 @@ Hemos trabajado duro para ofrecerte la plataforma de ofertas más avanzada del m
     const inlineKeyboard = {
         reply_markup: {
             inline_keyboard: [
-                [{ text: '🌐 VISITAR SITIO WEB', url: 'https://masbarato-deals-net.onrender.com' }],
+                [{ text: '🌐 VISITAR SITIO WEB', url: 'https://masbaratoexpress.onrender.com' }],
                 [{ text: '🔔 ACTIVAR ALERTAS', url: 'https://t.me/Masbarato_deals' }]
             ]
         }

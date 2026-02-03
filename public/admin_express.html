@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo | Masbarato Express</title>
+    <link rel="icon" href="https://www.techbargains.com/Content/static/tb-logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-glow: rgba(37, 99, 235, 0.4);
+            --secondary: #7c3aed;
+            --accent-green: #10b981;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+        }
+
+        .premium-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            margin-bottom: 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo-box {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .card-deal {
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-deal:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .calculator {
+            background: white;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .breakdown {
+            background: #f1f5f9;
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .input-manual-box {
+            background: linear-gradient(to right, #eff6ff, #f5f3ff);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid #dbeafe;
+        }
+
+        .nav-pills-custom .nav-link {
+            border-radius: 12px;
+            padding: 10px 25px;
+            font-weight: 700;
+            color: var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .nav-pills-custom .nav-link.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .img-preview {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            background: white;
+            border-radius: 16px;
+            padding: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .btn-premium {
+            border-radius: 14px;
+            padding: 12px 24px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .badge-trm-premium {
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+
+</head>
+
+<body>
+    <header class="premium-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-box">
+                    <i class="fa-solid fa-plane-up"></i>
+                </div>
+                <div>
+                    <h1 class="h4 fw-bold mb-0">Masbarato <span style="color:var(--secondary)">Express</span></h1>
+                    <p class="text-muted small mb-0 fw-semibold">Dashboard de Logística Premium</p>
+                </div>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+                <div class="badge-trm-premium">TRM Real: <span class="text-primary" id="trm-header-val">$3,628</span>
+                </div>
+                <div class="badge-trm-premium">Operativo: <span class="text-primary"
+                        id="dolar-op-header-val">$3,928</span></div>
+                <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="logout()">
+                    Salir <i class="fa-solid fa-right-from-bracket ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- Configuración Global -->
+        <section class="calculator shadow-sm">
+            <h6 class="text-uppercase fw-bold text-secondary mb-3 small"><i
+                    class="fa-solid fa-gears me-2"></i>Parámetros Arquitecto Senior (MASBARATO EXPRESS)</h6>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Dólar Operativo (TRM + 300)</label>
+                    <input type="number" id="globalDolarOp" class="form-control" value="3928" onchange="refreshView()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Ganancia (30% Fijo)</label>
+                    <input type="number" id="globalProfit" class="form-control" value="30" readonly
+                        style="background:#f8fafc">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Tax USA (7% Fijo)</label>
+                    <input type="number" id="globalTax" class="form-control" value="7" readonly
+                        style="background:#f8fafc">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Costo Libra ($USD)</label>
+                    <input type="number" id="globalRate" class="form-control" value="6" onchange="refreshView()">
+                </div>
+                <div class="col-md-3">
+                    <div class="p-2 bg-light rounded-3 border-start border-4 border-primary small">
+                        <strong>Regla de Negocio:</strong><br>
+                        Peso Real + 1lb extra obligatoria.<br>
+                        Redondeo SIEMPRE hacia arriba.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inyección Manual Premium -->
+        <div class="input-manual-box mb-5 shadow-sm">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"
+                            style="border-radius: 12px 0 0 12px; border: 1px solid #e2e8f0;"><i
+                                class="fa-solid fa-link text-primary"></i></span>
+                        <input type="text" id="manualUrl" class="form-control border-start-0"
+                            style="border-radius: 0 12px 12px 0; border: 1px solid #e2e8f0;"
+                            placeholder="Pega el link de Amazon, eBay, Nike...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" id="manualPrice" class="form-control"
+                        style="border-radius: 12px; border: 1px solid #e2e8f0;" placeholder="Precio USD">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" id="manualWeight" class="form-control"
+                        style="border-radius: 12px; border: 1px solid #e2e8f0;" placeholder="Peso Lbs">
+                </div>
+                <div class="col-md-1">
+                    <button id="btnProcess" onclick="postManual()" class="btn btn-primary w-100 fw-bold"
+                        style="border-radius: 12px; background: var(--primary); border:none; height: 45px;">IR</button>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-pills nav-pills-custom mb-5 gap-3 border-0">
+            <li class="nav-item">
+                <button class="nav-link active" id="tab-pending" onclick="switchTab('pending')">
+                    <i class="fa-solid fa-clock-rotate-left me-2"></i>PENDIENTES
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tab-published" onclick="switchTab('published')">
+                    <i class="fa-solid fa-circle-check me-2"></i>PUBLICADAS
+                </button>
+            </li>
+        </ul>
+
+        <div id="main-container">
+            <!-- Items loaded via AJAX -->
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+        let currentTab = 'pending';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-pending').classList.toggle('active', tab === 'pending');
+            document.getElementById('tab-published').classList.toggle('active', tab === 'published');
+            loadData();
+        }
+
+        function refreshView() {
+            const dolarOp = parseInt(document.getElementById('globalDolarOp').value) || 3928;
+            const trm = dolarOp - 300;
+            document.getElementById('dolar-op-header-val').innerText = `$${dolarOp}`;
+            document.getElementById('trm-header-val').innerText = `$${trm}`;
+            loadData();
+        }
+
+        async function fetchTRM() {
+            try {
+                // Usamos un proxy/api libre para el TRM
+                const res = await axios.get('https://api.exchangerate.host/latest?base=USD&symbols=COP');
+                if (res.data && res.data.rates && res.data.rates.COP) {
+                    const realTRM = Math.ceil(res.data.rates.COP);
+                    const dolarOp = realTRM + 300;
+                    document.getElementById('globalDolarOp').value = dolarOp;
+                    refreshView();
+                }
+            } catch (e) { console.warn("No se pudo auto-obtener TRM, usando predeterminado."); }
+        }
+
+        async function loadData() {
+            const endpoint = currentTab === 'pending' ? '/admin/express/pending' : '/admin/express/published';
+            try {
+                const res = await axios.get(`${API_URL}${endpoint}`, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+                renderItems(res.data);
+            } catch (e) { console.error(e); }
+        }
+
+        function calculateFinal(priceUSD, lbsReal) {
+            const dolarOp = parseInt(document.getElementById('globalDolarOp').value) || 3928;
+            const rate = parseFloat(document.getElementById('globalRate').value) || 6;
+
+            // --- FÓRMULA ESTRICTA DEL SNIPPET ---
+            // 1. Ganancia 30%
+            const precioConGanancia = priceUSD * 1.30;
+            const profitValUSD = priceUSD * 0.30;
+
+            // 2. Impuesto USA 7% (Calculado sobre el precio BASE)
+            const impuestoUSD = priceUSD * 0.07;
+
+            // 3. Peso + 1lb extra
+            const lbsFinal = lbsReal + 1;
+            const shipUSD = lbsFinal * rate;
+
+            // 4. Total USD Final
+            const totalUSD = precioConGanancia + impuestoUSD + shipUSD;
+
+            // 5. Redondeo Final
+            const finalCOP = Math.ceil(totalUSD * dolarOp);
+
+            return {
+                taxUSD: impuestoUSD,
+                profitVal: profitValUSD,
+                lbsFinal: lbsFinal,
+                shipUSD: shipUSD,
+                totalUSD: totalUSD,
+                finalCOP: finalCOP,
+                dolarOp: dolarOp,
+                trm: dolarOp - 300
+            };
+        }
+
+        function renderItems(items) {
+            const container = document.getElementById('main-container');
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                container.innerHTML = '<div class="text-center py-5 text-muted">No hay productos en esta lista.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const weightReal = parseFloat(item.weight) || 2.5;
+                const priceUSD = parseFloat(item.price_offer) || 0;
+                const calc = calculateFinal(priceUSD, weightReal);
+                const store = item.tienda || 'Amazon';
+
+                const card = document.createElement('div');
+                card.className = 'card card-deal mb-4';
+                card.innerHTML = `
+                    <div class="card-body p-0">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-md-3 text-center p-4 border-end" style="background: #fcfcfd">
+                                <img src="/api/proxy-image?url=${encodeURIComponent(item.image)}" class="img-preview mb-3">
+                                <div class="badge bg-primary px-3 py-2 mb-2" style="border-radius: 8px; font-weight: 800;">${item.tienda.toUpperCase()}</div>
+                                <div class="fw-bold text-primary mt-2" id="display-price-${item.id}" style="font-size: 1.1rem">$${priceUSD.toFixed(2)} USD</div>
+                            </div>
+
+                            <div class="col-md-5 px-4 py-3">
+                                <h6 class="fw-bold mb-1">
+                                    <input type="text" id="title-${item.id}" class="form-control fw-bold border-0 p-0 mb-2" style="font-size: 1.05rem; background:transparent" value="${item.title}">
+                                </h6>
+                                <div class="mb-3">
+                                    <select id="cat-${item.id}" class="form-select form-select-sm fw-bold" style="width: 220px; border-radius: 10px; border: 1px solid #e2e8f0; color: var(--secondary);">
+                                        <option value="Electrónica Premium" ${item.categoria === 'Electrónica Premium' || item.categoria === 'Tecnología' ? 'selected' : ''}>💻 Electrónica Premium</option>
+                                        <option value="Lifestyle & Street" ${item.categoria === 'Lifestyle & Street' || item.categoria === 'Moda' || item.categoria === 'Sneakers' ? 'selected' : ''}>👟 Lifestyle & Street</option>
+                                        <option value="Relojes & Wearables" ${item.categoria === 'Relojes & Wearables' || item.categoria === 'Relojes' ? 'selected' : ''}>⌚ Relojes & Wearables</option>
+                                    </select>
+                                </div>
+                                <div class="breakdown">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="small text-muted fw-semibold">1. PRECIO BASE:</span> 
+                                        <input type="number" step="0.01" id="price-${item.id}" class="form-control form-control-sm text-end w-25 fw-bold border-primary" value="${priceUSD}" onkeyup="updateLive('${item.id}')" onchange="updateLive('${item.id}')">
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="small text-muted fw-semibold">2. GANANCIA (30%):</span> 
+                                        <span class="text-success fw-bold" id="profit-val-${item.id}">+$${calc.profitVal.toFixed(2)} USD</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="small text-muted fw-semibold">3. TAX USA (7%):</span> 
+                                        <span id="tax-val-${item.id}" class="fw-bold text-muted">+$${calc.taxUSD.toFixed(2)} USD</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                        <span class="small text-muted fw-semibold">4. ENVÍO (USD):</span> 
+                                        <span id="ship-val-${item.id}" class="fw-bold text-muted">+$${calc.shipUSD.toFixed(2)} USD</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small text-muted fw-bold">Peson Real (Lbs):</span> 
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="number" id="weight-${item.id}" class="form-control form-control-sm text-end w-25 border-info" value="${weightReal}" onkeyup="updateLive('${item.id}')" onchange="updateLive('${item.id}')">
+                                            <span class="small">+1lb: <strong id="ship-cost-val-${item.id}" class="text-primary">$${calc.shipUSD.toFixed(2)} USD</strong></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 p-4 text-center" style="background: #fafbff">
+                                <div class="mb-3">
+                                    <div class="small text-muted fw-bold mb-1">PRECIO FINAL COLOMBIA</div>
+                                    <div class="h2 fw-900 text-primary mb-0" id="cop-display-${item.id}" style="letter-spacing: -1px">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
+                                    <input type="hidden" id="cop-${item.id}" value="${calc.finalCOP}">
+                                </div>
+                                <div class="d-grid gap-2 mb-3">
+                                    ${currentTab === 'pending' ?
+                        `<button onclick="approve('${item.id}')" class="btn btn-primary btn-premium shadow-sm">
+                            APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i>
+                         </button>` :
+                        item.status === 'expired' ?
+                            `<div class="badge bg-danger py-2 mb-2" style="border-radius: 10px;">PRODUCTO AGOTADO</div>
+                         <button onclick="approve('${item.id}')" class="btn btn-primary btn-premium shadow-sm"><i class="fa-solid fa-rotate-left me-2"></i>RE-ACTIVAR</button>` :
+                            `<div class="badge bg-success py-2 mb-2" style="border-radius: 10px;">PRODUCTO EN VIVO</div>
+                         <button onclick="finalize('${item.id}')" class="btn btn-warning btn-premium">MARCAR AGOTADA</button>`
+                    }
+                                </div>
+                                <div class="d-flex justify-content-center gap-4">
+                                    <a href="${item.link}" target="_blank" class="text-decoration-none small fw-bold text-muted"><i class="fa-solid fa-external-link me-1"></i> VER LINK</a>
+                                    <button onclick="removeItem('${item.id}')" class="btn btn-link p-0 text-danger text-decoration-none small fw-bold"><i class="fa-solid fa-trash-can me-1"></i> ELIMINAR</button>
+                                </div>
+                                <div class="mt-3 pt-2 border-top small text-muted font-monospace" style="font-size: 0.65rem">
+                                    Operación: TRM $${calc.trm} + $300 = $${calc.dolarOp}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function postManual() {
+            const url = document.getElementById('manualUrl').value;
+            const priceTyped = document.getElementById('manualPrice').value;
+            const weightTyped = document.getElementById('manualWeight').value;
+            const btn = document.getElementById('btnProcess');
+            if (!url) return alert('Pega un enlace');
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Analizando Producto...';
+            btn.disabled = true;
+
+            try {
+                // 1. Pre-Análisis para extraer datos reales automáticamente
+                const analysis = await axios.post(`${API_URL}/admin/express/analyze`, { url }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+
+                const finalPrice = priceTyped || analysis.data.price;
+                const finalWeight = weightTyped || analysis.data.weight;
+
+                // 2. Enviar a procesar con los datos extraídos
+                const res = await axios.post(`${API_URL}/admin/express/manual-post`, {
+                    url,
+                    price: finalPrice,
+                    weight: finalWeight,
+                    title: analysis.data.title,
+                    category: 'relojes'
+                }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+
+                alert(`✅ PROCESADO: ${analysis.data.title || 'Producto'} extraído con éxito.`);
+                document.getElementById('manualUrl').value = '';
+                document.getElementById('manualPrice').value = '';
+                document.getElementById('manualWeight').value = '';
+                loadData();
+            } catch (e) {
+                const msg = e.response?.data?.error || 'Error de conexión / Link bloqueado';
+                alert('⚠️ No se pudo procesar: ' + msg);
+            }
+            btn.innerHTML = 'PROCESAR'; btn.disabled = false;
+        }
+
+        function updateLive(id) {
+            const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
+            const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
+            const calc = calculateFinal(p, w);
+
+            document.getElementById(`cop-display-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
+            document.getElementById(`cop-${id}`).value = calc.finalCOP;
+            document.getElementById(`profit-val-${id}`).innerText = `+$${calc.profitVal.toFixed(2)} USD`;
+            document.getElementById(`tax-val-${id}`).innerText = `+$${calc.taxUSD.toFixed(2)} USD`;
+            document.getElementById(`ship-val-${id}`).innerText = `+$${calc.shipUSD.toFixed(2)} USD`;
+            document.getElementById(`final-weight-${id}`).innerText = `${calc.lbsFinal}`;
+            document.getElementById(`ship-cost-val-${id}`).innerText = `$${calc.shipUSD.toFixed(2)}`;
+            document.getElementById(`display-price-${id}`).innerText = `$${p.toFixed(2)} USD`;
+        }
+
+        function updateView(id) {
+            // Recalcular el ítem visualmente sin ir al servidor aún
+            updateLive(id);
+        }
+
+        async function approve(id) {
+            const price_cop = document.getElementById(`cop-${id}`).value;
+            const title = document.getElementById(`title-${id}`).value;
+            const weight = document.getElementById(`weight-${id}`).value;
+            const price_offer = document.getElementById(`price-${id}`) ? document.getElementById(`price-${id}`).value : null;
+            const categoria = document.getElementById(`cat-${id}`).value;
+
+            await axios.post(`${API_URL}/admin/express/approve`, { id, price_cop, title, weight, price_offer, categoria }, {
+                headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+            });
+            loadData();
+        }
+
+        async function removeItem(id) {
+            if (!confirm('¿Borrar?')) return;
+            await axios.post(`${API_URL}/delete-deal`, { id }, {
+                headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+            });
+            loadData();
+        }
+
+        async function finalize(id) {
+            await axios.post(`${API_URL}/admin/express/finalize`, { id }, {
+                headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+            });
+            loadData();
+        }
+
+        function logout() { localStorage.removeItem('adminPass'); location.reload(); }
+
+        // --- INICIALIZACIÓN CORPORATIVA ---
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchTRM(); // Trae TRM real de API
+            loadData(); // Carga las ofertas
+        });
+    </script>
+    <footer class="mt-5 py-4 text-center text-muted border-top">
+        <p class="small mb-0">© 2026 Masbarato Express 🇨🇴 | Panel de Control Corporativo</p>
+        <div class="mt-2" style="font-size: 0.7rem;">Arquitectura Senior .NET/JS - V 2.5</div>
+    </footer>
+</body>
+
+</html>

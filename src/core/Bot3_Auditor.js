@@ -49,26 +49,34 @@ class PriceAuditorBot {
         const savingsPercent = price_official > 0 ? Math.round((savings / price_official) * 100) : 0;
         report.discount = savingsPercent;
 
-        // 3. DEFINICIÓN DE MARCAS TOP Y DISEÑADOR (PRIORIDAD DE EL USER)
-        const topBrands = /iphone|apple|nike|adidas|reebok|puma|samsung|sony|nintendo|playstation|xbox|ps5|rtx|nvidia|ryzen|intel|gafas|sunglasses|ray-ban|oakley|gucci|prada|seiko|rolex|casio|fossil|gaming|lego|stanley/i;
+        // 3. DEFINICIÓN DE MARCAS TOP Y DISEÑADOR (ESTÁNDAR MASBARATO)
+        const topBrands = /iphone|apple|macbook|ipad|airpods|samsung|galaxy|nike|adidas|reebok|puma|jordan|asics|new balance|seiko|rolex|casio|fossil|tissot|omega|citizen|invicta|sony|nintendo|playstation|xbox|ps5|rtx|nvidia|dyson|stanley|lego|ray-ban|oakley/i;
         const isTopBrand = topBrands.test(lowTitle);
 
-        // 4. ALGORITMO DE FILTRADO SEGÚN REGLAS DEL USUARIO
-        // Regla: Bajamos el umbral para aumentar el volumen de ofertas.
-        const minSavings = isTopBrand ? 10 : 15; // 10% para Apple/Nike, 15% para el resto.
+        // 4. ALGORITMO DE FILTRADO (REGLAS ESTRICTAS)
+        // Regla Arquitecto: Descuento > 30% obligatorio para recomendaciones automáticas.
+        const minSavings = 30;
 
         if (price_official > 0 && savingsPercent < minSavings) {
             report.isGoodDeal = false;
-            report.reason = `Ahorro insuficiente. Marca TOP requiere 10%, genérica 15%. Oferta actual: ${savingsPercent}%.`;
+            report.reason = `Ahorro insuficiente. El Arquitecto exige >30%. Oferta actual: ${savingsPercent}%.`;
             return report;
         }
 
-        // Alerta especial: Si no hay MSRP (precio oficial), solo dejamos pasar Marcas Top o Tiendas Top.
+        // Si es automático, REQUERIMOS que sea de Marca Top o categoría estrella.
+        const isStarCategory = lowTitle.match(/watch|reloj|sneaker|tenis|shoe|zapato|phone|celular|laptop|computador/i);
+
+        if (!deal.isManual && !isTopBrand && !isStarCategory) {
+            report.isGoodDeal = false;
+            report.reason = 'No pertenece a marcas populares o categorías estrella (Relojes, Tenis, Apple, Samsung).';
+            return report;
+        }
+
+        // Alerta especial: Si no hay MSRP (precio oficial), solo dejamos pasar Marcas Top con muy buena reputación.
         if (price_official <= 0) {
-            const isTopStore = ['Amazon', 'Best Buy', 'Nike', 'Adidas', 'Walmart', 'Target', 'Newegg'].includes(deal.tienda);
-            if (!isTopBrand && !isTopStore) {
+            if (!isTopBrand) {
                 report.isGoodDeal = false;
-                report.reason = 'Oferta genérica sin precio de referencia (MSRP) verificado.';
+                report.reason = 'Oferta genérica sin precio de comparación oficial.';
                 return report;
             }
         }
@@ -95,14 +103,19 @@ class PriceAuditorBot {
             report.badge = 'OFERTA VERIFICADA';
         }
 
-        // 7. CATEGORIZACIÓN SEMÁNTICA (Mantenida y refinada)
+        // 7. CATEGORIZACIÓN SEMÁNTICA PREMIUM
         const t = deal.title.toLowerCase();
-        if (t.match(/laptop|tv|computer|monitor|ssd|drive|tech|gadget|iphone|samsung|galaxy|phone|ipad|tablet|apple watch/)) deal.categoria = 'Tecnología';
-        else if (t.match(/shoe|sneaker|nike|adidas|reebok|puma|clothing|watch|gafas|sunglasses|reloj/)) deal.categoria = 'Moda';
-        else if (t.match(/ps5|xbox|gaming|switch|game|nintendo|controller|rtx|gpu|cpu|monitor gaming/)) deal.categoria = 'Gamer';
-        else if (t.match(/cooker|fryer|pot|kitchen|home|furniture|vacuum|stanley|lego/)) deal.categoria = 'Hogar';
-        else if (t.match(/supplement|protein|vitamin|gym|exercise|teeth/)) deal.categoria = 'Salud';
-        else deal.categoria = 'General';
+        if (t.match(/laptop|tv|computer|monitor|ssd|drive|tech|gadget|iphone|samsung|galaxy|phone|ipad|tablet|apple watch|ps5|xbox|gaming|switch|game|nintendo|controller|rtx|gpu|cpu|monitor gaming/)) {
+            deal.categoria = 'Electrónica Premium';
+        } else if (t.match(/shoe|sneaker|nike|adidas|reebok|puma|clothing|ropa|shirt|jeans|hoodie|backpack/)) {
+            deal.categoria = 'Lifestyle & Street';
+        } else if (t.match(/watch|reloj|smartwatch|wearable|gafas|sunglasses|ray-ban|oakley/)) {
+            deal.categoria = 'Relojes & Wearables';
+        } else if (t.match(/cooker|fryer|pot|kitchen|home|furniture|vacuum|stanley|lego/)) {
+            deal.categoria = 'Electrónica Premium'; // O crear categoría Hogar si el usuario lo pide, por ahora lo dejamos en la más cercana o general
+        } else {
+            deal.categoria = 'Lifestyle & Street';
+        }
 
         deal.badge = report.badge;
         deal.score = report.confidenceScore;

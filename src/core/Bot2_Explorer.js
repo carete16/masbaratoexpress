@@ -58,7 +58,7 @@ class ValidatorBot {
                 /\?s=/i, /\?k=/i, /\?q=/i // Query strings
             ];
 
-            const isGeneric = genericPatterns.some(p => finalUrl.match(p)) && !finalUrl.match(/\/dp\/|\/ip\/|\/product\/|\/itm\//i);
+            const isGeneric = !opportunity.isManual && genericPatterns.some(p => finalUrl.match(p)) && !finalUrl.match(/\/dp\/|\/ip\/|\/product\/|\/itm\//i);
 
             if (isGeneric) {
                 logger.warn(`🛑 ENLACE GENÉRICO BLOQUEADO: ${finalUrl}. Evitando publicación de resultados de búsqueda.`);
@@ -72,7 +72,8 @@ class ValidatorBot {
                 if (deepData.finalUrl) result.finalUrl = deepData.finalUrl;
 
                 // Si después del scrape profundo seguimos en Slickdeals, bloqueamos.
-                if (result.finalUrl.includes('slickdeals.net')) {
+                // EXCEPCIÓN: Si es manual, permitimos que el usuario lo vea aunque no resuelva (él decidirá si borrar o no)
+                if (result.finalUrl.includes('slickdeals.net') && !opportunity.isManual) {
                     logger.warn(`🛑 SCRAPER TERMINÓ EN SLICKDEALS: ${result.finalUrl}. Omitiendo.`);
                     return result;
                 }
@@ -103,43 +104,84 @@ class ValidatorBot {
                 result.officialPrice = deepData.officialPrice || opportunity.msrp || 0;
                 result.hasStock = true;
                 result.isValid = true;
+                result.weight = deepData.weight || 0;
 
                 if (deepData.image) result.image = deepData.image;
                 if (deepData.title) result.title = deepData.title;
 
-                logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Imagen: ${result.image ? 'OK' : 'FALLBACK'})`);
+                logger.info(`✅ VALIDACIÓN ÉXITO: $${result.realPrice} (Imagen: ${result.image ? 'OK' : 'FALLBACK'}, Peso: ${result.weight} lbs)`);
             } else {
-                // --- FALLBACK: SI EL SCRAPE PROFUNDO FALLA PERO TENEMOS INFO ---
-                const canUseFallback = (providedPrice > 0) && (opportunity.image || opportunity.isManual);
+                // --- MANEJO DE FALLOS Y MANUALES ---
+                if (opportunity.isManual) {
+                    logger.info(`🛡️ Manual Post detectado: Procesando rescate de info via URL.`);
+                    result.isValid = true;
+                    result.hasStock = true;
+                    result.realPrice = providedPrice || 0;
 
-                if (canUseFallback && (opportunity.isManual || !['Amazon', 'Walmart'].includes(result.storeName))) {
-                    logger.info(`⚠️ Falló DeepScrape pero ${opportunity.isManual ? 'es MANUAL' : 'tenemos info de RSS'}. Procediendo con datos proporcionados.`);
+                    // A. Rescate de Título (Mejorado para Amazon y Walmart)
+                    if (!result.title || result.title.includes('Manual') || result.title === 'Analysis' || result.title.length < 5 || result.title === "Oferta Express") {
+                        try {
+                            const urlObj = new URL(result.finalUrl);
+                            const pathParts = urlObj.pathname.split('/').filter(p => p.length > 0);
+
+                            // Caso Amazon DP: /Nombre-Producto/dp/ASIN
+                            const dpIndex = pathParts.findIndex(p => p.toLowerCase() === 'dp');
+                            if (dpIndex > 0) {
+                                result.title = decodeURIComponent(pathParts[dpIndex - 1]).replace(/-/g, ' ');
+                            }
+                            // Caso genérico: Primer segmento significativo
+                            else if (pathParts[0] && !['dp', 'gp', 'ip', 'itm', 'product'].includes(pathParts[0].toLowerCase())) {
+                                result.title = decodeURIComponent(pathParts[0]).replace(/-/g, ' ');
+                            }
+
+                            if (!result.title || result.title.length < 3) result.title = "Producto Express";
+                        } catch (e) { result.title = "Producto Express"; }
+                    }
+
+                    // B. Rescate de Imagen (Amazon / Walmart)
+                    if (!result.image || result.image.includes('placehold')) {
+                        if (result.finalUrl.includes('amazon.com')) {
+                            const asinMatch = result.finalUrl.match(/\/(dp|gp\/product)\/([A-Z0-9]{10})/i);
+                            if (asinMatch) result.image = `https://images-na.ssl-images-amazon.com/images/P/${asinMatch[2]}.01.LZZZZZZZ.jpg`;
+                        } else if (result.finalUrl.includes('walmart.com')) {
+                            result.image = 'https://placehold.co/400?text=Walmart+Product';
+                        }
+                    }
+                    // C. Rescate de Peso Inteligente (NUEVO)
+                    if (!result.weight || result.weight <= 0) {
+                        const t = result.title.toLowerCase();
+                        // Diccionario de Pesos Estimados Reales (Basado en Mercado USA)
+                        if (t.match(/laptop|notebook|macbook/)) result.weight = 5.5;
+                        else if (t.match(/iphone|smartphone|galaxy|celular|phone|pixel/)) result.weight = 0.8;
+                        else if (t.match(/ipad|tablet|galaxy tab/)) result.weight = 1.5;
+                        else if (t.match(/monitor|display/)) {
+                            if (t.includes('32')) result.weight = 18;
+                            else if (t.includes('27')) result.weight = 14;
+                            else result.weight = 10;
+                        }
+                        else if (t.match(/ps5|playstation 5/)) result.weight = 12;
+                        else if (t.match(/xbox series x/)) result.weight = 13;
+                        else if (t.match(/xbox series s/)) result.weight = 6;
+                        else if (t.match(/nintendo switch/)) result.weight = 2;
+                        else if (t.match(/watch|reloj|smartwatch/)) result.weight = 0.5;
+                        else if (t.match(/headphone|auricular|airpods|buds/)) result.weight = 0.6;
+                        else if (t.match(/shoe|sneaker|tenis|nike|adidas/)) result.weight = 3.5; // Caja + Zapato
+                        else if (t.match(/backpack|maleta|bolso/)) result.weight = 2.5;
+                        else if (t.match(/tv|television|smart tv/)) {
+                            if (t.includes('55')) result.weight = 45;
+                            else if (t.includes('65')) result.weight = 60;
+                            else result.weight = 30;
+                        }
+                        else {
+                            result.weight = 2.5; // Peso neutro para artículos pequeños
+                        }
+                        logger.info(`⚖️ Peso rescatado via Heurística: ${result.weight} lbs para "${result.title}"`);
+                    }
+                } else if (providedPrice > 0 && opportunity.image && !['Amazon', 'Walmart'].includes(result.storeName)) {
+                    // Fallback para RSS regular
                     result.realPrice = providedPrice;
                     result.hasStock = true;
                     result.isValid = true;
-
-                    // Si no tenemos título real, intentar extraerlo del URL
-                    if (!result.title || result.title === 'Manual Order') {
-                        try {
-                            const urlObj = new URL(result.finalUrl);
-                            const pathParts = urlObj.pathname.split('/');
-                            // Amazon: /Product-Title/dp/ASIN
-                            const dpIndex = pathParts.findIndex(p => p.toLowerCase() === 'dp');
-                            if (dpIndex > 0 && pathParts[dpIndex - 1]) {
-                                result.title = decodeURIComponent(pathParts[dpIndex - 1]).replace(/-/g, ' ').substring(0, 80);
-                            } else if (pathParts[1] && pathParts[1] !== 'dp' && pathParts[1] !== 'ip') {
-                                result.title = decodeURIComponent(pathParts[1]).replace(/-/g, ' ').substring(0, 80);
-                            }
-                        } catch (e) { }
-                    }
-
-                    // Si es manual y no hay imagen, intentar una imagen genérica si es Amazon
-                    if (!result.image && opportunity.sourceLink.includes('amazon.com')) {
-                        const asinMatch = opportunity.sourceLink.match(/\/dp\/([A-Z0-9]{10})/i) || opportunity.sourceLink.match(/\/gp\/product\/([A-Z0-9]{10})/i);
-                        if (asinMatch) {
-                            result.image = `https://images-na.ssl-images-amazon.com/images/P/${asinMatch[1]}.01.LZZZZZZZ.jpg`;
-                        }
-                    }
                 } else {
                     logger.warn(`⚠️ Validación totalmente fallida para ${opportunity.title}.`);
                 }

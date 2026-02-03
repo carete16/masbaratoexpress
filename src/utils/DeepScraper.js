@@ -90,11 +90,18 @@ class DeepScraper {
                 }
 
                 if (window.location.hostname.includes('slickdeals.net')) {
-                    let seeDealBtn = document.querySelector('a.buyNow, a.seeDeal, .dealBuyButton, a[data-type="deal-button"]');
+                    // Buscar botones de "See Deal", "Buy Now", etc.
+                    let seeDealBtn = document.querySelector('a.buyNow, a.seeDeal, .dealBuyButton, a[data-type="deal-button"], a[data-role="deal-button"], .blueprint .buy-now');
+
                     if (seeDealBtn) {
-                        if (seeDealBtn.href) window.location.href = seeDealBtn.href;
-                        else seeDealBtn.click();
-                        return { isRedirecting: true };
+                        if (seeDealBtn.href && !seeDealBtn.href.includes('javascript')) {
+                            window.location.href = seeDealBtn.href;
+                            return { isRedirecting: true };
+                        } else {
+                            seeDealBtn.click();
+                            // Esperar un poco a que ocurra el click/redir (evaluate no espera)
+                            return { isRedirecting: true };
+                        }
                     }
                 }
 
@@ -111,6 +118,25 @@ class DeepScraper {
 
                     const features = Array.from(document.querySelectorAll('#feature-bullets li')).map(li => li.innerText.trim()).filter(t => t.length > 0).slice(0, 5);
                     description = features.join('\n');
+
+                    // Buscar en tablas de especificaciones y bullets
+                    const technicalSpecs = Array.from(document.querySelectorAll('tr, li, span, .a-list-item, .prodDetSectionEntry'));
+                    for (let el of technicalSpecs) {
+                        const txt = el.innerText.toLowerCase();
+                        if (txt.includes('weight') || txt.includes('peso') || txt.includes('dimension') || txt.includes('ounces') || txt.includes('pounds')) {
+                            const val = el.innerText;
+                            const match = val.match(/(\d+\.?\d*)\s*(pounds|lbs|libra|oz|ounces|kg|gram|g\b)/i);
+                            if (match) {
+                                let wVal = parseFloat(match[1]);
+                                let unit = match[2].toLowerCase();
+                                if (unit.includes('oz')) wVal = wVal / 16;
+                                if (unit.includes('kg')) wVal = wVal * 2.2;
+                                if (unit.includes('gram') || (unit === 'g')) wVal = wVal / 453.6;
+                                weight = wVal;
+                                if (weight > 0.01) break;
+                            }
+                        }
+                    }
                 }
                 else if (window.location.hostname.includes('walmart.com')) {
                     title = document.querySelector('h1')?.innerText;
@@ -119,6 +145,11 @@ class DeepScraper {
                     const lp = document.querySelector('[data-testid="list-price"]')?.innerText || document.querySelector('.price--was')?.innerText;
                     officialPrice = clean(lp);
                     image = document.querySelector('[data-testid="main-image-container"] img')?.src;
+
+                    // Walmart Weight (approximation)
+                    const specText = document.body.innerText;
+                    const wMatch = specText.match(/(\d+\.?\d*)\s*(lb|pounds)/i);
+                    if (wMatch) weight = parseFloat(wMatch[1]);
                 }
                 else if (window.location.hostname.includes('ebay.com')) {
                     title = document.querySelector('.x-item-title__mainTitle span')?.innerText || document.querySelector('#itemTitle')?.innerText;
@@ -127,6 +158,11 @@ class DeepScraper {
                     const lp = document.querySelector('.ux-textspans--STRIKETHROUGH')?.innerText || document.querySelector('.x-additional-info__text-strike span')?.innerText || document.querySelector('.ux-textspans--MSKU_STRIKETHROUGH')?.innerText;
                     officialPrice = clean(lp);
                     image = document.querySelector('.ux-image-magnify__image--main')?.src || document.querySelector('#icImg')?.src;
+
+                    // eBay Weight
+                    const specText = document.querySelector('.ux-layout-section--specification')?.innerText || '';
+                    const wMatch = specText.match(/(\d+\.?\d*)\s*(lb|pounds)/i);
+                    if (wMatch) weight = parseFloat(wMatch[1]);
 
                     // --- DETECTAR CUPONES EBAY (Adidas, etc) ---
                     const couponBox = document.querySelector('.ux-textspans--BOLD, .discount-info, .promo-banner-text');
@@ -147,6 +183,10 @@ class DeepScraper {
                     offerPrice = clean(document.querySelector('.priceView-customer-price span')?.innerText);
                     officialPrice = clean(document.querySelector('.pricing-price__regular-price')?.innerText);
                     image = document.querySelector('.main-media-container img')?.src;
+
+                    const spec = document.body.innerText;
+                    const wMatch = spec.match(/(\d+\.?\d*)\s*(lb|pounds)/i);
+                    if (wMatch) weight = parseFloat(wMatch[1]);
                 }
                 else if (window.location.hostname.includes('target.com')) {
                     title = document.querySelector('[data-test="product-title"]')?.innerText;
@@ -154,6 +194,10 @@ class DeepScraper {
                     const lp = document.querySelector('[data-test="reg-price-strike"]') || document.querySelector('.h-text-strikethrough');
                     officialPrice = clean(lp?.innerText);
                     image = document.querySelector('[data-test="product-image"] img')?.src;
+
+                    const spec = document.body.innerText;
+                    const wMatch = spec.match(/(\d+\.?\d*)\s*(lb|pounds)/i);
+                    if (wMatch) weight = parseFloat(wMatch[1]);
                 }
                 else if (window.location.hostname.includes('nike.com')) {
                     title = document.querySelector('#pdp_product_title')?.innerText || document.querySelector('h1')?.innerText;
@@ -165,7 +209,7 @@ class DeepScraper {
                 if (!image) image = document.querySelector('meta[property="og:image"]')?.content;
                 if (!title) title = document.querySelector('meta[property="og:title"]')?.content || document.title;
 
-                return { offerPrice, officialPrice, title, image, description, isUnavailable, finalUrl: window.location.href, coupon: couponInfo };
+                return { offerPrice, officialPrice, title, image, description, isUnavailable, weight, finalUrl: window.location.href, coupon: couponInfo };
             });
 
             if (data && data.isRedirecting) {
