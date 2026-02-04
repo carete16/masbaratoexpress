@@ -449,7 +449,14 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
 
     logger.info(`🔎 Buscando en ML MCO: "${cleanQuery}" (Id: ${req.body.id || 'N/A'})`);
     const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&limit=5`;
-    const response = await axios.get(searchUrl, { timeout: 8000 });
+
+    const response = await axios.get(searchUrl, {
+      timeout: 8000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json'
+      }
+    });
 
     if (response.data.results && response.data.results.length > 0) {
       const items = response.data.results;
