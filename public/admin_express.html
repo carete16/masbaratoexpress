@@ -372,7 +372,7 @@
                             <span class="fw-bold" id="tax-val-${item.id}">+$${calc.taxUSD.toFixed(2)} USD</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2 pb-2 border-bottom small">
-                            <span>Envío Internacional (Lbs + 1):</span>
+                            <span>Envío Internacional (Peso Real):</span>
                             <span class="fw-bold" id="ship-val-${item.id}">+$${calc.shipUSD.toFixed(2)} USD</span>
                         </div>
                         <div class="d-flex justify-content-between fw-bold text-primary">
@@ -444,13 +444,16 @@
         }
 
         async function saveChanges(id) {
-            const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
-            const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
+            const priceInput = document.getElementById(`price-${id}`).value.replace(',', '.');
+            const weightInput = document.getElementById(`weight-${id}`).value.replace(',', '.');
+
+            const p = parseFloat(priceInput) || 0;
+            const w = parseFloat(weightInput) || 0;
             const title = document.getElementById(`title-${id}`).value;
             const categoria = document.getElementById(`cat-${id}`).value;
             const calc = calculateFinal(p, w);
 
-            if (w <= 0) { alert("⚠️ El peso debe ser mayor a 0"); return; }
+            if (w <= 0) { alert("⚠️ El peso debe ser mayor a 0 (Usa punto o coma para decimales)"); return; }
 
             try {
                 const response = await axios.post(API_URL + '/admin/express/approve', {
@@ -472,8 +475,11 @@
         }
 
         async function toggleStatus(id, activate) {
-            const p = parseFloat(document.getElementById(`price-${id}`)?.value) || 0;
-            const w = parseFloat(document.getElementById(`weight-${id}`)?.value) || 0;
+            const priceVal = document.getElementById(`price-${id}`)?.value.replace(',', '.') || "0";
+            const weightVal = document.getElementById(`weight-${id}`)?.value.replace(',', '.') || "0";
+
+            const p = parseFloat(priceVal) || 0;
+            const w = parseFloat(weightVal) || 0;
             const title = document.getElementById(`title-${id}`)?.value;
             const categoria = document.getElementById(`cat-${id}`)?.value || 'Lifestyle & Street';
             const calc = calculateFinal(p, w);
@@ -500,8 +506,11 @@
         }
 
         function updateRow(id) {
-            const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
-            const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
+            const pInput = document.getElementById(`price-${id}`).value.replace(',', '.');
+            const wInput = document.getElementById(`weight-${id}`).value.replace(',', '.');
+
+            const p = parseFloat(pInput) || 0;
+            const w = parseFloat(wInput) || 0;
             const calc = calculateFinal(p, w);
 
             document.getElementById(`cop-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
