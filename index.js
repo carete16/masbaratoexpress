@@ -443,29 +443,17 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
   if (!title) return res.status(400).json({ error: 'Título requerido' });
 
   try {
-    // Limpiar el título para mejorar la búsqueda (quitar emojis y palabras ruidosas)
-    let cleanQuery = title.replace(/[^\w\s]/gi, ' ').replace(/(LIQUIDACIÓN|OFERTA|GANGA|PREMIUM|EXCLUSIVO|CHANCE)/gi, '').replace(/\s+/g, ' ').trim();
-    if (!cleanQuery) cleanQuery = title.substring(0, 60);
+    // Limpieza AGRESIVA para MercadoLibre
+    let cleanQuery = title.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    cleanQuery = cleanQuery.split(' ').slice(0, 4).join(' '); // Tomar solo marca/modelo
+    if (!cleanQuery) cleanQuery = "producto";
 
-    logger.info(`🔎 Buscando en ML MCO: "${cleanQuery}" (Id: ${req.body.id || 'N/A'})`);
-    const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&limit=5`;
+    logger.info(`🔎 Buscando en ML: "${cleanQuery}"`);
+    const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&limit=3`;
 
     const response = await axios.get(searchUrl, {
-      timeout: 8000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'es-CO,es;q=0.9',
-        'Referer': 'https://www.mercadolibre.com.co/',
-        'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Upgrade-Insecure-Requests': '1'
-      }
+      timeout: 10000,
+      headers: { 'User-Agent': 'Mozilla/5.0' } // Header mínimo
     });
 
     if (response.data.results && response.data.results.length > 0) {

@@ -52,79 +52,63 @@ Título original: ${rawTitle}`;
 
     pseudoTranslate(title) {
         if (!title) return "Oferta Exclusiva";
-        let clean = this.cleanTitle(title);
 
-        // Diccionario de "IA de Emergencia" (Traducción rápida)
-        const dict = {
-            'laptop': 'Portátil',
-            'purifier': 'Purificador',
-            'cool': 'Refrescante',
-            'fan': 'Ventilador',
-            'smart': 'Inteligente',
-            'air': 'de Aire',
-            'watch': 'Reloj',
-            'shoes': 'Tenis',
-            'sneakers': 'Tenis',
-            'headphones': 'Audífonos',
-            'earbuds': 'Audífonos Bluetooth',
-            'monitor': 'Monitor Gamer',
-            'gaming': 'para Gaming',
-            'shirt': 'Camisa',
-            'pant': 'Pantalón',
-            'keyboard': 'Teclado',
-            'mouse': 'Mouse',
-            'cordless': 'Inalámbrico',
-            'wireless': 'Inalámbrico',
-            'original': 'Original',
-            'clearance': '¡LIQUIDACIÓN!',
-            'sale': 'OFERTA',
-            'deal': 'Ganga',
-            'smartwatch': 'Reloj Inteligente',
-            'phone': 'Celular',
-            'camera': 'Cámara',
-            'storage': 'Almacenamiento',
-            'fast': 'Rápido',
-            'pro': 'Premium',
-            'ultra': 'Ultra',
-            'black': 'Negro',
-            'white': 'Blanco',
-            'blue': 'Azul',
-            'red': 'Rojo',
-            'kit': 'Combo',
-            'pack': 'Paquete',
-            'new': 'Nuevo',
-            'off': 'de descuento',
-            'discount': 'Descuento',
-            'free': 'Gratis',
-            'shipping': 'Envío',
-            'tv': 'Televisor',
-            'ssd': 'Disco SSD',
-            'drive': 'Unidad',
-            'leather': 'de Cuero',
-            'men': 'para Hombre',
-            'women': 'para Mujer',
-            'kids': 'para Niños',
-            'sport': 'Deportivo',
-            'running': 'para Correr',
-            'speaker': 'Parlante',
-            'soundbar': 'Barra de Sonido',
-            'camera': 'Cámara',
-            'battery': 'Batería',
-            'charger': 'Cargador',
-            'cable': 'Cable',
-            'case': 'Estuche',
-            'tablet': 'Tablet',
-            'console': 'Consola',
-            'game': 'Juego'
+        let translated = title.toLowerCase();
+
+        // 1. Reemplazos de frases comunes (Orden de importancia)
+        const phrases = {
+            'noise canceling': 'con cancelación de ruido',
+            'noise cancelling': 'con cancelación de ruido',
+            'wireless bluetooth': 'Bluetooth inalámbrico',
+            'smart watch': 'Reloj Inteligente',
+            'fast charging': 'Carga rápida',
+            'stainless steel': 'Acero inoxidable',
+            'limited edition': 'Edición limitada',
+            'men\'s': 'para Hombre',
+            'women\'s': 'para Mujer',
+            'boy\'s': 'para Niño',
+            'girl\'s': 'para Niña',
+            'built-in': 'integrado',
+            'high definition': 'Alta definición',
+            'waterproof': 'Impermeable',
+            'shockproof': 'Resistente a golpes'
         };
 
-        let words = clean.split(' ');
-        let translated = words.map(w => {
-            let low = w.toLowerCase().replace(/[^a-z]/g, '');
-            return dict[low] || w;
+        for (let [eng, esp] of Object.entries(phrases)) {
+            translated = translated.replace(new RegExp(eng, 'g'), esp);
+        }
+
+        // 2. Diccionario de palabras sueltas
+        const dict = {
+            'laptop': 'Portátil', 'purifier': 'Purificador', 'cool': 'Cool', 'fan': 'Ventilador',
+            'smart': 'Inteligente', 'air': 'de Aire', 'watch': 'Reloj', 'shoes': 'Tenis',
+            'sneakers': 'Tenis', 'headphones': 'Audífonos', 'earbuds': 'Audífonos',
+            'monitor': 'Monitor', 'gaming': 'Gamer', 'shirt': 'Camisa', 'pant': 'Pantalón',
+            'keyboard': 'Teclado', 'mouse': 'Mouse', 'cordless': 'Inalámbrico',
+            'wireless': 'Inalámbrico', 'original': 'Original', 'clearance': '¡Remate!',
+            'sale': 'Oferta', 'deal': 'Ganga', 'phone': 'Celular', 'camera': 'Cámara',
+            'storage': 'Almacenamiento', 'fast': 'Rápido', 'pro': 'Pro', 'ultra': 'Ultra',
+            'black': 'Negro', 'white': 'Blanco', 'blue': 'Azul', 'red': 'Rojo',
+            'kit': 'Combo', 'pack': 'Paquete', 'new': 'Nuevo', 'off': 'de descuento',
+            'discount': 'Descuento', 'free': 'Gratis', 'shipping': 'Envío', 'tv': 'Televisor',
+            'ssd': 'Disco SSD', 'drive': 'Disco', 'leather': 'de Cuero', 'men': 'Hombre',
+            'women': 'Mujer', 'kids': 'Niños', 'sport': 'Deportivo', 'running': 'para Correr',
+            'speaker': 'Parlante', 'soundbar': 'Barra de Sonido', 'battery': 'Batería',
+            'charger': 'Cargador', 'cable': 'Cable', 'case': 'Estuche', 'tablet': 'Tablet',
+            'console': 'Consola', 'game': 'Juego', 'analog': 'Análogo', 'digital': 'Digital',
+            'multi-function': 'Multifunción', 'light': 'Luz', 'heavy': 'Pesado'
+        };
+
+        let words = translated.split(' ');
+        translated = words.map(w => {
+            let clean = w.replace(/[^a-z-]/g, '');
+            if (dict[clean]) return dict[clean];
+            return w;
         }).join(' ');
 
-        return translated;
+        // Capitalizar la primera letra y limpiar espacios
+        translated = translated.charAt(0).toUpperCase() + translated.slice(1);
+        return translated.replace(/\s+/g, ' ').trim();
     }
 
     cleanTitle(title) {
