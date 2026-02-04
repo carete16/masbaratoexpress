@@ -96,7 +96,8 @@ Título original: ${rawTitle}`;
             'speaker': 'Parlante', 'soundbar': 'Barra de Sonido', 'battery': 'Batería',
             'charger': 'Cargador', 'cable': 'Cable', 'case': 'Estuche', 'tablet': 'Tablet',
             'console': 'Consola', 'game': 'Juego', 'analog': 'Análogo', 'digital': 'Digital',
-            'multi-function': 'Multifunción', 'light': 'Luz', 'heavy': 'Pesado'
+            'multi-function': 'Multifunción', 'light': 'Luz', 'heavy': 'Pesado',
+            'and': 'y', 'for': 'para', 'with': 'con', 'set': 'Set de', 'inch': 'pulgadas'
         };
 
         let words = translated.split(' ');

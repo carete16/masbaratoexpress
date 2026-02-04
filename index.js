@@ -440,12 +440,12 @@ app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) =
 // 7.5.0 OBTENER TRM ACTUAL (ADMIN)
 app.get('/api/express/trm', async (req, res) => {
   try {
-    const response = await axios.get('https://trm-colombia.vercel.app/', { timeout: 5000 });
-    // Esta API retorna { "trm": 3900.50, ... }
-    if (response.data && response.data.trm) {
-      res.json({ success: true, trm: response.data.trm });
+    // Intentar con una API de respaldo muy estable
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 10000 });
+    if (response.data && response.data.rates && response.data.rates.COP) {
+      res.json({ success: true, trm: response.data.rates.COP });
     } else {
-      res.status(500).json({ success: false, error: 'No se pudo obtener la TRM' });
+      res.status(500).json({ success: false, error: 'No se pudo obtener la TRM de respaldo' });
     }
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
@@ -466,9 +466,17 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
     logger.info(`🔎 Buscando en ML: "${cleanQuery}"`);
     const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&limit=3`;
 
+    // Headers ultra-completos para parecer un usuario real navegando desde Colombia
     const response = await axios.get(searchUrl, {
       timeout: 10000,
-      headers: { 'User-Agent': 'Mozilla/5.0' } // Header mínimo
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'es-CO,es;q=0.9',
+        'Referer': 'https://www.mercadolibre.com.co/',
+        'Origin': 'https://www.mercadolibre.com.co',
+        'Cache-Control': 'max-age=0'
+      }
     });
 
     if (response.data.results && response.data.results.length > 0) {
