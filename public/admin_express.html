@@ -276,19 +276,21 @@
 
         function calculateFinal(priceUSD, weightLbs) {
             const dolarOp = parseInt(document.getElementById('globalDolarOp').value) || 3928;
-            const profitPct = 0.30;
-            const taxPct = 0.07;
             const shipRate = parseFloat(document.getElementById('globalRate').value) || 6;
 
-            const profitVal = priceUSD * profitPct;
-            const taxUSD = priceUSD * taxPct;
-            const lbsFinal = Math.ceil(weightLbs); // Se eliminó la libra extra obligatoria (+1)
-            const shipUSD = lbsFinal * shipRate;
+            // Limpieza de peso (manejar comas)
+            let w = weightLbs;
+            if (typeof w === 'string') w = parseFloat(w.replace(',', '.')) || 0;
+            if (isNaN(w)) w = 0;
+
+            const profitVal = priceUSD * 0.30;
+            const taxUSD = priceUSD * 0.07;
+            const shipUSD = w * shipRate;
 
             const totalUSD = priceUSD + profitVal + taxUSD + shipUSD;
-            const finalCOP = Math.ceil(totalUSD * dolarOp);
+            const finalCOP = Math.ceil(totalUSD * dolarOp / 1000) * 1000;
 
-            return { profitVal, taxUSD, lbsFinal, shipUSD, totalUSD, finalCOP, dolarOp };
+            return { profitVal, taxUSD, shipUSD, totalUSD, finalCOP, dolarOp };
         }
 
         async function loadData() {
@@ -311,18 +313,17 @@
 
             items.forEach(item => {
                 const priceUSD = parseFloat(item.price_offer) || 0;
-                const weight = parseFloat(item.weight) || 0;
-                const calc = calculateFinal(priceUSD, weight);
+                // --- LÓGICA DE IA EN TIEMPO REAL SI LOS VALORES VIENEN VACÍOS ---
+                const iaValue = guessIA(item.title);
+                const finalWeight = (weight > 0) ? weight : iaValue.weight;
+                const finalCat = (item.categoria && item.categoria !== 'General' && item.categoria !== 'Oferta') ? item.categoria : iaValue.cat;
+
+                const calc = calculateFinal(priceUSD, finalWeight);
                 const isPending = currentTab === 'pending';
                 const isLive = item.status === 'published';
 
                 const card = document.createElement('div');
                 card.className = 'card card-deal';
-
-                // --- LÓGICA DE IA EN TIEMPO REAL SI LOS VALORES VIENEN VACÍOS ---
-                const iaValue = guessIA(item.title);
-                const finalWeight = (weight > 0) ? weight : iaValue.weight;
-                const finalCat = (item.categoria && item.categoria !== 'General' && item.categoria !== 'Oferta') ? item.categoria : iaValue.cat;
 
                 card.innerHTML = `
                 <div class="row g-0 align-items-center">
@@ -447,6 +448,9 @@
             document.getElementById(`cat-${id}`).value = res.cat;
             document.getElementById(`weight-${id}`).value = res.weight;
 
+            // IMPORTANTE: Actualizar cálculos inmediatamente
+            updateRow(id);
+
             // 2. Sugerencia Remota (Título Optimizado)
             try {
                 const response = await axios.post(API_URL + '/admin/express/optimize-title', { title: currentTitle }, {
@@ -456,8 +460,6 @@
                     document.getElementById(`title-${id}`).value = response.data.optimized;
                 }
             } catch (e) { console.warn("Falló optimización de título IA"); }
-
-            updateRow(id);
         }
 
         async function saveChanges(id) {

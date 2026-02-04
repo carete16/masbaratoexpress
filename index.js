@@ -307,6 +307,15 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 6.5.3 ELIMINAR OFERTA (ADMIN)
+app.post('/api/admin/express/delete', authMiddleware, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.prepare("DELETE FROM published_deals WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // 6.6 APROBAR EXPRESS (ADMIN)
 app.post('/api/admin/express/approve', authMiddleware, async (req, res) => {
   const { id, price_cop, price_offer, title, weight, categoria } = req.body;
