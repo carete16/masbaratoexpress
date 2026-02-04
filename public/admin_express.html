@@ -187,7 +187,7 @@
                 <div class="col-md-3">
                     <div class="p-2 bg-light rounded-3 border-start border-4 border-primary small">
                         <strong>Regla de Negocio:</strong><br>
-                        Se usa el PESO REAL ingresado.<br>
+                        Peso Real + 1lb extra obligatoria.<br>
                         Redondeo SIEMPRE hacia arriba.
                     </div>
                 </div>
@@ -321,8 +321,8 @@
             // 2. Impuesto USA 7% (Calculado sobre el precio BASE)
             const impuestoUSD = priceUSD * 0.07;
 
-            // 3. Peso Real (Sin libras extras)
-            const lbsFinal = lbsReal;
+            // 3. Peso + 1lb extra
+            const lbsFinal = lbsReal + 1;
             const shipUSD = lbsFinal * rate;
 
             // 4. Total USD Final
@@ -408,7 +408,7 @@
                                         <span class="small text-muted fw-bold">Peso Real (Lbs):</span> 
                                         <div class="d-flex align-items-center gap-2">
                                             <input type="number" id="weight-${item.id}" step="0.1" class="form-control form-control-sm text-end w-25 border-info" value="${weightReal}" onkeyup="updateLive('${item.id}')" onchange="updateLive('${item.id}')">
-                                            <span class="small" style="font-size: 0.75rem;"><span id="rate-label-${item.id}">$${currentRate}</span>/lb (<span id="final-weight-${item.id}">${calc.lbsFinal}</span> lbs): <strong id="ship-cost-val-${item.id}" class="text-primary">$${calc.shipUSD.toFixed(2)} USD</strong></span>
+                                            <span class="small" style="font-size: 0.75rem;"><span id="rate-label-${item.id}">$${currentRate}</span>/lb + 1lb extra (<span id="final-weight-${item.id}">${calc.lbsFinal}</span> lbs): <strong id="ship-cost-val-${item.id}" class="text-primary">$${calc.shipUSD.toFixed(2)} USD</strong></span>
                                         </div>
                                     </div>
                                 </div>
@@ -427,9 +427,8 @@
                          </button>` :
                         item.status === 'expired' ?
                             `<div class="badge bg-danger py-2 mb-2" style="border-radius: 10px;">PRODUCTO AGOTADO</div>
-                         <button onclick="approve('${item.id}')" class="btn btn-primary btn-premium shadow-sm mb-2"><i class="fa-solid fa-rotate-left me-2"></i>RE-ACTIVAR Y GUARDAR</button>` :
+                         <button onclick="approve('${item.id}')" class="btn btn-primary btn-premium shadow-sm"><i class="fa-solid fa-rotate-left me-2"></i>RE-ACTIVAR</button>` :
                             `<div class="badge bg-success py-2 mb-2" style="border-radius: 10px;">PRODUCTO EN VIVO</div>
-                         <button onclick="approve('${item.id}')" class="btn btn-info btn-premium shadow-sm text-white mb-2"><i class="fa-solid fa-floppy-disk me-2"></i>GUARDAR CAMBIOS</button>
                          <button onclick="finalize('${item.id}')" class="btn btn-warning btn-premium">MARCAR AGOTADA</button>`
                     }
                                 </div>

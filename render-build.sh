@@ -2,13 +2,20 @@
 # exit on error
 set -o errexit
 
-# Instalar dependencias
-npm install
+echo "🚀 Iniciando construcción optimizada..."
 
-# Instalar Chrome para Puppeteer (Crucial para el Scraper)
-npx puppeteer browsers install chrome
+# Usar npm ci es más rápido y limpio para despliegues
+npm ci
 
-# Rebuild better-sqlite3 para el entorno Linux de Render
+# Instalar Chrome solo si no está en caché (esto ahorra mucho tiempo)
+if [ ! -d "$PUPPETEER_CACHE_DIR" ]; then
+  echo "📥 Instalando Chrome por primera vez..."
+  npx puppeteer browsers install chrome
+else
+  echo "✅ Chrome ya está en caché, saltando instalación."
+fi
+
+# Rebuild rápido
 npm rebuild better-sqlite3 --build-from-source
 
 echo "✅ Build completado exitosamente"
