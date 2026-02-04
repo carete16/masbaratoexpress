@@ -53,7 +53,7 @@ class CoreProcessor {
             };
 
             // --- FILTRO EXPRESS (OFERTAS BIEN DEFINIDAS) ---
-            const expressCats = ['Relojes', 'PC Components', 'Sneakers', 'General'];
+            const expressCats = ['Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables'];
             if (opp.status === 'pending_express' || (expressCats.includes(dealData.categoria) && !opp.isManual)) {
                 logger.info(`🛡️ Oferta Express detectada: ${dealData.title}. Enviando a cola de aprobación.`);
                 dealData.status = 'pending_express';

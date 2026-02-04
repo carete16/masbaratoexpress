@@ -316,11 +316,9 @@
                         <div class="col-md-6">
                             <label class="small fw-bold text-muted mb-1">CATEGORÍA <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
                             <select id="cat-${item.id}" class="form-select fw-bold" style="border-radius: 10px;">
-                                <option value="General" ${item.categoria == 'General' ? 'selected' : ''}>📦 General</option>
-                                <option value="Electrónica Premium" ${item.categoria == 'Electrónica Premium' ? 'selected' : ''}>💻 Electrónica</option>
-                                <option value="Relojes & Wearables" ${item.categoria == 'Relojes & Wearables' ? 'selected' : ''}>⌚ Relojes</option>
-                                <option value="Lifestyle & Street" ${item.categoria == 'Lifestyle & Street' ? 'selected' : ''}>👟 Tenis / Ropa</option>
-                                <option value="Hogar & Cocina" ${item.categoria == 'Hogar & Cocina' ? 'selected' : ''}>🏠 Hogar</option>
+                                <option value="Electrónica Premium" ${item.categoria == 'Electrónica Premium' ? 'selected' : ''}>💻 Electrónica Premium</option>
+                                <option value="Lifestyle & Street" ${item.categoria == 'Lifestyle & Street' ? 'selected' : ''}>👟 Lifestyle & Street</option>
+                                <option value="Relojes & Wearables" ${item.categoria == 'Relojes & Wearables' ? 'selected' : ''}>⌚ Relojes & Wearables</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -392,12 +390,12 @@
         async function saveChanges(id) {
             const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
             const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
-            const calc = calculateFinal(p, w);
             const title = document.getElementById(`title-${id}`).value;
             const categoria = document.getElementById(`cat-${id}`).value;
+            const calc = calculateFinal(p, w);
 
             try {
-                await axios.post(API_URL + '/admin/express/approve', {
+                const response = await axios.post(API_URL + '/admin/express/approve', {
                     id,
                     title,
                     price_offer: p,
@@ -405,9 +403,17 @@
                     price_cop: calc.finalCOP,
                     categoria
                 }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
-                alert("✅ Cambios guardados correctamente.");
-                loadData();
-            } catch (e) { alert("Error al guardar cambios"); }
+
+                if (response.data.success) {
+                    alert("✅ ¡ÉXITO! Cambios guardados para: \n" + title);
+                    loadData();
+                } else {
+                    alert("⚠️ Servidor dice: " + (response.data.error || "No se pudo guardar"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("❌ ERROR: No se pudo conectar con el servidor.");
+            }
         }
 
         async function toggleStatus(id, activate) {
@@ -449,18 +455,44 @@
         }
 
         async function postManual() {
-            const url = document.getElementById('manualUrl').value;
+            const urlInput = document.getElementById('manualUrl');
+            const url = urlInput.value.trim();
             if (!url) return;
+
             const btn = document.getElementById('btnProcess');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ANALIZANDO...';
+            btn.disabled = true;
+
             try {
-                await axios.post(API_URL + '/admin/express/manual-post', { url }, {
+                // PRIMERO: Analizar con la IA
+                const analysisRes = await axios.post(API_URL + '/admin/express/analyze', { url }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
-                document.getElementById('manualUrl').value = '';
-                loadData();
-            } catch (e) { alert("Error al procesar"); }
+
+                const data = analysisRes.data;
+
+                // SEGUNDO: Enviar a la base de datos con los datos detectados
+                const response = await axios.post(API_URL + '/admin/express/manual-post', {
+                    url: data.url,
+                    price: data.price,
+                    weight: data.weight,
+                    category: data.categoria,
+                    title: data.title
+                }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+
+                if (response.data.success) {
+                    urlInput.value = '';
+                    alert(`✅ IA DETECTÓ:\n📦 Título: ${data.title}\n⚖️ Peso: ${data.weight} lbs\n🏷️ Cat: ${data.categoria}\n\nAgregado a PENDIENTES.`);
+                    switchTab('pending');
+                }
+            } catch (e) {
+                console.error(e);
+                alert("❌ Falló el análisis de IA. Intenta con otro link o verifica el servidor.");
+            }
             btn.innerHTML = 'PROCESAR';
+            btn.disabled = false;
         }
 
         async function removeItem(id) {

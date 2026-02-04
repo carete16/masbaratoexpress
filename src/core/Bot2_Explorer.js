@@ -151,35 +151,33 @@ class ValidatorBot {
                     // C. Rescate de Peso y Categoría Inteligente (NUEVO & MEJORADO)
                     const t = result.title.toLowerCase();
 
-                    // 1. Detección de Categoría
-                    if (t.match(/laptop|notebook|macbook|computer|ssd|cpu|gpu|monitor|keyboard|mouse|headset|gaming/)) {
+                    // 1. Detección de Categoría (Restringido a las 3 oficiales)
+                    if (t.match(/laptop|notebook|macbook|computer|ssd|cpu|gpu|monitor|keyboard|mouse|headset|gaming|tech|electronics|pc|component/)) {
                         result.categoria = "Electrónica Premium";
-                    } else if (t.match(/watch|reloj|smartwatch|galaxy watch|apple watch|casio|rolex|invicta/)) {
+                    } else if (t.match(/watch|reloj|smartwatch|galaxy watch|apple watch|casio|rolex|invicta|citizen|seiko/)) {
                         result.categoria = "Relojes & Wearables";
-                    } else if (t.match(/shoe|sneaker|tenis|nike|adidas|reebok|puma|crocs|clothing|shirt|pants|hoodie|jacket|perfume|fragrance/)) {
-                        result.categoria = "Lifestyle & Street";
-                    } else if (t.match(/kitchen|cocina|coffee|fryer|vacuum|aspiradora|blender|home|casa|bed|pillow/)) {
-                        result.categoria = "Hogar & Cocina";
                     } else {
-                        result.categoria = "General";
+                        // Fallback a Lifestyle si no es tech o relojes
+                        result.categoria = "Lifestyle & Street";
                     }
 
                     // 2. Estimación de Peso (Heurística Senior)
                     if (!result.weight || result.weight <= 0) {
                         if (t.includes('laptop') || t.includes('macbook')) result.weight = 5.0;
-                        else if (t.includes('monitor')) result.weight = 12.0;
+                        else if (t.includes('monitor')) {
+                            if (t.includes('27')) result.weight = 14.0;
+                            else result.weight = 10.0;
+                        }
                         else if (t.includes('iphone') || t.includes('phone') || t.includes('smartphone')) result.weight = 0.8;
                         else if (t.includes('tablet') || t.includes('ipad')) result.weight = 1.5;
                         else if (t.includes('watch') || t.includes('smartwatch')) result.weight = 0.5;
-                        else if (t.includes('shoe') || t.includes('sneaker') || t.includes('tenis')) result.weight = 3.0;
+                        else if (t.match(/shoe|sneaker|tenis|nike|adidas/)) result.weight = 3.5;
                         else if (t.includes('headphone') || t.includes('earbuds')) result.weight = 0.6;
                         else if (t.includes('perfume') || t.includes('cologne')) result.weight = 1.2;
                         else if (t.includes('keyboard')) result.weight = 2.0;
-                        else if (t.includes('backpack')) result.weight = 2.2;
-                        else if (t.includes('vacuum') || t.includes('fryer')) result.weight = 14.5;
-                        else if (t.includes('camera')) result.weight = 3.5;
-                        else if (t.includes('tool') || t.includes('drill')) result.weight = 6.0;
-                        else result.weight = 2.0; // Default neutral
+                        else if (t.includes('backpack')) result.weight = 2.5;
+                        else if (t.includes('camera')) result.weight = 4.0;
+                        else result.weight = 2.0; // Default moderado
 
                         logger.info(`⚖️ IA ESTIMADORA: Peso ${result.weight} lbs y Cat: ${result.categoria} para "${result.title}"`);
                     }

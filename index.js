@@ -370,16 +370,16 @@ app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
 
 // 7.5 PUBLICACIÓN MANUAL EXPRESS (ADMIN)
 app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
-  const { url, price, weight, category } = req.body;
+  const { url, price, weight, category, title } = req.body;
   try {
-    let cat = 'General';
-    if (category === 'relojes') cat = 'Relojes';
-    if (category === 'pc') cat = 'PC Components';
-    if (category === 'tenis') cat = 'Sneakers';
+    let cat = 'Lifestyle & Street'; // Fallback por defecto
+    if (category === 'relojes' || category === 'Relojes & Wearables') cat = 'Relojes & Wearables';
+    if (category === 'pc' || category === 'Electrónica Premium') cat = 'Electrónica Premium';
+    if (category === 'tenis' || category === 'Lifestyle & Street') cat = 'Lifestyle & Street';
 
     const success = await CoreProcessor.processDeal({
       sourceLink: url,
-      title: 'Manual Express Order',
+      title: title || 'Manual Express Order',
       price_offer: price ? parseFloat(price) : null,
       weight: weight ? parseFloat(weight) : null,
       categoria: cat,
