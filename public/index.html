@@ -653,40 +653,96 @@
                 padding-right: 18px;
             }
 
-            .deal-grid {
-                grid-template-columns: 1fr;
-                gap: 25px;
+            @media (max-width: 768px) {
+                .hero-banner {
+                    padding: 60px 20px;
+                    margin-top: 60px;
+                    /* Espacio para header fijo */
+                }
+
+                .hero-banner h1 {
+                    font-size: 2.2rem;
+                }
+
+                .deal-grid {
+                    grid-template-columns: 1fr;
+                    /* Una columna en móvil */
+                    gap: 20px;
+                    padding: 0 15px;
+                }
+
+                /* Ajuste para tablets pequeñas */
+                @media (min-width: 600px) {
+                    .deal-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                        /* Dos columnas en tablets */
+                    }
+                }
+
+                .vip-section {
+                    padding: 40px 20px;
+                    margin: 20px 15px;
+                    border-radius: 20px;
+                }
+
+                .vip-section h2 {
+                    font-size: 1.8rem;
+                }
+
+                .how-works-card {
+                    padding: 30px 20px;
+                    margin: 20px 15px;
+                    border-radius: 20px;
+                }
+
+                /* Ajuste visual pasos en móvil */
+                .how-works-card .d-flex {
+                    flex-direction: row;
+                    /* Mantener horizontal icono-texto */
+                    align-items: flex-start;
+                    /* Alinear arriba por si el texto es largo */
+                }
+
+                .step-circle {
+                    width: 35px;
+                    height: 35px;
+                    font-size: 1.1rem;
+                    margin-top: 2px;
+                    /* Ajuste óptico */
+                }
+
+                .modal-legal-content {
+                    width: 90%;
+                    padding: 20px;
+                }
             }
 
-            .vip-section {
-                padding: 40px 25px;
-                border-radius: 24px;
+            @media (min-width: 769px) and (max-width: 1024px) {
+
+                /* Estilos específicos Tablet */
+                .deal-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 25px;
+                    padding: 0 30px;
+                }
+
+                .hero-banner h1 {
+                    font-size: 3rem;
+                }
             }
 
-            .vip-section h2 {
-                font-size: 1.8rem;
-            }
+            @media (min-width: 1025px) {
 
-            .how-works-card {
-                padding: 30px 20px;
-                border-radius: 24px;
-            }
+                .mobile-header,
+                .bottom-nav {
+                    display: none;
+                }
 
-            .modal-legal-content {
-                padding: 25px 20px;
-                border-radius: 20px;
+                /* PC: 3 columnas o 4 según ancho */
+                .deal-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                }
             }
-        }
-
-        @media (min-width: 1025px) {
-            .mobile-header {
-                display: none;
-            }
-
-            .bottom-nav {
-                display: none;
-            }
-        }
     </style>
 </head>
 
@@ -787,33 +843,75 @@
             <h4 class="fw-900 mb-5 text-center" style="letter-spacing: -1px; font-size: 1.6rem;">
                 <i class="fa-solid fa-bolt-lightning text-warning me-2"></i>¿CÓMO OPERA EL MODELO EXPRESS?
             </h4>
-            <div class="row g-4 position-relative">
-                <div class="col-md-3 text-center">
-                    <div class="step-circle">1</div>
-                    <h6 class="fw-800 mb-2">Publicación</h6>
-                    <p class="small text-muted px-2">Anunciamos oferta real verificada en USA.</p>
+
+            <div class="row g-4 justify-content-center">
+                <!-- Paso 1 -->
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center p-3 rounded-4"
+                        style="background: #ffffff; border: 1px solid #f1f5f9;">
+                        <div class="step-circle flex-shrink-0 me-3" style="margin:0;">1</div>
+                        <div class="text-start">
+                            <h6 class="fw-800 mb-1">Publicación</h6>
+                            <p class="small text-muted mb-0" style="line-height:1.3">Anunciamos oferta real verificada
+                                en USA.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 text-center">
-                    <div class="step-circle">2</div>
-                    <h6 class="fw-800 mb-2">Separación</h6>
-                    <p class="small text-muted px-2">Cliente reserva con el 50% del valor.</p>
+
+                <!-- Paso 2 -->
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center p-3 rounded-4"
+                        style="background: #ffffff; border: 1px solid #f1f5f9;">
+                        <div class="step-circle flex-shrink-0 me-3" style="margin:0;">2</div>
+                        <div class="text-start">
+                            <h6 class="fw-800 mb-1">Separación</h6>
+                            <p class="small text-muted mb-0" style="line-height:1.3">Cliente reserva con el 50% del
+                                valor.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 text-center">
-                    <div class="step-circle">3</div>
-                    <h6 class="fw-800 mb-2">Tránsito</h6>
-                    <p class="small text-muted px-2">Importamos tu producto (10-20 días).</p>
+
+                <!-- Paso 3 -->
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center p-3 rounded-4"
+                        style="background: #ffffff; border: 1px solid #f1f5f9;">
+                        <div class="step-circle flex-shrink-0 me-3" style="margin:0;">3</div>
+                        <div class="text-start">
+                            <h6 class="fw-800 mb-1">Tránsito</h6>
+                            <p class="small text-muted mb-0" style="line-height:1.3">Importamos tu producto (10-20
+                                días).</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-3 text-center">
-                    <div class="step-circle">4</div>
-                    <h6 class="fw-800 mb-2">Entrega</h6>
-                    <p class="small text-muted px-2">Pago final y envío a tu domicilio.</p>
+
+                <!-- Paso 4 -->
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center p-3 rounded-4"
+                        style="background: #ffffff; border: 1px solid #f1f5f9;">
+                        <div class="step-circle flex-shrink-0 me-3" style="margin:0;">4</div>
+                        <div class="text-start">
+                            <h6 class="fw-800 mb-1">Entrega</h6>
+                            <p class="small text-muted mb-0" style="line-height:1.3">Pago final y envío a tu domicilio.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="mt-5 p-4 bg-light rounded-4 border-start border-5 border-primary">
-                <div class="d-flex align-items-center gap-3">
-                    <i class="fa-solid fa-circle-check text-primary fa-2xl"></i>
-                    <p class="mb-0 small fw-700 text-dark">Garantía MasBarato: Solo procesamos compras en tiendas
-                        oficiales. <span class="text-primary">Cero falsificaciones, 100% legalidad.</span></p>
+
+            <!-- GARANTIA PREMIUM -->
+            <div class="mt-4 p-4 rounded-4 shadow-sm border border-light" style="background: #fff;">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <!-- Icono Premium Escudo Dorado -->
+                        <i class="fa-solid fa-shield-halved text-warning fa-2x"></i>
+                    </div>
+                    <div>
+                        <p class="mb-0 fw-800 text-dark">Garantía MasBarato</p>
+                        <p class="mb-0 small text-muted" style="line-height: 1.3;">
+                            Solo procesamos compras en tiendas oficiales. <br>
+                            <span class="text-success fw-bold">Cero falsificaciones, 100% legalidad.</span>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -969,7 +1067,7 @@
                 <div class="legal-section">
                     <h2><i class="fa-solid fa-file-contract"></i> TÉRMINOS Y CONDICIONES</h2>
                     <p>MasBarato Express opera como gestor de compras e importaciones internacionales, facilitando el acceso a ofertas reales desde tiendas oficiales en Estados Unidos.</p>
-                    <p><strong>1️⃣ Precios:</strong> Publicados en pesos colombianos (COP). El valor es final e incluye precio del producto, impuestos en USA e importación. Se calculan con TRM del día + $300 COP.</p>
+                    <p><strong>1️⃣ Precios:</strong> Publicados en pesos colombianos (COP). El valor es final e incluye precio del producto, impuestos en USA e importación.</p>
                     <p><strong>2️⃣ Pagos:</strong> Para asegurar una oferta se requiere un anticipo del 50%. El precio queda congelado una vez realizado el anticipo.</p>
                     <p><strong>3️⃣ Entregas:</strong> Los tiempos son estimados (10-20 días hábiles) y dependen de aduanas y logística internacional.</p>
                     <p><strong>4️⃣ Cancelaciones:</strong> Una vez comprado en USA, no se aceptan devoluciones. Si la oferta no se asegura, se devuelve el dinero íntegramente.</p>
