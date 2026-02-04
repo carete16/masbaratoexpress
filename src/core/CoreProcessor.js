@@ -42,7 +42,7 @@ class CoreProcessor {
 
             // 3. AUDITORÍA (Verificación de Ganga)
             const dealData = {
-                title: validation.title || opp.title,
+                title: await AI.generateOptimizedTitle(validation.title || opp.title),
                 price_offer: validation.realPrice,
                 price_official: validation.officialPrice || 0,
                 image: validation.image || opp.image,
@@ -51,11 +51,6 @@ class CoreProcessor {
                 status: 'pending_express', // POR DEFECTO: Todo va a cola de aprobación (REGLA DE ORO)
                 weight: (opp.weight !== undefined && opp.weight !== null) ? opp.weight : (validation.weight || 2.0)
             };
-
-            // Sobrescribir si es manual y ya trae un estado específico (ej: desde el Admin al aprobar)
-            if (opp.isManual && opp.status) {
-                dealData.status = opp.status;
-            }
 
             // Auditoría solo falla para automáticos
             const audit = await Auditor.audit(dealData);

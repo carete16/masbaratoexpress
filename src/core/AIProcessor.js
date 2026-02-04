@@ -57,6 +57,11 @@ Título original: ${rawTitle}`;
         // Diccionario de "IA de Emergencia" (Traducción rápida)
         const dict = {
             'laptop': 'Portátil',
+            'purifier': 'Purificador',
+            'cool': 'Refrescante',
+            'fan': 'Ventilador',
+            'smart': 'Inteligente',
+            'air': 'de Aire',
             'watch': 'Reloj',
             'shoes': 'Tenis',
             'sneakers': 'Tenis',
@@ -100,7 +105,17 @@ Título original: ${rawTitle}`;
             'women': 'para Mujer',
             'kids': 'para Niños',
             'sport': 'Deportivo',
-            'running': 'para Correr'
+            'running': 'para Correr',
+            'speaker': 'Parlante',
+            'soundbar': 'Barra de Sonido',
+            'camera': 'Cámara',
+            'battery': 'Batería',
+            'charger': 'Cargador',
+            'cable': 'Cable',
+            'case': 'Estuche',
+            'tablet': 'Tablet',
+            'console': 'Consola',
+            'game': 'Juego'
         };
 
         let words = clean.split(' ');
