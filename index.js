@@ -408,7 +408,8 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       image: result.image,
       weight: result.weight || 0,
       store: result.storeName,
-      url: result.finalUrl
+      url: result.finalUrl,
+      categoria: result.categoria
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
