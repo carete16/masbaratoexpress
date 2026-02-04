@@ -436,6 +436,33 @@ app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) =
   }
 });
 
+// 7.5.1 BUSCAR PRECIO EN MERCADOLIBRE (ADMIN)
+app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
+  const { title } = req.body;
+  if (!title) return res.status(400).json({ error: 'Título requerido' });
+
+  try {
+    // Buscar en MercadoLibre Colombia (MCO)
+    const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(title)}&limit=5`;
+    const response = await axios.get(searchUrl);
+
+    if (response.data.results && response.data.results.length > 0) {
+      const items = response.data.results;
+      // Tomar el precio promedio de los primeros 3 resultados para evitar outliers
+      const top3 = items.slice(0, 3);
+      const avgPrice = Math.round(top3.reduce((acc, curr) => acc + curr.price, 0) / top3.length);
+      const lowest = items[0].price;
+      const link = items[0].permalink;
+
+      res.json({ success: true, avgPrice, lowest, link });
+    } else {
+      res.json({ success: false, message: 'No se encontraron resultados' });
+    }
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // 7.6 ANALIZAR LINK (ADMIN)
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
