@@ -587,7 +587,6 @@
         }
 
         async function removeItem(id) {
-            if (!confirm("¿Eliminar definitivamente?")) return;
             try {
                 await axios.post(API_URL + '/admin/express/delete', { id }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
