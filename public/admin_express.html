@@ -353,7 +353,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="small fw-bold text-muted mb-1">PESO LBS <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
-                            <input type="number" step="0.1" id="weight-${item.id}" value="${finalWeight}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
+                            <input type="text" id="weight-${item.id}" value="${finalWeight}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
                         </div>
                     </div>
 
@@ -413,24 +413,28 @@
             });
         }
 
-        // --- LOGICA DE IA FRONTEND ---
+        // --- LOGICA DE IA FRONTEND (SHIPPING WEIGHT USA LBS) ---
         function guessIA(title) {
             const t = title.toLowerCase();
             let cat = "Lifestyle & Street";
-            let weight = 2.0;
+            let weight = 3.5; // Mínimo con caja y empaque
 
-            if (t.match(/laptop|macbook|monitor|ssd|cpu|gpu|keyboard|mouse|headset|gaming|tech|computer/)) {
+            if (t.match(/laptop|macbook|computer|ssd|cpu|gpu|monitor|keyboard|mouse|headset|gaming|tech/)) {
                 cat = "Electrónica Premium";
-                if (t.includes('laptop')) weight = 5.0;
-                else if (t.includes('monitor')) weight = 12.0;
-                else weight = 3.5;
-            } else if (t.match(/watch|reloj|smartwatch|casio|rolex|invicta|citizen/)) {
+                if (t.includes('laptop')) weight = 6.5;
+                else if (t.includes('monitor')) {
+                    if (t.includes('27')) weight = 17.0;
+                    else weight = 13.0;
+                }
+                else if (t.includes('tablet') || t.includes('ipad')) weight = 3.0;
+                else weight = 4.0;
+            } else if (t.match(/watch|reloj|smartwatch|apple watch|galaxy watch|casio|invicta/)) {
                 cat = "Relojes & Wearables";
-                weight = 0.5;
+                weight = 1.0;
             } else {
-                if (t.match(/shoe|sneaker|tenis|nike|adidas/)) weight = 3.5;
-                else if (t.includes('iphone') || t.includes('phone')) weight = 0.8;
-                else if (t.includes('perfume')) weight = 1.2;
+                if (t.match(/shoe|sneaker|tenis|nike|adidas/)) weight = 5.0;
+                else if (t.includes('iphone') || t.includes('phone')) weight = 1.5;
+                else if (t.includes('perfume')) weight = 2.0;
             }
             return { cat, weight };
         }

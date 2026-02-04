@@ -67,6 +67,7 @@ class DeepScraper {
                 let description = "";
                 let isUnavailable = false;
                 let couponInfo = null;
+                let weight = 0;
 
                 const clean = (txt) => {
                     if (!txt) return 0;
