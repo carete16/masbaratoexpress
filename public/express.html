@@ -358,6 +358,33 @@
             box-shadow: 0 8px 25px rgba(15, 23, 42, 0.3);
         }
 
+        /* --- EXPIRED STYLE --- */
+        .deal-card.expired {
+            filter: grayscale(0.8);
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .deal-card.expired .btn-view {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .badge-expired {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--accent-red);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 11px;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+            text-transform: uppercase;
+            z-index: 10;
+        }
+
         /* --- MOBILE LAYOUT --- */
         .bottom-nav {
             display: flex;
@@ -542,10 +569,12 @@
                     currentPrice = '~ ' + formatCurrency(est);
                 }
 
+                const isExpired = deal.status === 'expired';
                 const card = document.createElement('div');
-                card.className = 'deal-card';
+                card.className = `deal-card ${isExpired ? 'expired' : ''}`;
                 card.innerHTML = `
                     <div class="image-container">
+                        ${isExpired ? '<div class="badge-expired"><i class="fa-solid fa-clock"></i> AGOTADO</div>' : ''}
                         <div class="badge-cop"><i class="fa-solid fa-check"></i> 🇨🇴 Todo Incluido</div>
                         <img src="/api/proxy-image?url=${encodeURIComponent(deal.image)}" alt="${deal.title}" loading="lazy" 
                              onerror="this.src='https://placehold.co/400x300/f8fafc/64748b?text=Express'">
@@ -559,8 +588,8 @@
                             <span class="price-usd">(Ref USD: $${deal.price_offer})</span>
                         </div>
 
-                        <a href="/go/${deal.id}" target="_blank" class="btn-view">
-                            COMPRAR AHORA <i class="fa-solid fa-arrow-right"></i>
+                        <a href="${isExpired ? '#' : '/go/' + deal.id}" target="${isExpired ? '_self' : '_blank'}" class="btn-view">
+                            ${isExpired ? 'PRODUCTO AGOTADO' : 'COMPRAR AHORA <i class="fa-solid fa-arrow-right"></i>'}
                         </a>
                     </div>
                 `;
