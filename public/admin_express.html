@@ -278,14 +278,16 @@
             const dolarOp = parseInt(document.getElementById('globalDolarOp').value) || 3928;
             const shipRate = parseFloat(document.getElementById('globalRate').value) || 6;
 
-            // Limpieza de peso (manejar comas)
+            // Limpieza y validación de peso
             let w = weightLbs;
             if (typeof w === 'string') w = parseFloat(w.replace(',', '.')) || 0;
-            if (isNaN(w)) w = 0;
+            if (isNaN(w) || w < 0) w = 0;
 
             const profitVal = priceUSD * 0.30;
             const taxUSD = priceUSD * 0.07;
-            const shipUSD = w * shipRate;
+
+            // Regla: Peso Real redondeado hacia arriba por libra
+            const shipUSD = Math.ceil(w) * shipRate;
 
             const totalUSD = priceUSD + profitVal + taxUSD + shipUSD;
             const finalCOP = Math.ceil(totalUSD * dolarOp / 1000) * 1000;
@@ -338,7 +340,7 @@
                         <label class="small fw-bold text-muted">TÍTULO (EDITABLE)</label>
                         <button onclick="applyIA('${item.id}')" class="btn-ia-magic"><i class="fa-solid fa-wand-sparkles"></i> RE-CALCULAR IA</button>
                     </div>
-                    <textarea class="form-control fw-bold border mb-3" rows="2" style="font-size: 1rem; border-radius: 10px;" id="title-${item.id}" oninput="if(weight-${item.id}.value == 0) applyIA('${item.id}')">${item.title}</textarea>
+                    <textarea class="form-control fw-bold border mb-3" rows="2" style="font-size: 1rem; border-radius: 10px;" id="title-${item.id}">${item.title}</textarea>
                     
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
@@ -392,7 +394,10 @@
                     <div class="price-cop-display mb-4" id="cop-${item.id}" style="font-size: 2.5rem;">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
                         
                         ${isPending ?
-                        `<button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4 mb-2">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>` :
+                        `
+                            <button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4 mb-2">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>
+                            <button onclick="saveChanges('${item.id}')" class="btn btn-outline-primary btn-sm fw-bold w-100 rounded-3 mb-2"><i class="fa-solid fa-check me-1"></i> GUARDAR SIN PUBLICAR</button>
+                        ` :
                         `
                             <div class="mb-3">
                                 <span class="status-label ${isLive ? 'text-success' : 'text-danger'}">${isLive ? 'OFERTA ACTIVA ✅' : 'OFERTA AGOTADA ❌'}</span>
@@ -476,7 +481,7 @@
             if (w <= 0) { alert("⚠️ El peso debe ser mayor a 0 (Usa punto o coma para decimales)"); return; }
 
             try {
-                const response = await axios.post(API_URL + '/admin/express/approve', {
+                const response = await axios.post(API_URL + '/admin/express/update', {
                     id,
                     title,
                     price_offer: p,
@@ -486,12 +491,12 @@
                 }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
 
                 if (response.data.success) {
-                    alert("✅ Cambios guardados.");
+                    alert("✅ Guardado correctamente.");
                     loadData();
                 } else {
                     alert("⚠️ Error al guardar");
                 }
-            } catch (e) { alert("❌ Error de conexión"); }
+            } catch (e) { alert("❌ Error de conexión al guardar"); }
         }
 
         async function toggleStatus(id, activate) {

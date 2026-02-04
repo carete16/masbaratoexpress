@@ -4,6 +4,7 @@ const path = require('path');
 const { db } = require('./src/database/db');
 const LinkTransformer = require('./src/utils/LinkTransformer');
 const CoreProcessor = require('./src/core/CoreProcessor');
+const AIProcessor = require('./src/core/AIProcessor');
 require('dotenv').config();
 
 const app = express();
@@ -325,21 +326,39 @@ app.post('/api/admin/express/approve', authMiddleware, async (req, res) => {
         UPDATE published_deals 
         SET status = 'published', price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?
         WHERE id = ?
-    `).run(price_cop || 0, price_offer || 0, title, weight || 0, categoria || 'Lifestyle & Street', id);
+    `).run(
+      parseFloat(price_cop) || 0,
+      parseFloat(price_offer) || 0,
+      title,
+      parseFloat(weight) || 0,
+      categoria || 'Lifestyle & Street',
+      id
+    );
 
-    if (updated.changes > 0) {
-      // Enviar a Telegram inmediatamente
-      const deal = db.prepare('SELECT * FROM published_deals WHERE id = ?').get(id);
-      const Publisher = require('./src/core/Bot4_Publisher');
-      // El publisher ahora tiene la lógica para ver el price_cop y enviarlo bonito
-      await Publisher.sendOffer(deal);
-    }
-
+    console.log(`✅ Resultado del UPDATE: ${updated.changes} filas modificadas.`);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 7. PUBLICACIÓN MANUAL (ADMIN)
+// 6.7 ACTUALIZAR SIN CAMBIAR ESTADO (ADMIN)
+app.post('/api/admin/express/update', authMiddleware, async (req, res) => {
+  const { id, price_cop, price_offer, title, weight, categoria } = req.body;
+  try {
+    db.prepare(`
+        UPDATE published_deals 
+        SET price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?
+        WHERE id = ?
+    `).run(
+      parseFloat(price_cop) || 0,
+      parseFloat(price_offer) || 0,
+      title,
+      parseFloat(weight) || 0,
+      categoria || 'Lifestyle & Street',
+      id
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 app.get('/api/admin/stats', authMiddleware, (req, res) => {
   try {
     const totalDeals = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
@@ -392,7 +411,7 @@ app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
       title: title || 'Manual Express Order',
       price_offer: price ? parseFloat(price) : null,
       weight: weight ? parseFloat(weight) : null,
-      categoria: cat,
+      categoria: category || 'Lifestyle & Street',
       isManual: true,
       status: 'pending_express'
     });

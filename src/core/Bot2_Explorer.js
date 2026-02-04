@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const logger = require('../utils/logger');
 const LinkResolver = require('../utils/LinkResolver');
 const DeepScraper = require('../utils/DeepScraper');
+const AIProcessor = require('./AIProcessor');
 
 /**
  * BOT 2: EL EXPLORADOR (VALIDADOR ESTRICTO)
@@ -62,7 +63,6 @@ class ValidatorBot {
                 result.weight = deepData.weight || 0;
                 if (deepData.image) result.image = deepData.image;
                 if (deepData.title) {
-                    const AIProcessor = require('./AIProcessor');
                     result.title = await AIProcessor.generateOptimizedTitle(deepData.title);
                 }
             } else if (opportunity.isManual) {
@@ -77,7 +77,6 @@ class ValidatorBot {
                         const pathParts = new URL(result.finalUrl).pathname.split('/').filter(p => p.length > 5);
                         if (pathParts[0]) {
                             const raw = pathParts[0].replace(/-/g, ' ');
-                            const AIProcessor = require('./AIProcessor');
                             result.title = await AIProcessor.generateOptimizedTitle(raw);
                         }
                     } catch (e) { }
