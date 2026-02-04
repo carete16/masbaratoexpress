@@ -10,7 +10,13 @@ class AIProcessor {
     }
 
     async generateOptimizedTitle(rawTitle) {
-        if (!this.apiKey) return this.cleanTitle(rawTitle);
+        // Recargar la llave por si no estaba lista en el constructor
+        if (!this.apiKey) this.apiKey = process.env.OPENAI_API_KEY;
+
+        if (!this.apiKey) {
+            logger.warn("⚠️ OPENAI_API_KEY no detectada en .env. Usando traductor básico.");
+            return this.pseudoTranslate(rawTitle);
+        }
 
         try {
             const prompt = `Actúa como un experto en Growth Hacking y Ventas para un canal de ofertas.
@@ -37,11 +43,73 @@ Título original: ${rawTitle}`;
             // Limpiar si la IA agregó comillas o "Título:"
             optimized = optimized.replace(/^["']|["']$/g, '').replace(/^Título:\s*/i, '');
 
-            return optimized || this.cleanTitle(rawTitle);
+            return optimized || this.pseudoTranslate(rawTitle);
         } catch (e) {
             logger.warn(`⚠️ OpenAI Title Error: ${e.message}. Usando fallback.`);
-            return this.cleanTitle(rawTitle);
+            return this.pseudoTranslate(rawTitle);
         }
+    }
+
+    pseudoTranslate(title) {
+        if (!title) return "Oferta Exclusiva";
+        let clean = this.cleanTitle(title);
+
+        // Diccionario de "IA de Emergencia" (Traducción rápida)
+        const dict = {
+            'laptop': 'Portátil',
+            'watch': 'Reloj',
+            'shoes': 'Tenis',
+            'sneakers': 'Tenis',
+            'headphones': 'Audífonos',
+            'earbuds': 'Audífonos Bluetooth',
+            'monitor': 'Monitor Gamer',
+            'gaming': 'para Gaming',
+            'shirt': 'Camisa',
+            'pant': 'Pantalón',
+            'keyboard': 'Teclado',
+            'mouse': 'Mouse',
+            'cordless': 'Inalámbrico',
+            'wireless': 'Inalámbrico',
+            'original': 'Original',
+            'clearance': '¡LIQUIDACIÓN!',
+            'sale': 'OFERTA',
+            'deal': 'Ganga',
+            'smartwatch': 'Reloj Inteligente',
+            'phone': 'Celular',
+            'camera': 'Cámara',
+            'storage': 'Almacenamiento',
+            'fast': 'Rápido',
+            'pro': 'Premium',
+            'ultra': 'Ultra',
+            'black': 'Negro',
+            'white': 'Blanco',
+            'blue': 'Azul',
+            'red': 'Rojo',
+            'kit': 'Combo',
+            'pack': 'Paquete',
+            'new': 'Nuevo',
+            'off': 'de descuento',
+            'discount': 'Descuento',
+            'free': 'Gratis',
+            'shipping': 'Envío',
+            'tv': 'Televisor',
+            'ssd': 'Disco SSD',
+            'drive': 'Unidad',
+            'leather': 'de Cuero',
+            'men': 'para Hombre',
+            'women': 'para Mujer',
+            'kids': 'para Niños',
+            'sport': 'Deportivo',
+            'running': 'para Correr'
+        };
+
+        let words = clean.split(' ');
+        let translated = words.map(w => {
+            let low = w.toLowerCase().replace(/[^a-z]/g, '');
+            return dict[low] || w;
+        }).join(' ');
+
+        return translated;
     }
 
     cleanTitle(title) {

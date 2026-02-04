@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
@@ -5,7 +6,6 @@ const { db } = require('./src/database/db');
 const LinkTransformer = require('./src/utils/LinkTransformer');
 const CoreProcessor = require('./src/core/CoreProcessor');
 const AIProcessor = require('./src/core/AIProcessor');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
