@@ -439,11 +439,24 @@
             return { cat, weight };
         }
 
-        function applyIA(id) {
-            const title = document.getElementById(`title-${id}`).value;
-            const res = guessIA(title);
+        async function applyIA(id) {
+            const currentTitle = document.getElementById(`title-${id}`).value;
+            const res = guessIA(currentTitle);
+
+            // 1. Sugerencia Local (Peso y Cat)
             document.getElementById(`cat-${id}`).value = res.cat;
             document.getElementById(`weight-${id}`).value = res.weight;
+
+            // 2. Sugerencia Remota (Título Optimizado)
+            try {
+                const response = await axios.post(API_URL + '/admin/express/optimize-title', { title: currentTitle }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+                if (response.data.success) {
+                    document.getElementById(`title-${id}`).value = response.data.optimized;
+                }
+            } catch (e) { console.warn("Falló optimización de título IA"); }
+
             updateRow(id);
         }
 

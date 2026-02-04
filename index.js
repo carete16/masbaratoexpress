@@ -396,6 +396,18 @@ app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 7.5 OPTIMIZAR TÍTULO CON IA (ADMIN)
+app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) => {
+  const { title } = req.body;
+  try {
+    const AIProcessor = require('./src/core/AIProcessor');
+    const optimized = await AIProcessor.generateOptimizedTitle(title);
+    res.json({ success: true, optimized });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // 7.6 ANALIZAR LINK (ADMIN)
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;

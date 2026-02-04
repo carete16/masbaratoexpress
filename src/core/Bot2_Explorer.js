@@ -61,7 +61,10 @@ class ValidatorBot {
                 result.isValid = true;
                 result.weight = deepData.weight || 0;
                 if (deepData.image) result.image = deepData.image;
-                if (deepData.title) result.title = deepData.title;
+                if (deepData.title) {
+                    const AIProcessor = require('./AIProcessor');
+                    result.title = await AIProcessor.generateOptimizedTitle(deepData.title);
+                }
             } else if (opportunity.isManual) {
                 // Modo Rescate para Manual
                 result.isValid = true;
@@ -72,7 +75,11 @@ class ValidatorBot {
                 if (!result.title || result.title.includes('Manual') || result.title.length < 5) {
                     try {
                         const pathParts = new URL(result.finalUrl).pathname.split('/').filter(p => p.length > 5);
-                        if (pathParts[0]) result.title = pathParts[0].replace(/-/g, ' ');
+                        if (pathParts[0]) {
+                            const raw = pathParts[0].replace(/-/g, ' ');
+                            const AIProcessor = require('./AIProcessor');
+                            result.title = await AIProcessor.generateOptimizedTitle(raw);
+                        }
                     } catch (e) { }
                 }
             } else if (providedPrice > 0 && opportunity.image) {
