@@ -48,15 +48,13 @@ class CoreProcessor {
                 image: validation.image || opp.image,
                 tienda: validation.storeName || opp.tienda,
                 categoria: opp.categoria || validation.categoria || 'General',
-                status: opp.status || 'published',
+                status: 'pending_express', // POR DEFECTO: Todo va a cola de aprobación (REGLA DE ORO)
                 weight: (opp.weight !== undefined && opp.weight !== null) ? opp.weight : (validation.weight || 2.0)
             };
 
-            // --- FILTRO EXPRESS (OFERTAS BIEN DEFINIDAS) ---
-            const expressCats = ['Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables'];
-            if (opp.status === 'pending_express' || (expressCats.includes(dealData.categoria) && !opp.isManual)) {
-                logger.info(`🛡️ Oferta Express detectada: ${dealData.title}. Enviando a cola de aprobación.`);
-                dealData.status = 'pending_express';
+            // Sobrescribir si es manual y ya trae un estado específico (ej: desde el Admin al aprobar)
+            if (opp.isManual && opp.status) {
+                dealData.status = opp.status;
             }
 
             // Auditoría solo falla para automáticos
