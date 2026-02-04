@@ -443,7 +443,10 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
 
   try {
     // Limpiar el título para mejorar la búsqueda (quitar emojis y palabras ruidosas)
-    const cleanQuery = title.replace(/[^\w\s]/gi, '').replace(/(LIQUIDACIÓNOFERTAGANGAPREMIUM)/gi, '').trim();
+    let cleanQuery = title.replace(/[^\w\s]/gi, ' ').replace(/(LIQUIDACIÓN|OFERTA|GANGA|PREMIUM|EXCLUSIVO|CHANCE)/gi, '').replace(/\s+/g, ' ').trim();
+    if (!cleanQuery) cleanQuery = title.substring(0, 60);
+
+    console.log(`🔎 Buscando en ML MCO: "${cleanQuery}" (Original: "${title}")`);
     const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&limit=5`;
     const response = await axios.get(searchUrl);
 
