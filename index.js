@@ -265,7 +265,7 @@ app.post('/api/delete-deal', authMiddleware, (req, res) => {
 app.post('/api/approve-deal', authMiddleware, (req, res) => {
   const { id } = req.body;
   try {
-    db.prepare("UPDATE published_deals SET status = 'published' WHERE id = ?").run(id);
+    db.prepare("UPDATE published_deals SET status = 'published', posted_at = CURRENT_TIMESTAMP WHERE id = ?").run(id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -324,7 +324,7 @@ app.post('/api/admin/express/approve', authMiddleware, async (req, res) => {
   try {
     const updated = db.prepare(`
         UPDATE published_deals 
-        SET status = 'published', price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?
+        SET status = 'published', price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?, posted_at = CURRENT_TIMESTAMP
         WHERE id = ?
     `).run(
       parseFloat(price_cop) || 0,
