@@ -181,6 +181,23 @@
             max-height: 100%;
             object-fit: contain;
         }
+
+        .btn-ia-magic {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid var(--primary-glow);
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-ia-magic:hover {
+            background: var(--primary);
+            color: white;
+        }
     </style>
 </head>
 
@@ -301,6 +318,12 @@
 
                 const card = document.createElement('div');
                 card.className = 'card card-deal';
+
+                // --- LÓGICA DE IA EN TIEMPO REAL SI LOS VALORES VIENEN VACÍOS ---
+                const iaValue = guessIA(item.title);
+                const finalWeight = (weight > 0) ? weight : iaValue.weight;
+                const finalCat = (item.categoria && item.categoria !== 'General' && item.categoria !== 'Oferta') ? item.categoria : iaValue.cat;
+
                 card.innerHTML = `
                 <div class="row g-0 align-items-center">
                     <div class="col-md-2 p-4">
@@ -309,16 +332,19 @@
                     <div class="fw-bold text-center text-primary" style="font-size: 1.2rem;">$${priceUSD.toFixed(2)} USD</div>
                 </div>
                 <div class="col-md-6 p-4 border-end">
-                    <label class="small fw-bold text-muted mb-1">TÍTULO DE LA PUBLICACIÓN (EDITABLE)</label>
-                    <textarea class="form-control fw-bold border mb-3" rows="2" style="font-size: 1rem; border-radius: 10px;" id="title-${item.id}">${item.title}</textarea>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="small fw-bold text-muted">TÍTULO (EDITABLE)</label>
+                        <button onclick="applyIA('${item.id}')" class="btn-ia-magic"><i class="fa-solid fa-wand-sparkles"></i> RE-CALCULAR IA</button>
+                    </div>
+                    <textarea class="form-control fw-bold border mb-3" rows="2" style="font-size: 1rem; border-radius: 10px;" id="title-${item.id}" oninput="if(weight-${item.id}.value == 0) applyIA('${item.id}')">${item.title}</textarea>
                     
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
                             <label class="small fw-bold text-muted mb-1">CATEGORÍA <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
                             <select id="cat-${item.id}" class="form-select fw-bold" style="border-radius: 10px;">
-                                <option value="Electrónica Premium" ${item.categoria == 'Electrónica Premium' ? 'selected' : ''}>💻 Electrónica Premium</option>
-                                <option value="Lifestyle & Street" ${item.categoria == 'Lifestyle & Street' ? 'selected' : ''}>👟 Lifestyle & Street</option>
-                                <option value="Relojes & Wearables" ${item.categoria == 'Relojes & Wearables' ? 'selected' : ''}>⌚ Relojes & Wearables</option>
+                                <option value="Electrónica Premium" ${finalCat == 'Electrónica Premium' ? 'selected' : ''}>💻 Electrónica Premium</option>
+                                <option value="Lifestyle & Street" ${finalCat == 'Lifestyle & Street' ? 'selected' : ''}>👟 Lifestyle & Street</option>
+                                <option value="Relojes & Wearables" ${finalCat == 'Relojes & Wearables' ? 'selected' : ''}>⌚ Relojes & Wearables</option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -327,7 +353,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="small fw-bold text-muted mb-1">PESO LBS <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
-                            <input type="number" id="weight-${item.id}" value="${weight}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
+                            <input type="number" step="0.1" id="weight-${item.id}" value="${finalWeight}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
                         </div>
                     </div>
 
@@ -387,12 +413,44 @@
             });
         }
 
+        // --- LOGICA DE IA FRONTEND ---
+        function guessIA(title) {
+            const t = title.toLowerCase();
+            let cat = "Lifestyle & Street";
+            let weight = 2.0;
+
+            if (t.match(/laptop|macbook|monitor|ssd|cpu|gpu|keyboard|mouse|headset|gaming|tech|computer/)) {
+                cat = "Electrónica Premium";
+                if (t.includes('laptop')) weight = 5.0;
+                else if (t.includes('monitor')) weight = 12.0;
+                else weight = 3.5;
+            } else if (t.match(/watch|reloj|smartwatch|casio|rolex|invicta|citizen/)) {
+                cat = "Relojes & Wearables";
+                weight = 0.5;
+            } else {
+                if (t.match(/shoe|sneaker|tenis|nike|adidas/)) weight = 3.5;
+                else if (t.includes('iphone') || t.includes('phone')) weight = 0.8;
+                else if (t.includes('perfume')) weight = 1.2;
+            }
+            return { cat, weight };
+        }
+
+        function applyIA(id) {
+            const title = document.getElementById(`title-${id}`).value;
+            const res = guessIA(title);
+            document.getElementById(`cat-${id}`).value = res.cat;
+            document.getElementById(`weight-${id}`).value = res.weight;
+            updateRow(id);
+        }
+
         async function saveChanges(id) {
             const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
             const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
             const title = document.getElementById(`title-${id}`).value;
             const categoria = document.getElementById(`cat-${id}`).value;
             const calc = calculateFinal(p, w);
+
+            if (w <= 0) { alert("⚠️ El peso debe ser mayor a 0"); return; }
 
             try {
                 const response = await axios.post(API_URL + '/admin/express/approve', {
@@ -405,23 +463,22 @@
                 }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
 
                 if (response.data.success) {
-                    alert("✅ ¡ÉXITO! Cambios guardados para: \n" + title);
+                    alert("✅ Cambios guardados.");
                     loadData();
                 } else {
-                    alert("⚠️ Servidor dice: " + (response.data.error || "No se pudo guardar"));
+                    alert("⚠️ Error al guardar");
                 }
-            } catch (e) {
-                console.error(e);
-                alert("❌ ERROR: No se pudo conectar con el servidor.");
-            }
+            } catch (e) { alert("❌ Error de conexión"); }
         }
 
         async function toggleStatus(id, activate) {
             const p = parseFloat(document.getElementById(`price-${id}`)?.value) || 0;
             const w = parseFloat(document.getElementById(`weight-${id}`)?.value) || 0;
-            const calc = calculateFinal(p, w);
             const title = document.getElementById(`title-${id}`)?.value;
-            const categoria = document.getElementById(`cat-${id}`)?.value || 'General';
+            const categoria = document.getElementById(`cat-${id}`)?.value || 'Lifestyle & Street';
+            const calc = calculateFinal(p, w);
+
+            if (activate && w <= 0) { alert("⚠️ Define un peso antes de aprobar."); return; }
 
             try {
                 if (activate) {

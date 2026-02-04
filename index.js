@@ -310,12 +310,13 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
 // 6.6 APROBAR EXPRESS (ADMIN)
 app.post('/api/admin/express/approve', authMiddleware, async (req, res) => {
   const { id, price_cop, price_offer, title, weight, categoria } = req.body;
+  console.log(`💾 Guardando cambio para ${id}: Título: ${title}, Peso: ${weight}, Cat: ${categoria}`);
   try {
     const updated = db.prepare(`
         UPDATE published_deals 
         SET status = 'published', price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?
         WHERE id = ?
-    `).run(price_cop || 0, price_offer || 0, title, weight || 0, categoria || 'General', id);
+    `).run(price_cop || 0, price_offer || 0, title, weight || 0, categoria || 'Lifestyle & Street', id);
 
     if (updated.changes > 0) {
       // Enviar a Telegram inmediatamente
