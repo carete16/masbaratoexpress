@@ -317,16 +317,16 @@
                         <div class="price-cop-display mb-4" id="cop-${item.id}">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
                         
                         ${isPending ?
-                        `<button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>` :
+                        `<button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4 mb-2">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>` :
                         `
-                            <div class="mb-2">
+                            <div class="mb-3">
                                 <span class="status-label ${isLive ? 'text-success' : 'text-danger'}">${isLive ? 'OFERTA ACTIVA ✅' : 'OFERTA AGOTADA ❌'}</span>
                                 <label class="switch">
                                     <input type="checkbox" ${isLive ? 'checked' : ''} onchange="toggleStatus('${item.id}', this.checked)">
                                     <span class="slider"></span>
                                 </label>
                             </div>
-                            <div class="small text-muted mt-2">Usa el interruptor para activar/agotar</div>
+                            <button onclick="saveChanges('${item.id}')" class="btn btn-info btn-sm text-white fw-bold w-100 rounded-3 mb-2"><i class="fa-solid fa-floppy-disk me-1"></i> GUARDAR CAMBIOS</button>
                             `
                     }
                         
@@ -338,6 +338,26 @@
                 </div>`;
                 container.appendChild(card);
             });
+        }
+
+        async function saveChanges(id) {
+            const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
+            const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
+            const calc = calculateFinal(p, w);
+            const title = document.getElementById(`title-${id}`).value;
+
+            try {
+                await axios.post(API_URL + '/admin/express/approve', {
+                    id,
+                    title,
+                    price_offer: p,
+                    weight: w,
+                    price_cop: calc.finalCOP,
+                    categoria: 'General'
+                }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
+                alert("✅ Cambios guardados correctamente.");
+                loadData();
+            } catch (e) { alert("Error al guardar cambios"); }
         }
 
         async function toggleStatus(id, activate) {

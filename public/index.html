@@ -743,6 +743,52 @@
                     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                 }
             }
+
+            /* IMAGE ZOOM MODAL */
+            .zoom-modal {
+                display: none;
+                position: fixed;
+                z-index: 9999;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+            }
+
+            .zoom-modal-content {
+                max-width: 90%;
+                max-height: 90%;
+                background: white;
+                border-radius: 20px;
+                padding: 10px;
+                position: relative;
+            }
+
+            .zoom-modal img {
+                max-width: 100%;
+                max-height: 80vh;
+                border-radius: 15px;
+                display: block;
+            }
+
+            .zoom-modal-close {
+                position: absolute;
+                top: -50px;
+                right: 0;
+                color: white;
+                font-size: 30px;
+                cursor: pointer;
+                background: none;
+                border: none;
+            }
+
+            .image-container img {
+                cursor: zoom-in;
+            }
     </style>
 </head>
 
@@ -953,6 +999,16 @@
         </div>
     </div>
 
+    <!-- IMAGE ZOOM MODAL -->
+    <div id="zoomModal" class="zoom-modal" onclick="closeZoom()">
+        <div class="zoom-modal-content" onclick="event.stopPropagation()">
+            <button class="zoom-modal-close" onclick="closeZoom()"><i class="fa-solid fa-xmark"></i></button>
+            <img id="zoomImg" src="" alt="Zoom">
+            <p id="zoomTitle" style="margin-top: 15px; font-weight: 800; text-align: center; color: var(--text-main);">
+            </p>
+        </div>
+    </div>
+
     <!-- MOBILE NAV -->
     <nav class="bottom-nav">
         <a href="/" class="bottom-nav-item active">
@@ -999,7 +1055,7 @@
                 card.style.opacity = isExpired ? '0.7' : '1';
 
                 card.innerHTML = `
-                    <div class="image-container">
+                    <div class="image-container" onclick="openZoom('${deal.image}', '${deal.title.replace(/'/g, "\\'")}')">
                         ${isExpired ? '<div class="badge-cop" style="background:#64748b">AGOTADA</div>' : '<div class="badge-cop"><i class="fa-solid fa-check"></i> 🇨🇴 Todo Incluido</div>'}
                         <img src="/api/proxy-image?url=${encodeURIComponent(deal.image)}" alt="${deal.title}" loading="lazy" 
                              style="${isExpired ? 'filter: grayscale(1);' : ''}"
@@ -1135,6 +1191,15 @@
         });
 
         fetchDeals();
+        function openZoom(img, title) {
+            document.getElementById('zoomImg').src = '/api/proxy-image?url=' + encodeURIComponent(img);
+            document.getElementById('zoomTitle').innerText = title;
+            document.getElementById('zoomModal').style.display = 'flex';
+        }
+
+        function closeZoom() {
+            document.getElementById('zoomModal').style.display = 'none';
+        }
     </script>
 </body>
 
