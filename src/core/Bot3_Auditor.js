@@ -53,22 +53,34 @@ class PriceAuditorBot {
         const topBrands = /iphone|apple|macbook|ipad|airpods|samsung|galaxy|nike|adidas|reebok|puma|jordan|asics|new balance|seiko|rolex|casio|fossil|tissot|omega|citizen|invicta|sony|nintendo|playstation|xbox|ps5|rtx|nvidia|dyson|stanley|lego|ray-ban|oakley/i;
         const isTopBrand = topBrands.test(lowTitle);
 
-        // 4. ALGORITMO DE FILTRADO (REGLAS ESTRICTAS)
-        // Regla Arquitecto: Descuento > 30% obligatorio para recomendaciones automáticas.
+        // 4. ALGORITMO DE FILTRADO (REGLAS ESTRICTAS DEL USUARIO)
+        // Regla de Oro: Descuento > 30% obligatorio para recomendaciones automáticas.
         const minSavings = 30;
 
         if (price_official > 0 && savingsPercent < minSavings) {
             report.isGoodDeal = false;
-            report.reason = `Ahorro insuficiente. El Arquitecto exige >30%. Oferta actual: ${savingsPercent}%.`;
+            report.reason = `Ahorro insuficiente. El Usuario exige ≥30%. Oferta actual: ${savingsPercent}%.`;
             return report;
         }
 
-        // Si es automático, REQUERIMOS que sea de Marca Top o categoría estrella.
+        // --- SISTEMA DE APRENDIZAJE IA (RECOMENDACIÓN PERSONALIZADA) ---
+        // La IA analiza qué ha publicado el jefe manualmente para recomendar cosas similares.
+        let favoriteBrands = ['iphone', 'apple', 'nike', 'adidas', 'samsung', 'casio', 'seiko']; // Defaults
+        try {
+            const { db } = require('../database/db');
+            const manuals = db.prepare("SELECT title FROM published_deals WHERE posted_at > datetime('now', '-7 days') LIMIT 20").all();
+            manuals.forEach(m => {
+                const words = m.title.toLowerCase().split(/[ \-,|]/); // Split por varios separadores
+                words.forEach(w => { if (w.length > 4 && !favoriteBrands.includes(w)) favoriteBrands.push(w); });
+            });
+        } catch (e) { }
+
+        const isFavorite = favoriteBrands.some(b => lowTitle.includes(b));
         const isStarCategory = lowTitle.match(/watch|reloj|sneaker|tenis|shoe|zapato|phone|celular|laptop|computador/i);
 
-        if (!deal.isManual && !isTopBrand && !isStarCategory) {
+        if (!deal.isManual && !isFavorite && !isStarCategory) {
             report.isGoodDeal = false;
-            report.reason = 'No pertenece a marcas populares o categorías estrella (Relojes, Tenis, Apple, Samsung).';
+            report.reason = 'No coincide con tus marcas favoritas detectadas ni categorías estrella.';
             return report;
         }
 

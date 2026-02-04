@@ -114,7 +114,7 @@ app.post('/api/login', (req, res) => {
 // 1. OBTENER OFERTAS (PÚBLICO)
 app.get('/api/deals', async (req, res) => {
   try {
-    const deals = db.prepare('SELECT * FROM published_deals ORDER BY posted_at DESC LIMIT 50').all();
+    const deals = db.prepare("SELECT * FROM published_deals WHERE status = 'published' ORDER BY posted_at DESC LIMIT 50").all();
 
     // Transformar links en tiempo real para asegurar que el tag esté presente
     const transformedDeals = await Promise.all(deals.map(async (deal) => {
@@ -131,7 +131,7 @@ app.get('/api/deals/express', async (req, res) => {
   try {
     const deals = db.prepare(`
         SELECT * FROM published_deals 
-        WHERE status IN ('published', 'expired') 
+        WHERE status = 'published' 
         AND (price_cop > 0 OR categoria IN ('Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables'))
         ORDER BY posted_at DESC LIMIT 50
     `).all();
