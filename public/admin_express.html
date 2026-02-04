@@ -419,7 +419,6 @@
                                 </label>
                             </div>
                             <button onclick="saveChanges('${item.id}')" class="btn btn-info btn-sm text-white fw-bold w-100 rounded-3 mb-2"><i class="fa-solid fa-floppy-disk me-1"></i> GUARDAR CAMBIOS</button>
-                            <button onclick="searchMeli('${item.id}')" class="btn btn-warning btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#fff3e0; color:#e65100; border:1px solid #ffcc80;"><i class="fa-solid fa-search me-1"></i> RE-COMPARAR ML</button>
                             `
                     }
                         
@@ -610,32 +609,40 @@
 
         async function searchMeli(id) {
             const titleInput = document.getElementById(`title-${id}`);
-            const title = titleInput ? titleInput.value : "";
+            if (!titleInput) {
+                console.error("Input de título no encontrado para ID:", id);
+                return;
+            }
 
+            const title = titleInput.value.trim();
             const box = document.getElementById(`meli-box-${id}`);
             const priceSpan = document.getElementById(`meli-price-${id}`);
             const linkA = document.getElementById(`meli-link-${id}`);
 
-            if (!title) return;
+            if (!title) {
+                alert("⚠️ Primero ingresa o edita un título para buscar.");
+                return;
+            }
 
             box.style.display = 'block';
-            priceSpan.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            priceSpan.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
 
             try {
-                const response = await axios.post(API_URL + '/admin/express/meli-search', { title }, {
+                const response = await axios.post(API_URL + '/admin/express/meli-search', { title, id }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
                 if (response.data.success) {
                     const price = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(response.data.avgPrice);
-                    priceSpan.innerText = price;
+                    priceSpan.innerHTML = `<span class="text-dark">${price}</span> <small class="text-muted">(Promedio)</small>`;
                     linkA.href = response.data.link;
                 } else {
-                    priceSpan.innerText = "No encontrado";
+                    priceSpan.innerText = "Sin resultados";
                 }
             } catch (e) {
                 console.error("Meli Error:", e);
-                priceSpan.innerText = "Error local";
+                const errorMsg = e.response?.data?.error || "Error de conexión";
+                priceSpan.innerHTML = `<span class="text-danger">Error: ${errorMsg}</span>`;
             }
         }
 
