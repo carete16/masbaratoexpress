@@ -315,7 +315,8 @@
                 const priceUSD = parseFloat(item.price_offer) || 0;
                 // --- LÓGICA DE IA EN TIEMPO REAL SI LOS VALORES VIENEN VACÍOS ---
                 const iaValue = guessIA(item.title);
-                const finalWeight = (weight > 0) ? weight : iaValue.weight;
+                const itemWeight = parseFloat(item.weight) || 0;
+                const finalWeight = (itemWeight > 0) ? itemWeight : iaValue.weight;
                 const finalCat = (item.categoria && item.categoria !== 'General' && item.categoria !== 'Oferta') ? item.categoria : iaValue.cat;
 
                 const calc = calculateFinal(priceUSD, finalWeight);
