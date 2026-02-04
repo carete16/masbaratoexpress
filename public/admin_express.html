@@ -14,18 +14,17 @@
     <style>
         :root {
             --primary: #1e40af;
-            /* Azul profundo premium */
             --primary-glow: rgba(30, 64, 175, 0.3);
             --secondary: #6366f1;
             --accent-green: #10b981;
-            --accent-yellow: #ffc107;
+            --accent-yellow: #f59e0b;
             --accent-red: #ef4444;
             --bg-body: #f1f5f9;
             --card-bg: #ffffff;
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
         }
 
         body {
@@ -37,7 +36,7 @@
 
         .premium-header {
             background: white;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 2px solid var(--primary);
             padding: 12px 0;
             margin-bottom: 30px;
             position: sticky;
@@ -54,26 +53,22 @@
             align-items: center;
             justify-content: center;
             color: white;
+            box-shadow: 0 4px 10px var(--primary-glow);
         }
 
         .card-deal {
-            border-radius: 24px;
+            border-radius: 20px;
             background: white;
             margin-bottom: 30px;
             transition: all 0.3s ease;
             box-shadow: var(--shadow-premium);
-            border: 1px solid rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
             overflow: hidden;
-        }
-
-        .card-deal:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
         }
 
         .breakdown {
             background: #f8fafc;
-            border-radius: 20px;
+            border-radius: 15px;
             padding: 20px;
             border: 1px solid #edf2f7;
         }
@@ -85,53 +80,74 @@
             letter-spacing: -2px;
         }
 
-        .btn-premium {
-            border-radius: 16px;
-            padding: 16px;
+        /* TOGGLE SWITCH STYLE */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ef4444;
+            /* Rojo por defecto (Agotado) */
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: #10b981;
+            /* Verde (Activo) */
+        }
+
+        input:focus+.slider {
+            box-shadow: 0 0 1px #10b981;
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(26px);
+        }
+
+        .status-label {
             font-weight: 800;
-            transition: all 0.3s;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .btn-action {
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 800;
             text-transform: uppercase;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             border: none;
-            box-shadow: 0 4px 12px var(--primary-glow);
-        }
-
-        /* BOTONES DE ESTADO RESALTADOS */
-        .btn-marcar-agotada {
-            background-color: #ffc107 !important;
-            color: #000 !important;
-            border: 2px solid #e5a500 !important;
-            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4) !important;
-        }
-
-        .btn-aprobar {
-            background-color: #2563eb !important;
-            color: white !important;
-        }
-
-        .btn-reactivar {
-            background-color: #2563eb !important;
-            color: white !important;
-        }
-
-        .badge-status-live {
-            background-color: #10b981 !important;
-            color: white;
-            font-weight: 800;
-            padding: 10px 20px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-        }
-
-        .badge-status-expired {
-            background-color: #ef4444 !important;
-            color: white;
-            font-weight: 800;
-            padding: 10px 20px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            font-size: 0.8rem;
+            width: 100%;
+            margin-top: 10px;
         }
 
         .nav-pills-custom .nav-link {
@@ -144,18 +160,8 @@
         }
 
         .nav-pills-custom .nav-link.active {
-            background: #2563eb !important;
+            background: var(--primary) !important;
             color: white !important;
-            box-shadow: 0 10px 15px -3px var(--primary-glow);
-        }
-
-        .badge-trm {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            padding: 6px 12px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            font-weight: 800;
         }
 
         .img-container {
@@ -166,7 +172,7 @@
             justify-content: center;
             background: white;
             border-radius: 18px;
-            padding: 15px;
+            padding: 10px;
             border: 1px solid #f1f5f9;
         }
 
@@ -185,78 +191,50 @@
                 <div class="logo-box"><i class="fa-solid fa-plane-up"></i></div>
                 <div>
                     <h1 class="h5 fw-bold mb-0">Masbarato <span style="color:var(--secondary)">Express</span></h1>
-                    <p class="text-muted small mb-0 fw-semibold" style="font-size: 0.65rem;">Dashboard de Logística
-                        Premium</p>
+                    <p class="text-muted small mb-0 fw-semibold">Admin Panel Pro</p>
                 </div>
             </div>
-            <div class="d-flex gap-2">
-                <div class="badge-trm">TRM Real: <span class="text-primary" id="trm-real">$3.628</span></div>
-                <div class="badge-trm">Operativo: <span class="text-primary" id="trm-op">$3.928</span></div>
-                <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" style="font-size: 0.7rem;"
-                    onclick="logout()">Salir <i class="fa-solid fa-right-from-bracket ms-1"></i></button>
+            <div class="d-flex gap-3">
+                <div class="badge bg-white border text-dark p-2 rounded-3 small fw-bold">TRM Real: <span
+                        class="text-primary" id="trm-real">$3.628</span></div>
+                <div class="badge bg-white border text-dark p-2 rounded-3 small fw-bold">Operativo: <span
+                        class="text-primary" id="trm-op">$3.928</span></div>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <!-- Parámetros -->
-        <div class="p-4 bg-white rounded-4 border mb-4 shadow-sm">
-            <h6 class="text-uppercase fw-900 text-muted mb-4" style="font-size: 0.7rem;"><i
-                    class="fa-solid fa-gears me-2"></i>Parámetros Arquitecto Senior (MASBARATO EXPRESS)</h6>
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="small fw-bold mb-1">Dólar Operativo (TRM + 300)</label>
+        <!-- Dashboard Params -->
+        <div class="row mb-5 g-4">
+            <div class="col-md-3">
+                <div class="card p-3 border-0 shadow-sm rounded-4">
+                    <label class="small fw-bold mb-2">Dólar Operativo</label>
                     <input type="number" id="globalDolarOp" class="form-control" value="3928" onchange="refreshView()">
                 </div>
-                <div class="col-md-2">
-                    <label class="small fw-bold mb-1">Ganancia (30% Fijo)</label>
-                    <input type="text" class="form-control bg-light" value="30%" readonly>
-                    <input type="hidden" id="globalProfit" value="30">
-                </div>
-                <div class="col-md-2">
-                    <label class="small fw-bold mb-1">Tax USA (7% Fijo)</label>
-                    <input type="text" class="form-control bg-light" value="7%" readonly>
-                    <input type="hidden" id="globalTax" value="7">
-                </div>
-                <div class="col-md-2">
-                    <label class="small fw-bold mb-1">Costo Libra ($USD)</label>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3 border-0 shadow-sm rounded-4">
+                    <label class="small fw-bold mb-2">Costo Libra ($USD)</label>
                     <input type="number" id="globalRate" class="form-control" value="6" onchange="refreshView()">
                 </div>
-                <div class="col-md-3">
-                    <div class="p-2 rounded-3 border-start border-primary border-4 bg-light small fw-semibold"
-                        style="font-size: 0.7rem;">
-                        Regla: Peso Real + 1lb extra obligatoria. Redondeo SIEMPRE hacia arriba.
-                    </div>
-                </div>
             </div>
-        </div>
-
-        <!-- Buscador -->
-        <div class="p-3 mb-5 rounded-4 shadow-sm"
-            style="background: linear-gradient(to right, #eff6ff, #f5f3ff); border: 1px solid #dbeafe;">
-            <div class="row g-2 align-items-center">
-                <div class="col-md-7">
+            <div class="col-md-6">
+                <!-- Quick Post -->
+                <div class="card p-3 border-0 shadow-sm rounded-4" style="background: #eff6ff;">
+                    <label class="small fw-bold mb-2">Auto-Post Links (Amazon, etc)</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-white border-0"><i
-                                class="fa-solid fa-link text-primary"></i></span>
-                        <input type="text" id="manualUrl" class="form-control border-0"
-                            placeholder="Pega el link de Amazon, eBay, Nike...">
+                        <input type="text" id="manualUrl" class="form-control" placeholder="Pega el enlace aquí...">
+                        <button onclick="postManual()" id="btnProcess" class="btn btn-primary fw-bold">PROCESAR</button>
                     </div>
                 </div>
-                <div class="col-md-2"><input type="number" id="manualPrice" class="form-control border-0"
-                        placeholder="Precio USD"></div>
-                <div class="col-md-2"><input type="number" id="manualWeight" class="form-control border-0"
-                        placeholder="Peso Lbs"></div>
-                <div class="col-md-1"><button onclick="postManual()" id="btnProcess"
-                        class="btn btn-primary w-100 fw-bold rounded-3">IR</button></div>
             </div>
         </div>
 
-        <ul class="nav nav-pills nav-pills-custom mb-4 gap-3">
-            <li class="nav-item"><button class="nav-link active" id="tab-pending" onclick="switchTab('pending')"><i
-                        class="fa-solid fa-clock-rotate-left me-2"></i>PENDIENTES</button></li>
-            <li class="nav-item"><button class="nav-link" id="tab-published" onclick="switchTab('published')"><i
-                        class="fa-solid fa-circle-check me-2"></i>PUBLICADAS</button></li>
+        <ul class="nav nav-pills nav-pills-custom mb-5">
+            <li class="nav-item"><button class="nav-link active" id="tab-pending"
+                    onclick="switchTab('pending')">PENDIENTES</button></li>
+            <li class="nav-item"><button class="nav-link" id="tab-published" onclick="switchTab('published')">PUBLICADAS
+                    / VIVO</button></li>
         </ul>
 
         <div id="main-container"></div>
@@ -265,7 +243,6 @@
     <script>
         const API_URL = '/api';
         let currentTab = 'pending';
-        let allItemsFetched = [];
 
         function switchTab(tab) {
             currentTab = tab;
@@ -288,87 +265,74 @@
             const totalUSD = priceUSD + profitVal + taxUSD + shipUSD;
             const finalCOP = Math.ceil(totalUSD * dolarOp);
 
-            return { profitVal, taxUSD, lbsFinal, shipUSD, totalUSD, finalCOP, dolarOp, trm: dolarOp - 300 };
+            return { profitVal, taxUSD, lbsFinal, shipUSD, totalUSD, finalCOP, dolarOp };
         }
 
         async function loadData() {
             const container = document.getElementById('main-container');
-            container.innerHTML = '<div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-2x text-primary"></i></div>';
+            container.innerHTML = '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
 
             try {
                 const endpoint = currentTab === 'pending' ? '/admin/express/pending' : '/admin/express/published';
                 const res = await axios.get(API_URL + endpoint, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
-                allItemsFetched = res.data;
                 renderItems(res.data);
-            } catch (e) { container.innerHTML = '<div class="text-center py-5 text-danger">Error de autenticación. Login necesario.</div>'; }
+            } catch (e) { container.innerHTML = '<div class="text-center py-5 text-danger">Error al cargar datos.</div>'; }
         }
 
         function renderItems(items) {
             const container = document.getElementById('main-container');
             container.innerHTML = '';
-            if (!items.length) { container.innerHTML = '<div class="text-center py-5 text-muted">No hay productos.</div>'; return; }
+            if (!items.length) { container.innerHTML = '<div class="text-center py-5 text-muted">No hay ofertas en esta sección.</div>'; return; }
 
             items.forEach(item => {
                 const priceUSD = parseFloat(item.price_offer) || 0;
                 const weight = parseFloat(item.weight) || 0;
                 const calc = calculateFinal(priceUSD, weight);
                 const isPending = currentTab === 'pending';
-                const isExpired = item.status === 'expired';
+                const isLive = item.status === 'published';
 
                 const card = document.createElement('div');
                 card.className = 'card card-deal';
                 card.innerHTML = `
                 <div class="row g-0 align-items-center">
-                    <div class="col-md-3 text-center p-4 border-end">
+                    <div class="col-md-3 text-center p-4 border-end" style="background: #fcfdfe;">
                         <div class="img-container mx-auto mb-3"><img src="/api/proxy-image?url=${encodeURIComponent(item.image)}"></div>
                         <div class="badge bg-primary px-3 py-1 mb-2">${item.tienda.toUpperCase()}</div>
                         <div class="fw-bold text-primary">$${priceUSD.toFixed(2)} USD</div>
                     </div>
                     <div class="col-md-5 p-4">
-                        <textarea class="form-control fw-bold border-0 p-0 mb-3" rows="2" style="background:transparent; resize:none; font-size: 1.1rem;" id="title-${item.id}">${item.title}</textarea>
+                        <h6 class="fw-bold mb-3"><input type="text" id="title-${item.id}" value="${item.title}" class="form-control border-0 p-0 fw-bold" style="background:transparent;"></h6>
                         
                         <div class="breakdown">
-                            <div class="d-flex justify-content-between mb-2 small"><span class="fw-bold text-muted">1. PRECIO BASE:</span> <input type="number" id="price-${item.id}" value="${priceUSD}" class="form-control form-control-sm text-end w-25 fw-bold" oninput="updateRow('${item.id}')"></div>
-                            <div class="d-flex justify-content-between mb-2 small"><span class="fw-bold text-muted">2. GANANCIA (30%):</span> <span class="text-success fw-bold" id="profit-val-${item.id}">+$${calc.profitVal.toFixed(2)} USD</span></div>
-                            <div class="d-flex justify-content-between mb-2 small"><span class="fw-bold text-muted">3. TAX USA (7%):</span> <span class="fw-bold text-muted" id="tax-val-${item.id}">+$${calc.taxUSD.toFixed(2)} USD</span></div>
-                            <div class="d-flex justify-content-between mb-3 small border-bottom pb-2"><span class="fw-bold text-muted">4. ENVÍO (USD):</span> <span class="fw-bold text-muted" id="ship-val-${item.id}">+$${calc.shipUSD.toFixed(2)} USD</span></div>
-                            
-                            <div class="d-flex justify-content-between align-items-center small">
-                                <span class="fw-bold text-muted">Peso Real (Lbs):</span>
-                                <div class="d-flex align-items-center gap-2">
-                                    <input type="number" id="weight-${item.id}" value="${weight}" class="form-control form-control-sm text-end w-25" oninput="updateRow('${item.id}')"> 
-                                    <span class="text-muted" style="font-size:0.7rem;">Total (<span id="lbs-final-${item.id}">${calc.lbsFinal}</span> Lbs): <strong class="text-primary" id="ship-usd-${item.id}">$${calc.shipUSD.toFixed(2)}</strong></span>
-                                </div>
-                            </div>
+                            <div class="d-flex justify-content-between mb-2 small"><span>PRECIO PRODUCTO:</span> <input type="number" id="price-${item.id}" value="${priceUSD}" class="form-control form-control-sm w-25 text-end" oninput="updateRow('${item.id}')"></div>
+                            <div class="d-flex justify-content-between mb-2 small"><span>PESO REAL (LBS):</span> <input type="number" id="weight-${item.id}" value="${weight}" class="form-control form-control-sm w-25 text-end" oninput="updateRow('${item.id}')"></div>
+                            <hr class="my-2">
+                            <div class="d-flex justify-content-between small fw-bold"><span>TOTAL USD:</span> <span>$${calc.totalUSD.toFixed(2)} USD</span></div>
                         </div>
                     </div>
-                    <div class="col-md-4 p-4 text-center" style="background: #fcfdfe">
-                        <div class="small text-muted fw-bold mb-1">PRECIO FINAL COLOMBIA</div>
-                        <div class="price-cop-display mb-3" id="cop-display-${item.id}">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
-                        <input type="hidden" id="cop-input-${item.id}" value="${calc.finalCOP}">
+                    <div class="col-md-4 p-4 text-center">
+                        <span class="small text-muted fw-bold">PRECIO FINAL COLOMBIA</span>
+                        <div class="price-cop-display mb-4" id="cop-${item.id}">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
                         
-                        <div class="d-grid gap-3 mb-4">
-                            ${isPending ?
-                        `<button onclick="approve('${item.id}')" class="btn btn-premium btn-aprobar shadow-sm">
-                                    <i class="fa-solid fa-paper-plane me-2"></i> APROBAR Y PUBLICAR
-                                 </button>` :
-                        isExpired ?
-                            `<div class="badge-status-expired mb-2">PRODUCTO AGOTADO</div>
-                                 <button onclick="approve('${item.id}')" class="btn btn-premium btn-reactivar shadow-sm">
-                                    <i class="fa-solid fa-rotate-left me-2"></i> RE-ACTIVAR
-                                 </button>` :
-                            `<div class="badge-status-live mb-2">PRODUCTO EN VIVO</div>
-                                 <button onclick="finalize('${item.id}')" class="btn btn-premium btn-marcar-agotada">
-                                    <i class="fa-solid fa-ban me-2"></i> MARCAR AGOTADA
-                                 </button>`
+                        ${isPending ?
+                        `<button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>` :
+                        `
+                            <div class="mb-2">
+                                <span class="status-label ${isLive ? 'text-success' : 'text-danger'}">${isLive ? 'OFERTA ACTIVA ✅' : 'OFERTA AGOTADA ❌'}</span>
+                                <label class="switch">
+                                    <input type="checkbox" ${isLive ? 'checked' : ''} onchange="toggleStatus('${item.id}', this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="small text-muted mt-2">Usa el interruptor para activar/agotar</div>
+                            `
                     }
-                        </div>
                         
-                        <div class="d-flex justify-content-center gap-4">
-                            <a href="${item.link}" target="_blank" class="small fw-bold text-muted text-decoration-none"><i class="fa-solid fa-external-link me-1"></i> VER LINK</a>
-                            <button onclick="removeItem('${item.id}')" class="btn btn-link p-0 text-danger small fw-bold text-decoration-none"><i class="fa-solid fa-trash me-1"></i> ELIMINAR</button>
+                        <div class="mt-4 d-flex justify-content-center gap-4">
+                            <a href="${item.link}" target="_blank" class="small fw-bold text-primary text-decoration-none">VER LINK</a>
+                            <button onclick="removeItem('${item.id}')" class="btn btn-link p-0 text-danger small fw-bold text-decoration-none">ELIMINAR</button>
                         </div>
                     </div>
                 </div>`;
@@ -376,18 +340,36 @@
             });
         }
 
+        async function toggleStatus(id, activate) {
+            const p = parseFloat(document.getElementById(`price-${id}`)?.value) || 0;
+            const w = parseFloat(document.getElementById(`weight-${id}`)?.value) || 0;
+            const calc = calculateFinal(p, w);
+            const title = document.getElementById(`title-${id}`)?.value;
+
+            try {
+                if (activate) {
+                    await axios.post(API_URL + '/admin/express/approve', {
+                        id,
+                        title,
+                        price_offer: p,
+                        weight: w,
+                        price_cop: calc.finalCOP,
+                        categoria: 'General'
+                    }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
+                } else {
+                    await axios.post(API_URL + '/admin/express/finalize', { id }, {
+                        headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                    });
+                }
+                loadData();
+            } catch (e) { alert("Error al actualizar estado"); }
+        }
+
         function updateRow(id) {
             const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
             const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
             const calc = calculateFinal(p, w);
-
-            document.getElementById(`cop-display-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
-            document.getElementById(`cop-input-${id}`).value = calc.finalCOP;
-            document.getElementById(`profit-val-${id}`).innerText = `+$${calc.profitVal.toFixed(2)} USD`;
-            document.getElementById(`tax-val-${id}`).innerText = `+$${calc.taxUSD.toFixed(2)} USD`;
-            document.getElementById(`ship-val-${id}`).innerText = `+$${calc.shipUSD.toFixed(2)} USD`;
-            document.getElementById(`lbs-final-${id}`).innerText = calc.lbsFinal;
-            document.getElementById(`ship-usd-${id}`).innerText = `$${calc.shipUSD.toFixed(2)}`;
+            document.getElementById(`cop-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
         }
 
         async function postManual() {
@@ -396,52 +378,26 @@
             const btn = document.getElementById('btnProcess');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             try {
-                await axios.post(API_URL + '/admin/express/manual-post', {
-                    url,
-                    price: document.getElementById('manualPrice').value,
-                    weight: document.getElementById('manualWeight').value
-                }, {
+                await axios.post(API_URL + '/admin/express/manual-post', { url }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
+                document.getElementById('manualUrl').value = '';
                 loadData();
-            } catch (e) { alert("Error al procesar link"); }
-            btn.innerHTML = 'IR';
-        }
-
-        async function approve(id) {
-            const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
-            const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
-            const calc = calculateFinal(p, w);
-
-            await axios.post(API_URL + '/admin/express/approve', {
-                id,
-                title: document.getElementById(`title-${id}`).value,
-                price_cop: calc.finalCOP,
-                price_offer: p,
-                weight: w,
-                categoria: 'General'
-            }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
-            loadData();
-        }
-
-        async function finalize(id) {
-            await axios.post(API_URL + '/admin/express/finalize', { id }, {
-                headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
-            });
-            loadData();
+            } catch (e) { alert("Error al procesar"); }
+            btn.innerHTML = 'PROCESAR';
         }
 
         async function removeItem(id) {
-            if (!confirm("¿Eliminar?")) return;
-            await axios.post(API_URL + '/admin/express/delete', { id }, {
-                headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
-            });
-            loadData();
+            if (!confirm("¿Eliminar definitivamente?")) return;
+            try {
+                await axios.post(API_URL + '/admin/express/delete', { id }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+                loadData();
+            } catch (e) { alert("Error al eliminar"); }
         }
 
         function refreshView() { loadData(); }
-        function logout() { localStorage.removeItem('adminPass'); location.reload(); }
-
         loadData();
     </script>
 </body>
