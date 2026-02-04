@@ -193,6 +193,12 @@
                     <h1 class="h5 fw-bold mb-0">Masbarato <span style="color:var(--secondary)">Express</span></h1>
                     <p class="text-muted small mb-0 fw-semibold">Admin Panel Pro</p>
                 </div>
+                <div class="col-md-3">
+                    <div class="p-2 rounded-3 border-start border-primary border-4 bg-light small fw-semibold"
+                        style="font-size: 0.7rem;">
+                        Regla: Peso Real (redondeado hacia arriba). Tarifa plana por libra.
+                    </div>
+                </div>
             </div>
             <div class="d-flex gap-3">
                 <div class="badge bg-white border text-dark p-2 rounded-3 small fw-bold">TRM Real: <span
@@ -259,7 +265,7 @@
 
             const profitVal = priceUSD * profitPct;
             const taxUSD = priceUSD * taxPct;
-            const lbsFinal = Math.ceil(weightLbs + 1);
+            const lbsFinal = Math.ceil(weightLbs); // Se eliminó la libra extra obligatoria (+1)
             const shipUSD = lbsFinal * shipRate;
 
             const totalUSD = priceUSD + profitVal + taxUSD + shipUSD;
@@ -297,24 +303,67 @@
                 card.className = 'card card-deal';
                 card.innerHTML = `
                 <div class="row g-0 align-items-center">
-                    <div class="col-md-3 text-center p-4 border-end" style="background: #fcfdfe;">
-                        <div class="img-container mx-auto mb-3"><img src="/api/proxy-image?url=${encodeURIComponent(item.image)}"></div>
-                        <div class="badge bg-primary px-3 py-1 mb-2">${item.tienda.toUpperCase()}</div>
-                        <div class="fw-bold text-primary">$${priceUSD.toFixed(2)} USD</div>
-                    </div>
-                    <div class="col-md-5 p-4">
-                        <h6 class="fw-bold mb-3"><input type="text" id="title-${item.id}" value="${item.title}" class="form-control border-0 p-0 fw-bold" style="background:transparent;"></h6>
-                        
-                        <div class="breakdown">
-                            <div class="d-flex justify-content-between mb-2 small"><span>PRECIO PRODUCTO:</span> <input type="number" id="price-${item.id}" value="${priceUSD}" class="form-control form-control-sm w-25 text-end" oninput="updateRow('${item.id}')"></div>
-                            <div class="d-flex justify-content-between mb-2 small"><span>PESO REAL (LBS):</span> <input type="number" id="weight-${item.id}" value="${weight}" class="form-control form-control-sm w-25 text-end" oninput="updateRow('${item.id}')"></div>
-                            <hr class="my-2">
-                            <div class="d-flex justify-content-between small fw-bold"><span>TOTAL USD:</span> <span>$${calc.totalUSD.toFixed(2)} USD</span></div>
+                    <div class="col-md-2 p-4">
+                    <div class="img-container mx-auto mb-3"><img src="/api/proxy-image?url=${encodeURIComponent(item.image)}"></div>
+                    <div class="badge bg-primary px-3 py-1 mb-2 w-100">${item.tienda.toUpperCase()}</div>
+                    <div class="fw-bold text-center text-primary" style="font-size: 1.2rem;">$${priceUSD.toFixed(2)} USD</div>
+                </div>
+                <div class="col-md-6 p-4 border-end">
+                    <label class="small fw-bold text-muted mb-1">TÍTULO DE LA PUBLICACIÓN (EDITABLE)</label>
+                    <textarea class="form-control fw-bold border mb-3" rows="2" style="font-size: 1rem; border-radius: 10px;" id="title-${item.id}">${item.title}</textarea>
+                    
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted mb-1">CATEGORÍA</label>
+                            <select id="cat-${item.id}" class="form-select fw-bold" style="border-radius: 10px;">
+                                <option value="General" ${item.categoria == 'General' ? 'selected' : ''}>📦 General</option>
+                                <option value="Electrónica Premium" ${item.categoria == 'Electrónica Premium' ? 'selected' : ''}>💻 Electrónica</option>
+                                <option value="Relojes & Wearables" ${item.categoria == 'Relojes & Wearables' ? 'selected' : ''}>⌚ Relojes</option>
+                                <option value="Lifestyle & Street" ${item.categoria == 'Lifestyle & Street' ? 'selected' : ''}>👟 Tenis / Ropa</option>
+                                <option value="Hogar & Cocina" ${item.categoria == 'Hogar & Cocina' ? 'selected' : ''}>🏠 Hogar</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-muted mb-1">PRECIO USD</label>
+                            <input type="number" id="price-${item.id}" value="${priceUSD}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small fw-bold text-muted mb-1">PESO LBS</label>
+                            <input type="number" id="weight-${item.id}" value="${weight}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
                         </div>
                     </div>
-                    <div class="col-md-4 p-4 text-center">
-                        <span class="small text-muted fw-bold">PRECIO FINAL COLOMBIA</span>
-                        <div class="price-cop-display mb-4" id="cop-${item.id}">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
+
+                    <div class="breakdown" style="background: #f1f5f9; border-radius: 15px; padding: 15px;">
+                        <h6 class="small fw-bold text-uppercase mb-3" style="letter-spacing: 1px;"><i class="fa-solid fa-calculator me-2"></i>Desglose Matemático</h6>
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span>Precio Base:</span>
+                            <span class="fw-bold">$${priceUSD.toFixed(2)} USD</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span>Ganancia (30%):</span>
+                            <span class="text-success fw-bold" id="profit-val-${item.id}">+$${calc.profitVal.toFixed(2)} USD</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 small">
+                            <span>Tax USA (7%):</span>
+                            <span class="fw-bold" id="tax-val-${item.id}">+$${calc.taxUSD.toFixed(2)} USD</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 pb-2 border-bottom small">
+                            <span>Envío Internacional (Lbs + 1):</span>
+                            <span class="fw-bold" id="ship-val-${item.id}">+$${calc.shipUSD.toFixed(2)} USD</span>
+                        </div>
+                        <div class="d-flex justify-content-between fw-bold text-primary">
+                            <span>SUBTOTAL USD:</span>
+                            <span id="total-val-${item.id}">$${calc.totalUSD.toFixed(2)} USD</span>
+                        </div>
+                        <div class="d-flex justify-content-between small text-muted mt-1">
+                            <span>Tasa Aplicada (TRM + 300):</span>
+                            <span class="fw-bold">$${calc.dolarOp} COP</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 p-4 text-center d-flex flex-column justify-content-center">
+                    <span class="small text-muted fw-bold mb-1">SUBTOTAL FINAL A RECAUDAR</span>
+                    <div class="price-cop-display mb-4" id="cop-${item.id}" style="font-size: 2.5rem;">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
                         
                         ${isPending ?
                         `<button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4 mb-2">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>` :
@@ -345,6 +394,7 @@
             const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
             const calc = calculateFinal(p, w);
             const title = document.getElementById(`title-${id}`).value;
+            const categoria = document.getElementById(`cat-${id}`).value;
 
             try {
                 await axios.post(API_URL + '/admin/express/approve', {
@@ -353,7 +403,7 @@
                     price_offer: p,
                     weight: w,
                     price_cop: calc.finalCOP,
-                    categoria: 'General'
+                    categoria
                 }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
                 alert("✅ Cambios guardados correctamente.");
                 loadData();
@@ -365,6 +415,7 @@
             const w = parseFloat(document.getElementById(`weight-${id}`)?.value) || 0;
             const calc = calculateFinal(p, w);
             const title = document.getElementById(`title-${id}`)?.value;
+            const categoria = document.getElementById(`cat-${id}`)?.value || 'General';
 
             try {
                 if (activate) {
@@ -374,7 +425,7 @@
                         price_offer: p,
                         weight: w,
                         price_cop: calc.finalCOP,
-                        categoria: 'General'
+                        categoria
                     }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
                 } else {
                     await axios.post(API_URL + '/admin/express/finalize', { id }, {
@@ -389,7 +440,12 @@
             const p = parseFloat(document.getElementById(`price-${id}`).value) || 0;
             const w = parseFloat(document.getElementById(`weight-${id}`).value) || 0;
             const calc = calculateFinal(p, w);
+
             document.getElementById(`cop-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
+            document.getElementById(`profit-val-${id}`).innerText = `+$${calc.profitVal.toFixed(2)} USD`;
+            document.getElementById(`tax-val-${id}`).innerText = `+$${calc.taxUSD.toFixed(2)} USD`;
+            document.getElementById(`ship-val-${id}`).innerText = `+$${calc.shipUSD.toFixed(2)} USD`;
+            document.getElementById(`total-val-${id}`).innerText = `$${calc.totalUSD.toFixed(2)} USD`;
         }
 
         async function postManual() {
