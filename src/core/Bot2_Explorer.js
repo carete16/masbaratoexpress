@@ -147,35 +147,41 @@ class ValidatorBot {
                             result.image = 'https://placehold.co/400?text=Walmart+Product';
                         }
                     }
-                    // C. Rescate de Peso Inteligente (NUEVO)
+
+                    // C. Rescate de Peso y Categoría Inteligente (NUEVO & MEJORADO)
+                    const t = result.title.toLowerCase();
+
+                    // 1. Detección de Categoría
+                    if (t.match(/laptop|notebook|macbook|computer|ssd|cpu|gpu|monitor|keyboard|mouse|headset|gaming/)) {
+                        result.categoria = "Electrónica Premium";
+                    } else if (t.match(/watch|reloj|smartwatch|galaxy watch|apple watch|casio|rolex|invicta/)) {
+                        result.categoria = "Relojes & Wearables";
+                    } else if (t.match(/shoe|sneaker|tenis|nike|adidas|reebok|puma|crocs|clothing|shirt|pants|hoodie|jacket|perfume|fragrance/)) {
+                        result.categoria = "Lifestyle & Street";
+                    } else if (t.match(/kitchen|cocina|coffee|fryer|vacuum|aspiradora|blender|home|casa|bed|pillow/)) {
+                        result.categoria = "Hogar & Cocina";
+                    } else {
+                        result.categoria = "General";
+                    }
+
+                    // 2. Estimación de Peso (Heurística Senior)
                     if (!result.weight || result.weight <= 0) {
-                        const t = result.title.toLowerCase();
-                        // Diccionario de Pesos Estimados Reales (Basado en Mercado USA)
-                        if (t.match(/laptop|notebook|macbook/)) result.weight = 5.5;
-                        else if (t.match(/iphone|smartphone|galaxy|celular|phone|pixel/)) result.weight = 0.8;
-                        else if (t.match(/ipad|tablet|galaxy tab/)) result.weight = 1.5;
-                        else if (t.match(/monitor|display/)) {
-                            if (t.includes('32')) result.weight = 18;
-                            else if (t.includes('27')) result.weight = 14;
-                            else result.weight = 10;
-                        }
-                        else if (t.match(/ps5|playstation 5/)) result.weight = 12;
-                        else if (t.match(/xbox series x/)) result.weight = 13;
-                        else if (t.match(/xbox series s/)) result.weight = 6;
-                        else if (t.match(/nintendo switch/)) result.weight = 2;
-                        else if (t.match(/watch|reloj|smartwatch/)) result.weight = 0.5;
-                        else if (t.match(/headphone|auricular|airpods|buds/)) result.weight = 0.6;
-                        else if (t.match(/shoe|sneaker|tenis|nike|adidas/)) result.weight = 3.5; // Caja + Zapato
-                        else if (t.match(/backpack|maleta|bolso/)) result.weight = 2.5;
-                        else if (t.match(/tv|television|smart tv/)) {
-                            if (t.includes('55')) result.weight = 45;
-                            else if (t.includes('65')) result.weight = 60;
-                            else result.weight = 30;
-                        }
-                        else {
-                            result.weight = 2.5; // Peso neutro para artículos pequeños
-                        }
-                        logger.info(`⚖️ Peso rescatado via Heurística: ${result.weight} lbs para "${result.title}"`);
+                        if (t.includes('laptop') || t.includes('macbook')) result.weight = 5.0;
+                        else if (t.includes('monitor')) result.weight = 12.0;
+                        else if (t.includes('iphone') || t.includes('phone') || t.includes('smartphone')) result.weight = 0.8;
+                        else if (t.includes('tablet') || t.includes('ipad')) result.weight = 1.5;
+                        else if (t.includes('watch') || t.includes('smartwatch')) result.weight = 0.5;
+                        else if (t.includes('shoe') || t.includes('sneaker') || t.includes('tenis')) result.weight = 3.0;
+                        else if (t.includes('headphone') || t.includes('earbuds')) result.weight = 0.6;
+                        else if (t.includes('perfume') || t.includes('cologne')) result.weight = 1.2;
+                        else if (t.includes('keyboard')) result.weight = 2.0;
+                        else if (t.includes('backpack')) result.weight = 2.2;
+                        else if (t.includes('vacuum') || t.includes('fryer')) result.weight = 14.5;
+                        else if (t.includes('camera')) result.weight = 3.5;
+                        else if (t.includes('tool') || t.includes('drill')) result.weight = 6.0;
+                        else result.weight = 2.0; // Default neutral
+
+                        logger.info(`⚖️ IA ESTIMADORA: Peso ${result.weight} lbs y Cat: ${result.categoria} para "${result.title}"`);
                     }
                 } else if (providedPrice > 0 && opportunity.image && !['Amazon', 'Walmart'].includes(result.storeName)) {
                     // Fallback para RSS regular

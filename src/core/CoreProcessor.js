@@ -47,9 +47,9 @@ class CoreProcessor {
                 price_official: validation.officialPrice || 0,
                 image: validation.image || opp.image,
                 tienda: validation.storeName || opp.tienda,
-                categoria: opp.categoria || 'General',
+                categoria: opp.categoria || validation.categoria || 'General',
                 status: opp.status || 'published',
-                weight: (opp.weight !== undefined && opp.weight !== null) ? opp.weight : (validation.weight || 0)
+                weight: (opp.weight !== undefined && opp.weight !== null) ? opp.weight : (validation.weight || 2.0)
             };
 
             // --- FILTRO EXPRESS (OFERTAS BIEN DEFINIDAS) ---
