@@ -646,7 +646,24 @@
             }
         }
 
+        async function fetchTRM() {
+            try {
+                const res = await axios.get(API_URL + '/express/trm');
+                if (res.data.success) {
+                    const trm = Math.round(res.data.trm);
+                    const trmOp = Math.ceil((trm + 300) / 10) * 10; // Redondeo a la decena más cercana
+
+                    const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+                    document.getElementById('trm-real').innerText = fmt.format(trm);
+                    document.getElementById('trm-op').innerText = fmt.format(trmOp);
+                    document.getElementById('globalDolarOp').value = trmOp;
+                    if (typeof refreshView === 'function') refreshView();
+                }
+            } catch (e) { console.error("Error TRM:", e); }
+        }
+
         function refreshView() { loadData(); }
+        fetchTRM();
         loadData();
     </script>
 </body>

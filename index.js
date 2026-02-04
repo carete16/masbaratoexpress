@@ -437,6 +437,21 @@ app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) =
   }
 });
 
+// 7.5.0 OBTENER TRM ACTUAL (ADMIN)
+app.get('/api/express/trm', async (req, res) => {
+  try {
+    const response = await axios.get('https://trm-colombia.vercel.app/', { timeout: 5000 });
+    // Esta API retorna { "trm": 3900.50, ... }
+    if (response.data && response.data.trm) {
+      res.json({ success: true, trm: response.data.trm });
+    } else {
+      res.status(500).json({ success: false, error: 'No se pudo obtener la TRM' });
+    }
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 // 7.5.1 BUSCAR PRECIO EN MERCADOLIBRE (ADMIN)
 app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
   const { title } = req.body;
