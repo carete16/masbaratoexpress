@@ -408,7 +408,7 @@
                         `
                             <button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4 mb-2">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>
                             <button onclick="saveChanges('${item.id}')" class="btn btn-outline-primary btn-sm fw-bold w-100 rounded-3 mb-2"><i class="fa-solid fa-check me-1"></i> GUARDAR SIN PUBLICAR</button>
-                            <button onclick="searchMeli('${item.id}', '${item.title.replace(/'/g, "\\'")}')" class="btn btn-warning btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#fff3e0; color:#e65100; border:1px solid #ffcc80;"><i class="fa-solid fa-search me-1"></i> COMPARAR CON MERCADOLIBRE</button>
+                            <button onclick="searchMeli('${item.id}')" class="btn btn-warning btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#fff3e0; color:#e65100; border:1px solid #ffcc80;"><i class="fa-solid fa-search me-1"></i> COMPARAR CON MERCADOLIBRE</button>
                         ` :
                         `
                             <div class="mb-3">
@@ -419,7 +419,7 @@
                                 </label>
                             </div>
                             <button onclick="saveChanges('${item.id}')" class="btn btn-info btn-sm text-white fw-bold w-100 rounded-3 mb-2"><i class="fa-solid fa-floppy-disk me-1"></i> GUARDAR CAMBIOS</button>
-                            <button onclick="searchMeli('${item.id}', '${item.title.replace(/'/g, "\\'")}')" class="btn btn-warning btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#fff3e0; color:#e65100; border:1px solid #ffcc80;"><i class="fa-solid fa-search me-1"></i> RE-COMPARAR ML</button>
+                            <button onclick="searchMeli('${item.id}')" class="btn btn-warning btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#fff3e0; color:#e65100; border:1px solid #ffcc80;"><i class="fa-solid fa-search me-1"></i> RE-COMPARAR ML</button>
                             `
                     }
                         
@@ -608,10 +608,15 @@
             } catch (e) { alert("Error al eliminar"); }
         }
 
-        async function searchMeli(id, title) {
+        async function searchMeli(id) {
+            const titleInput = document.getElementById(`title-${id}`);
+            const title = titleInput ? titleInput.value : "";
+
             const box = document.getElementById(`meli-box-${id}`);
             const priceSpan = document.getElementById(`meli-price-${id}`);
             const linkA = document.getElementById(`meli-link-${id}`);
+
+            if (!title) return;
 
             box.style.display = 'block';
             priceSpan.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
@@ -629,7 +634,8 @@
                     priceSpan.innerText = "No encontrado";
                 }
             } catch (e) {
-                priceSpan.innerText = "Error";
+                console.error("Meli Error:", e);
+                priceSpan.innerText = "Error local";
             }
         }
 

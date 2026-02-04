@@ -6,6 +6,7 @@ const { db } = require('./src/database/db');
 const LinkTransformer = require('./src/utils/LinkTransformer');
 const CoreProcessor = require('./src/core/CoreProcessor');
 const AIProcessor = require('./src/core/AIProcessor');
+const logger = require('./src/utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -446,9 +447,9 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
     let cleanQuery = title.replace(/[^\w\s]/gi, ' ').replace(/(LIQUIDACIÓN|OFERTA|GANGA|PREMIUM|EXCLUSIVO|CHANCE)/gi, '').replace(/\s+/g, ' ').trim();
     if (!cleanQuery) cleanQuery = title.substring(0, 60);
 
-    console.log(`🔎 Buscando en ML MCO: "${cleanQuery}" (Original: "${title}")`);
+    logger.info(`🔎 Buscando en ML MCO: "${cleanQuery}" (Id: ${req.body.id || 'N/A'})`);
     const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&limit=5`;
-    const response = await axios.get(searchUrl);
+    const response = await axios.get(searchUrl, { timeout: 8000 });
 
     if (response.data.results && response.data.results.length > 0) {
       const items = response.data.results;
