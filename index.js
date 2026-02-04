@@ -442,8 +442,9 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
   if (!title) return res.status(400).json({ error: 'Título requerido' });
 
   try {
-    // Buscar en MercadoLibre Colombia (MCO)
-    const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(title)}&limit=5`;
+    // Limpiar el título para mejorar la búsqueda (quitar emojis y palabras ruidosas)
+    const cleanQuery = title.replace(/[^\w\s]/gi, '').replace(/(LIQUIDACIÓNOFERTAGANGAPREMIUM)/gi, '').trim();
+    const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&limit=5`;
     const response = await axios.get(searchUrl);
 
     if (response.data.results && response.data.results.length > 0) {
