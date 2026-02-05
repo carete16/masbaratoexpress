@@ -463,7 +463,16 @@
                             <h3>${deal.title}</h3>
                             <p><b>Precio:</b> $${deal.price_offer} | <b>Ref:</b> $${deal.price_official || '?'}</p>
                             <p><b>Tienda:</b> ${deal.tienda} | <b>Categoría:</b> ${deal.categoria}</p>
-                            <a href="${deal.link}" target="_blank">Ver Link Original 🔍</a>
+                            <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                                <a href="${deal.link}" target="_blank" style="padding: 5px 10px; background: rgba(255,255,255,0.05); border-radius: 8px;">Ver Link Original 🔍</a>
+                                <button onclick="compareML('${deal.title.replace(/'/g, "\\'")}', 'ml-${deal.id}')" 
+                                        style="background: #ffe600; color: #000; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: 800;">
+                                    📊 COMPARAR CON MERCADOLIBRE
+                                </button>
+                            </div>
+                            <div id="ml-${deal.id}" style="margin-top: 10px; font-size: 12px; display: none; padding: 10px; background: rgba(255,230,0,0.05); border: 1px dashed #ffe600; border-radius: 12px;">
+                                ⏳ Consultando precios en Colombia...
+                            </div>
                         </div>
                         <div class="mod-actions">
                             <button class="btn btn-approve" onclick="approve('${deal.id}')">APROBAR Y MONETIZAR</button>
@@ -473,6 +482,32 @@
                 `).join('');
 
             } catch (e) { console.error(e); }
+        }
+
+        async function compareML(title, containerId) {
+            const container = document.getElementById(containerId);
+            container.style.display = 'block';
+            container.innerHTML = '⏳ Consultando precios en MercadoLibre Colombia...';
+
+            try {
+                const res = await fetch(`/api/check-ml?title=${encodeURIComponent(title)}`);
+                const data = await res.json();
+
+                if (data.price) {
+                    const priceCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(data.price);
+                    container.innerHTML = `
+                        <div style="color: #ffe600; font-weight: 800;">💰 Precio MCO: ~${priceCOP}</div>
+                        <div style="font-size: 10px; margin-top: 4px; color: var(--text-muted);">
+                            Vendedor: ${data.vendor} | 
+                            <a href="${data.link}" target="_blank" style="color: #ffe600; text-decoration: underline;">Ver en ML</a>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '❌ No se encontraron resultados exactos en MCO.';
+                }
+            } catch (e) {
+                container.innerHTML = '❌ Error al consultar MercadoLibre. Intenta de nuevo.';
+            }
         }
 
         async function loadRecent() {
