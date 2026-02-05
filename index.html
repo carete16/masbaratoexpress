@@ -4,39 +4,362 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>+BARATO DEALS | Las Mejores Ofertas de USA</title>
+    <meta name="theme-color" content="#2563eb">
+    <title>Masbarato Express | Cargando...</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/public/service-worker.js')
+                    .then(reg => console.log('✅ SW registrado'))
+                    .catch(err => console.log('❌ SW falló', err));
+            });
+        }
+    </script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: #0f0f12;
-            color: white;
-            font-family: sans-serif;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
+            overflow: hidden;
+            position: relative;
         }
 
-        .box {
-            border: 2px solid #f87171;
-            padding: 40px;
-            border-radius: 20px;
+        /* Animated background particles */
+        .bg-animation {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .particle:nth-child(2) {
+            width: 60px;
+            height: 60px;
+            left: 30%;
+            animation-delay: 2s;
+        }
+
+        .particle:nth-child(3) {
+            width: 100px;
+            height: 100px;
+            left: 50%;
+            animation-delay: 4s;
+        }
+
+        .particle:nth-child(4) {
+            width: 70px;
+            height: 70px;
+            left: 70%;
+            animation-delay: 6s;
+        }
+
+        .particle:nth-child(5) {
+            width: 90px;
+            height: 90px;
+            left: 85%;
+            animation-delay: 8s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translateY(-100px) rotate(180deg);
+                opacity: 0.6;
+            }
+        }
+
+        /* Main container */
+        .loader-container {
+            position: relative;
+            z-index: 1;
             text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            animation: fadeInUp 0.8s ease-out;
         }
 
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Logo */
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .logo-icon {
+            font-size: 40px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Title */
         h1 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            font-weight: 400;
+            margin-bottom: 35px;
+            opacity: 0.9;
+        }
+
+        /* Spinner */
+        .spinner-container {
+            margin: 30px 0;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Loading text */
+        .loading-text {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-top: 20px;
+            animation: fadeInOut 2s ease-in-out infinite;
+        }
+
+        @keyframes fadeInOut {
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Progress dots */
+        .dots {
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .dots span {
+            animation: blink 1.4s infinite;
+            opacity: 0;
+        }
+
+        .dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Info message */
+        .info-message {
+            margin-top: 25px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .info-message p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.85rem;
+            line-height: 1.6;
             margin: 0;
-            color: #f87171;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .subtitle {
+                font-size: 0.9rem;
+            }
+
+            .loader-container {
+                padding: 30px 25px;
+            }
+
+            .logo {
+                width: 70px;
+                height: 70px;
+            }
+
+            .logo-icon {
+                font-size: 35px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="box">
-        <h1>🚀 MASBARATODEALS ONLINE</h1>
-        <p>El servidor ha arrancado correctamente en la raíz.</p>
-        <p>Restaurando interfaz premium...</p>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
     </div>
+
+    <!-- Main Loader -->
+    <div class="loader-container">
+        <div class="logo">
+            <div class="logo-icon">💰</div>
+        </div>
+
+        <h1>Masbarato Express</h1>
+        <p class="subtitle">Todo Incluido Colombia</p>
+
+        <div class="spinner-container">
+            <div class="spinner"></div>
+        </div>
+
+        <p class="loading-text">
+            Preparando las mejores ofertas<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+        </p>
+
+        <div class="info-message">
+            <p>⏱️ Primera carga puede tomar 30 segundos<br>Estamos despertando el servidor...</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-redirect to main app after checking if it's ready
+        let attempts = 0;
+        const maxAttempts = 60; // 60 seconds max
+
+        function checkServer() {
+            attempts++;
+
+            fetch('/api/deals')
+                .then(response => {
+                    if (response.ok) {
+                        // Server is ready, redirect to main page
+                        window.location.href = '/public/index.html';
+                    } else if (attempts < maxAttempts) {
+                        setTimeout(checkServer, 1000);
+                    }
+                })
+                .catch(() => {
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkServer, 1000);
+                    } else {
+                        // After 60 seconds, try to redirect anyway
+                        window.location.href = '/public/index.html';
+                    }
+                });
+        }
+
+        // Start checking after 2 seconds
+        setTimeout(checkServer, 2000);
+    </script>
 </body>
 
 </html>

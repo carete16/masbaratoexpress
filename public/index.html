@@ -6,16 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2563eb">
 
+    <!-- Google Analytics (Gratis) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
     <!-- SEO Meta Tags -->
     <title>Masbarato Express | Todo Incluido Colombia</title>
     <meta name="description"
         content="Precios finales en pesos colombianos. Sin cargos ocultos. El precio publicado es el precio final.">
 
-    <link rel="icon" href="https://www.techbargains.com/Content/static/tb-logo.png">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
     <!-- Font Awesome for premium icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/public/service-worker.js')
+                    .then(reg => console.log('✅ SW App registrado'))
+                    .catch(err => console.log('❌ SW App falló', err));
+            });
+        }
+    </script>
 
     <style>
         :root {
