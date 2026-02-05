@@ -41,7 +41,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/admin.html'));
+  res.sendFile(path.join(__dirname, 'public/admin_express.html'));
 });
 
 app.get('/express', (req, res) => {
@@ -460,13 +460,12 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
   try {
     // Bypass Maestro: Usamos un túnel de consulta para saltar el bloqueo de IP 403
     let simpleQuery = title.toLowerCase()
-      .replace(/ipad|iphone|galaxy|sony|casio|apple/g, (match) => match.toUpperCase())
+      .replace(/ipad|iphone|galaxy|sony|casio|apple|stylus|haptic|m2|m4|tablet/g, (match) => match.toUpperCase())
       .split(' ')
       .slice(0, 3)
       .join(' ');
 
-    // Usamos el endpoint oficial pero con un truco de parámetros para parecer consulta de App Móvil
-    const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(simpleQuery)}&limit=3&access_token=none`;
+    const searchUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(simpleQuery)}&limit=5&access_token=none`;
 
     const response = await axios.get(searchUrl, {
       timeout: 15000,
@@ -477,20 +476,18 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
         'X-App-Version': '10.0.0'
       }
     });
-
-    if (response.data.results && response.data.results.length > 0) {
-      const items = response.data.results;
-      // Tomar el precio promedio de los primeros 3 resultados para evitar outliers
-      const top3 = items.slice(0, 3);
-      const avgPrice = Math.round(top3.reduce((acc, curr) => acc + curr.price, 0) / top3.length);
-      const lowest = items[0].price;
-      const link = items[0].permalink;
-
-      res.json({ success: true, avgPrice, lowest, link });
-    } else {
-      res.json({ success: false, message: 'No se encontraron resultados' });
+    const results = response.data.results;
+    if (results && results.length > 0) {
+      const avgPrice = results.reduce((acc, curr) => acc + curr.price, 0) / results.length;
+      return res.json({
+        success: true,
+        avgPrice,
+        link: `https://listado.mercadolibre.com.co/${encodeURIComponent(simpleQuery)}`
+      });
     }
+    res.json({ success: false });
   } catch (e) {
+    logger.error(`❌ Meli Error: ${e.message}`);
     res.status(500).json({ success: false, error: e.message });
   }
 });
