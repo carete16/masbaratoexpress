@@ -331,23 +331,57 @@ app.post('/api/admin/express/analyze', async (req, res) => {
 
     // 2. Extraer metadatos básicos (Hostname de la tienda final)
     let hostname = 'Tienda';
+    let productTitle = "Producto detectado";
+    let categoria = "Electrónica Premium";
+    let estimatedWeight = 4;
+
     try {
-      hostname = new URL(finalUrl).hostname.replace('www.', '').split('.')[0].toUpperCase();
+      const urlObj = new URL(finalUrl);
+      hostname = urlObj.hostname.replace('www.', '').split('.')[0].toUpperCase();
+
+      // 3. Detección inteligente de categoría basada en la tienda y URL
+      const lowUrl = finalUrl.toLowerCase();
+
+      // Amazon: Intentar extraer info del ASIN
+      if (lowUrl.includes('amazon.')) {
+        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})/i) || finalUrl.match(/\/gp\/product\/([A-Z0-9]{10})/i);
+        if (asinMatch) {
+          productTitle = `Producto Amazon ASIN: ${asinMatch[1]}`;
+          console.log(`[ANALYZE] ASIN detectado: ${asinMatch[1]}`);
+        }
+      }
+
+      // Categorización inteligente por keywords en URL
+      if (lowUrl.match(/watch|reloj|wearable|garmin|fitbit|smartwatch/i)) {
+        categoria = "Relojes & Wearables";
+        estimatedWeight = 1;
+      } else if (lowUrl.match(/shoe|sneaker|nike|adidas|jordan|clothing|shirt|hoodie|pant/i)) {
+        categoria = "Lifestyle & Street";
+        estimatedWeight = 2;
+      } else if (lowUrl.match(/laptop|phone|tablet|headphone|gpu|monitor|keyboard|mouse|camera|tv|console|gaming/i)) {
+        categoria = "Electrónica Premium";
+        estimatedWeight = 5;
+      }
+
     } catch (err) {
       console.error("[ANALYZE ERROR] Error parsing finalUrl:", finalUrl, err);
     }
 
     const result = {
       url: finalUrl,
-      title: "Producto detectado en " + hostname,
-      price: 1, // Placeholder
-      weight: 4, // Mínimo PRD
-      categoria: "Electrónica Premium",
+      title: `${productTitle} en ${hostname}`,
+      price: 1, // Placeholder (el admin lo ajustará)
+      weight: estimatedWeight,
+      categoria: categoria,
       image: "https://placehold.co/400x400?text=Scan+Complete"
     };
 
+    console.log(`[ANALYZE] Resultado final:`, result);
     res.json(result);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("[ANALYZE CRITICAL ERROR]:", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/admin/express/manual-post', (req, res) => {

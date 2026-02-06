@@ -52,13 +52,17 @@ class LinkTransformer {
                 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
                 'tag', 'ref', 'ascsubtag', 'creative', 'camp', 'affid', 'affname',
                 'asubid', 'asid', 'ranmid', 'raneaid', 'ransiteid', 'clickid',
-                'gclid', 'fbclid', 'linkcode', 'linkid', 'afsrc', 'tr_id'
+                'gclid', 'fbclid', 'linkcode', 'linkid', 'afsrc', 'tr_id',
+                // Parámetros adicionales de Amazon y Slickdeals
+                'ie', 'm', 'psc', 'smid', 'th', 'psc', 'ref_', 'pd_rd_i', 'pd_rd_r',
+                'pd_rd_w', 'pd_rd_wg', 'pf_rd_p', 'pf_rd_r', 'pf_rd_s', 'pf_rd_t',
+                'qid', 'sr', 'keywords'
             ];
 
             const keysToDelete = [];
             url.searchParams.forEach((value, key) => {
                 const lowKey = key.toLowerCase();
-                if (blacklist.includes(lowKey) || lowKey.startsWith('utm_')) {
+                if (blacklist.includes(lowKey) || lowKey.startsWith('utm_') || lowKey.startsWith('pd_') || lowKey.startsWith('pf_')) {
                     keysToDelete.push(key);
                 }
             });
