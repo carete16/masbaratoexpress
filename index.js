@@ -89,12 +89,17 @@ app.post('/api/orders', (req, res) => {
 app.post('/api/admin/products', (req, res) => {
   const { name, description, images, category, source_link, price_usd, weight_lb } = req.body;
   try {
-    const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
-    const trm_offset = db.prepare('SELECT value FROM settings WHERE key = "trm_offset"').get().value;
-    const cost_lb = db.prepare('SELECT value FROM settings WHERE key = "cost_lb_default"').get().value;
-    const min_weight = db.prepare('SELECT value FROM settings WHERE key = "min_weight_lb"').get().value;
-    const tax_usa_perc = db.prepare('SELECT value FROM settings WHERE key = "tax_usa_perc"').get().value;
-    const margin_perc = db.prepare('SELECT value FROM settings WHERE key = "margin_perc"').get().value;
+    const getSetting = (key, fallback) => {
+      const res = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+      return res ? res.value : fallback;
+    };
+
+    const trm = getSetting('trm_base', '3650');
+    const trm_offset = getSetting('trm_offset', '300');
+    const cost_lb = getSetting('cost_lb_default', '6');
+    const min_weight = getSetting('min_weight_default', '4');
+    const tax_usa_perc = getSetting('tax_usa_perc', '7');
+    const margin_perc = getSetting('margin_perc', '30');
 
     const calc = PriceEngine.calculate({
       price_usd: parseFloat(price_usd) || 0,
@@ -102,7 +107,7 @@ app.post('/api/admin/products', (req, res) => {
       trm: parseFloat(trm),
       trm_offset: parseFloat(trm_offset),
       cost_lb_usd: parseFloat(cost_lb),
-      min_weight_lb: parseFloat(min_weight),
+      min_weight: parseFloat(min_weight),
       tax_usa_perc: parseFloat(tax_usa_perc),
       margin_perc: parseFloat(margin_perc)
     });
@@ -309,9 +314,14 @@ app.post('/api/admin/express/manual-post', (req, res) => {
   const { title, price, weight, category, url } = req.body;
   console.log(`[ADMIN] Solicitud manual-post recibida para: ${title}`);
   try {
-    const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
-    const trm_offset = db.prepare('SELECT value FROM settings WHERE key = "trm_offset"').get().value;
-    const cost_lb = db.prepare('SELECT value FROM settings WHERE key = "cost_lb_default"').get().value;
+    const getSetting = (key, fallback) => {
+      const res = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+      return res ? res.value : fallback;
+    };
+
+    const trm = getSetting('trm_base', '3650');
+    const trm_offset = getSetting('trm_offset', '300');
+    const cost_lb = getSetting('cost_lb_default', '6');
 
     console.log(`[ADMIN] Calculando precio para USD:${price} LBS:${weight} TRM:${trm}`);
     const calc = PriceEngine.calculate({
