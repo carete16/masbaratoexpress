@@ -571,6 +571,15 @@ app.post('/api/admin/express/analyze', async (req, res) => {
 
     // 5. Procesar Resultados
     let title = scraperResult?.title || "Producto detectado";
+
+    // LIMPIEZA FORZADA DE TÍTULO (Global)
+    if (title) {
+      title = title.replace(/Amazon\.com: | : .*/g, '')
+        .replace(/en Amazon/gi, '')
+        .replace(/\s+-\s+Amazon.*/gi, '') // " - Amazon.com"
+        .trim();
+    }
+
     let price = scraperResult?.offerPrice || 1;
     let weight = scraperResult?.weight || 4;
     let images = scraperResult?.images || [];
