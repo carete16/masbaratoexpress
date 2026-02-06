@@ -605,7 +605,8 @@
                 }
             } catch (e) {
                 console.error(e);
-                alert("❌ Falló el análisis de IA. Intenta con otro link o verifica el servidor.");
+                const errorMsg = e.response?.data?.error || e.message;
+                alert("❌ Falló el servidor: " + errorMsg);
             }
             btn.innerHTML = 'PROCESAR';
             btn.disabled = false;

@@ -17,26 +17,30 @@ class PriceEngine {
             min_weight = 4
         } = input;
 
-        // 1. Peso mínimo reglamentario
-        const finalWeight = Math.max(parseFloat(weight_lb) || 0, parseFloat(min_weight));
+        // 1. Asegurar tipos numéricos y peso mínimo
+        const p_usd = parseFloat(price_usd) || 0;
+        const w_lb = parseFloat(weight_lb) || 0;
+        const m_weight = parseFloat(min_weight) || 4;
+
+        const finalWeight = Math.max(w_lb, m_weight);
 
         // 2. Costos de importación
-        const shippingCost = finalWeight * cost_lb_usd;
-        const taxCost = price_usd * (tax_usa_perc / 100);
-        const marginCost = price_usd * (margin_perc / 100);
+        const shippingCost = finalWeight * (parseFloat(cost_lb_usd) || 6);
+        const taxCost = p_usd * (parseFloat(tax_usa_perc) || 7) / 100;
+        const marginCost = p_usd * (parseFloat(margin_perc) || 30) / 100;
 
         // 3. Total USD
-        const totalUsd = price_usd + shippingCost + taxCost + marginCost;
+        const totalUsd = p_usd + shippingCost + taxCost + marginCost;
 
         // 4. Tasa Operativa
         const operationalTrm = parseFloat(trm) + parseFloat(trm_offset);
 
-        // 5. Precio Final COP (Redondeado a la milena más cercana)
+        // 5. Precio Final COP
         const rawCop = totalUsd * operationalTrm;
         const finalCop = Math.ceil(rawCop / 1000) * 1000;
 
         return {
-            price_usd,
+            price_usd: p_usd,
             weight_used: finalWeight,
             shipping_usd: shippingCost,
             tax_usd: taxCost,

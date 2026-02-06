@@ -92,9 +92,19 @@ app.post('/api/admin/products', (req, res) => {
     const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
     const trm_offset = db.prepare('SELECT value FROM settings WHERE key = "trm_offset"').get().value;
     const cost_lb = db.prepare('SELECT value FROM settings WHERE key = "cost_lb_default"').get().value;
+    const min_weight = db.prepare('SELECT value FROM settings WHERE key = "min_weight_lb"').get().value;
+    const tax_usa_perc = db.prepare('SELECT value FROM settings WHERE key = "tax_usa_perc"').get().value;
+    const margin_perc = db.prepare('SELECT value FROM settings WHERE key = "margin_perc"').get().value;
 
     const calc = PriceEngine.calculate({
-      price_usd, weight_lb, trm, trm_offset, cost_lb_usd: cost_lb
+      price_usd: parseFloat(price_usd) || 0,
+      weight_lb: parseFloat(weight_lb) || 0,
+      trm: parseFloat(trm),
+      trm_offset: parseFloat(trm_offset),
+      cost_lb_usd: parseFloat(cost_lb),
+      min_weight_lb: parseFloat(min_weight),
+      tax_usa_perc: parseFloat(tax_usa_perc),
+      margin_perc: parseFloat(margin_perc)
     });
 
     const id = 'PROD-' + Math.random().toString(36).substr(2, 7).toUpperCase();
@@ -267,16 +277,19 @@ app.get('/api/proxy-image', async (req, res) => {
 // 8. ADMIN EXPRESS: ANALIZAR URL (IA MAGIC + LINK TRANSFORMER)
 app.post('/api/admin/express/analyze', async (req, res) => {
   const { url } = req.body;
+  console.log(`[ANALYZE] Recibida solicitud para analizar URL: ${url}`);
   try {
     // 1. Transformar y Limpiar Link (Resolución Slickdeals -> Store URL -> Afiliación propia)
+    console.log(`[ANALYZE] Transformando URL: ${url}`);
     const finalUrl = await LinkTransformer.transform(url);
+    console.log(`[ANALYZE] URL transformada a: ${finalUrl}`);
 
     // 2. Extraer metadatos básicos (Hostname de la tienda final)
     let hostname = 'Tienda';
     try {
       hostname = new URL(finalUrl).hostname.replace('www.', '').split('.')[0].toUpperCase();
     } catch (err) {
-      console.error("Error parsing finalUrl:", finalUrl);
+      console.error("[ANALYZE ERROR] Error parsing finalUrl:", finalUrl, err);
     }
 
     const result = {
@@ -294,16 +307,20 @@ app.post('/api/admin/express/analyze', async (req, res) => {
 
 app.post('/api/admin/express/manual-post', (req, res) => {
   const { title, price, weight, category, url } = req.body;
+  console.log(`[ADMIN] Solicitud manual-post recibida para: ${title}`);
   try {
     const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
     const trm_offset = db.prepare('SELECT value FROM settings WHERE key = "trm_offset"').get().value;
     const cost_lb = db.prepare('SELECT value FROM settings WHERE key = "cost_lb_default"').get().value;
 
+    console.log(`[ADMIN] Calculando precio para USD:${price} LBS:${weight} TRM:${trm}`);
     const calc = PriceEngine.calculate({
       price_usd: price, weight_lb: weight, trm, trm_offset, cost_lb_usd: cost_lb
     });
 
     const id = 'EXPR-' + Math.random().toString(36).substr(2, 7).toUpperCase();
+    console.log(`[ADMIN] Insertando producto con ID: ${id}`);
+
     db.prepare(`
         INSERT INTO products (
             id, name, description, images, category, source_link, 
@@ -312,8 +329,12 @@ app.post('/api/admin/express/manual-post', (req, res) => {
     `).run(id, title, "Importación Express desde USA", JSON.stringify(["https://placehold.co/600x600?text=Express"]),
       category, url, price, calc.trm_applied, calc.weight_used, calc.final_cop);
 
+    console.log(`[ADMIN] Producto guardado con éxito.`);
     res.json({ success: true, id });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("[ADMIN ERROR] Falla en manual-post:", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // 9. ADMIN EXPRESS: MERCADOLIBRE SEARCH
