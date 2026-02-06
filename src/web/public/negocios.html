@@ -118,18 +118,25 @@
                 const res = await fetch('/api/subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(payload)
                 });
                 const result = await res.json();
                 if (result.success) {
-                    alert('👑 Solicitud enviada. Un asesor corporativo se contactará contigo en breve.');
-                    e.target.reset();
+                    document.getElementById('business-form').innerHTML = `
+                        <div style="text-align:center; padding: 40px;">
+                            <i class="fa-solid fa-circle-check fa-4x" style="color: var(--accent-success); margin-bottom: 20px;"></i>
+                            <h2 style="font-weight: 900;">¡Solicitud Recibida!</h2>
+                            <p style="color: var(--text-muted);">Un asesor corporativo se contactará contigo vía WhatsApp en menos de 24 horas.</p>
+                            <a href="/" class="btn btn-primary" style="margin-top: 20px;">Volver al Inicio</a>
+                        </div>
+                    `;
                 } else {
                     alert('Error: ' + result.error);
+                    btn.disabled = false;
+                    btn.innerHTML = 'Solicitar Cotización Corporativa <i class="fa-solid fa-paper-plane"></i>';
                 }
             } catch (err) {
                 alert('Error al enviar la solicitud. Intenta por WhatsApp.');
-            } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Solicitar Cotización Corporativa <i class="fa-solid fa-paper-plane"></i>';
             }

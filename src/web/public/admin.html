@@ -256,8 +256,12 @@
         <ul class="nav nav-pills nav-pills-custom mb-5">
             <li class="nav-item"><button class="nav-link active" id="tab-pending"
                     onclick="switchTab('pending')">PENDIENTES</button></li>
-            <li class="nav-item"><button class="nav-link" id="tab-published" onclick="switchTab('published')">PUBLICADAS
-                    / VIVO</button></li>
+            <li class="nav-item"><button class="nav-link" id="tab-published"
+                    onclick="switchTab('published')">PUBLICADAS</button></li>
+            <li class="nav-item"><button class="nav-link" id="tab-leads" onclick="switchTab('leads')">LEADS /
+                    NEGOCIOS</button></li>
+            <li class="nav-item"><button class="nav-link" id="tab-claims"
+                    onclick="switchTab('claims')">RECLAMOS</button></li>
         </ul>
 
         <div id="main-container"></div>
@@ -300,11 +304,20 @@
             container.innerHTML = '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
 
             try {
-                const endpoint = currentTab === 'pending' ? '/admin/express/pending' : '/admin/express/published';
+                let endpoint = '';
+                if (currentTab === 'pending') endpoint = '/admin/express/pending';
+                else if (currentTab === 'published') endpoint = '/admin/express/published';
+                else if (currentTab === 'leads') endpoint = '/admin/express/leads';
+                else if (currentTab === 'claims') endpoint = '/admin/express/claims';
+
                 const res = await axios.get(API_URL + endpoint, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
-                renderItems(res.data);
+
+                if (currentTab === 'leads') renderLeads(res.data);
+                else if (currentTab === 'claims') renderClaims(res.data);
+                else renderItems(res.data);
+
             } catch (e) { container.innerHTML = '<div class="text-center py-5 text-danger">Error al cargar datos.</div>'; }
         }
 
@@ -598,7 +611,62 @@
             btn.disabled = false;
         }
 
+        function renderLeads(leads) {
+            const container = document.getElementById('main-container');
+            container.innerHTML = '<div class="row g-4">' + leads.map(l => {
+                const meta = JSON.parse(l.meta_data || '{}');
+                return `
+                <div class="col-md-6">
+                    <div class="card p-4 border-0 shadow-sm rounded-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-light text-primary border">${l.subject.toUpperCase()}</span>
+                            <span class="small text-muted">${new Date(l.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <h5 class="fw-bold mb-1">${l.full_name}</h5>
+                        <p class="mb-2 text-primary fw-bold"><i class="fa-brands fa-whatsapp"></i> ${l.phone}</p>
+                        ${meta.product ? `<div class="p-2 bg-light rounded-3 mb-2 small"><b>Producto:</b> ${meta.product}<br><b>Enlace:</b> <a href="${meta.link}" target="_blank">Ver Tienda</a></div>` : ''}
+                        <p class="text-muted small">${l.message}</p>
+                        <hr>
+                        <a href="https://wa.me/${l.phone.replace(/[^0-9]/g, '')}" target="_blank" class="btn btn-success btn-sm w-100 rounded-3">CONTACTAR POR WHATSAPP</a>
+                    </div>
+                </div>`;
+            }).join('') + '</div>';
+        }
+
+        function renderClaims(claims) {
+            const container = document.getElementById('main-container');
+            container.innerHTML = '<div class="row g-4">' + claims.map(c => `
+                <div class="col-md-6">
+                    <div class="card p-4 border-0 shadow-sm rounded-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-danger">${c.status.toUpperCase()}</span>
+                            <span class="small text-muted">ID: ${c.id}</span>
+                        </div>
+                        <h6 class="fw-bold mb-1">Orden: ${c.order_display_id}</h6>
+                        <p class="mb-2"><b>Cliente:</b> ${c.user_name}</p>
+                        <div class="p-3 bg-light rounded-3 mb-3">
+                            <b class="text-danger">${c.type}:</b><br>
+                            ${c.description}
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button onclick="updateClaimStatus('${c.id}', 'en_gestion')" class="btn btn-outline-warning btn-sm flex-fill">EN GESTIÓN</button>
+                            <button onclick="updateClaimStatus('${c.id}', 'resuelto')" class="btn btn-outline-success btn-sm flex-fill">RESUELTO</button>
+                        </div>
+                    </div>
+                </div>`).join('') + '</div>';
+        }
+
+        async function updateClaimStatus(id, status) {
+            try {
+                await axios.post(API_URL + '/admin/express/claims/status', { id, status }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+                loadData();
+            } catch (e) { alert("Error al actualizar reclamo"); }
+        }
+
         async function removeItem(id) {
+            if (!confirm("¿Seguro que deseas eliminar este item?")) return;
             try {
                 await axios.post(API_URL + '/admin/express/delete', { id }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }

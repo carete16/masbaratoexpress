@@ -103,6 +103,19 @@ CREATE TABLE IF NOT EXISTS claims (
     FOREIGN KEY(order_id) REFERENCES orders(id),
     FOREIGN KEY(user_id) REFERENCES users(id)
 );
+
+-- Leads (Negocios y Contacto)
+CREATE TABLE IF NOT EXISTS leads (
+    id TEXT PRIMARY KEY,
+    full_name TEXT,
+    phone TEXT,
+    email TEXT,
+    subject TEXT, -- 'business_import', 'contact', 'other'
+    message TEXT,
+    meta_data TEXT, -- JSON para cantidad, links, etc.
+    status TEXT DEFAULT 'nuevo', -- 'nuevo', 'contactado', 'convertido', 'cerrado'
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 `;
 
 db.exec(schema);

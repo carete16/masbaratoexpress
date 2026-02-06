@@ -8,128 +8,203 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        .search-box {
+            max-width: 500px;
+            margin: 40px auto;
+            text-align: center;
+        }
+
         .order-card {
             background: white;
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             margin-bottom: 20px;
             border: 1px solid var(--border-color);
-        }
-
-        .stepper {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-            position: relative;
-        }
-
-        .stepper::before {
-            content: '';
-            position: absolute;
-            top: 15px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: #e2e8f0;
-            z-index: 1;
-        }
-
-        .step {
-            position: relative;
-            z-index: 2;
-            background: #f8fafc;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: 2px solid #e2e8f0;
-            display: flex;
+            display: grid;
+            grid-template-columns: 100px 1fr auto;
+            gap: 20px;
             align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
+        }
+
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 50px;
             font-weight: 800;
+            font-size: 0.8rem;
+            text-transform: uppercase;
         }
 
-        .step.active {
-            border-color: var(--primary);
-            background: var(--primary);
-            color: white;
+        .status-recibido {
+            background: #e0f2fe;
+            color: #0369a1;
         }
 
-        .step-label {
-            position: absolute;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.65rem;
-            white-space: nowrap;
-            color: var(--text-muted);
+        .status-comprado_usa {
+            background: #fef9c3;
+            color: #a16207;
+        }
+
+        .status-en_transito {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-entregado {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .claim-btn {
+            background: none;
+            border: 1px solid var(--accent-danger);
+            color: var(--accent-danger);
+            padding: 8px 15px;
+            border-radius: 8px;
             font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .step.active+.step-label {
-            color: var(--primary);
+        .claim-btn:hover {
+            background: var(--accent-danger);
+            color: white;
         }
     </style>
 </head>
 
 <body>
-
     <header>
         <a href="/" class="logo">Masbarato<span>Express</span></a>
         <nav>
             <a href="/catalog">Catálogo</a>
             <a href="/como-funciona">Cómo Funciona</a>
+            <a href="/negocios">Para Negocios</a>
         </nav>
         <div class="header-actions">
-            <a href="/" class="btn"><i class="fa-solid fa-house"></i> Volver al Inicio</a>
+            <a href="/mis-pedidos" class="btn btn-primary"><i class="fa-solid fa-box-open"></i> Mis Pedidos</a>
         </div>
     </header>
 
-    <main class="container" style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
-        <h1 style="font-weight: 900; margin-bottom: 10px;">Mis Pedidos</h1>
-        <p style="color: var(--text-muted); margin-bottom: 30px;">Trazabilidad en tiempo real de tus importaciones.</p>
-
-        <!-- Pedido Mock -->
-        <div class="order-card">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-                <div>
-                    <h3 style="font-weight: 800;">ORD-AF82K9X</h3>
-                    <p style="font-size: 0.8rem; color: var(--text-muted);">iPhone 15 Pro Max - 256GB</p>
-                </div>
-                <div style="text-align: right;">
-                    <div class="card-price" style="font-size: 1.2rem;">$ 5.860.000</div>
-                    <span class="global-tag" style="background: #ecfdf5; color: #059669;">Pago 1 Confirmado</span>
-                </div>
-            </div>
-
-            <div class="stepper">
-                <div class="step active">1<span class="step-label">Recibido</span></div>
-                <div class="step active">2<span class="step-label">Comprado USA</span></div>
-                <div class="step">3<span class="step-label">En Tránsito</span></div>
-                <div class="step">4<span class="step-label">Aduana</span></div>
-                <div class="step">5<span class="step-label">Listo</span></div>
-                <div class="step">6<span class="step-label">Entregado</span></div>
-            </div>
-
-            <div style="margin-top: 80px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.85rem;">
-                <p><strong>Última actualización:</strong> El producto ha sido recibido en nuestra bodega de Miami y se
-                    prepara para el vuelo a Colombia.</p>
-            </div>
-
-            <div style="margin-top: 20px; display: flex; gap: 15px;">
-                <button class="btn btn-primary" style="flex: 1;"><i class="fa-brands fa-whatsapp"></i> Contactar
-                    Soporte</button>
-                <button class="btn" style="background: white; border: 1px solid var(--border-color); flex: 1;">Ver
-                    Factura</button>
+    <main class="container" style="padding: 40px 5%;">
+        <div class="search-box">
+            <h1 style="font-weight: 900; margin-bottom: 15px;">Trazabilidad de Pedidos 📦</h1>
+            <p style="color: var(--text-muted); margin-bottom: 25px;">Ingresa tu número de WhatsApp para ver tus
+                importaciones.</p>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="user-phone" placeholder="Ej: 3012722472" class="btn"
+                    style="background: white; border: 1px solid var(--border-color); flex: 1; text-align: left; color: var(--text-main);">
+                <button onclick="loadOrders()" class="btn btn-primary">Buscar</button>
             </div>
         </div>
 
-        <div style="text-align: center; margin-top: 40px;">
-            <p style="color: var(--text-muted); font-size: 0.9rem;">¿No encuentras tu pedido? <a href="/soporte"
-                    style="color: var(--primary); font-weight: 700;">Contáctanos</a></p>
+        <div id="orders-list" style="max-width: 900px; margin: 0 auto;">
+            <!-- Placeholder -->
+            <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                <i class="fa-solid fa-magnifying-glass fa-3x" style="margin-bottom: 20px; opacity: 0.3;"></i>
+                <p>Ingresa tus datos para ver el historial.</p>
+            </div>
         </div>
     </main>
 
+    <!-- Simple Modal for Claims -->
+    <div id="claim-modal"
+        style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 40px; border-radius: 20px; width: 90%; max-width: 500px;">
+            <h3 style="font-weight: 800; margin-bottom: 20px;">Crear Reclamo o Soporte</h3>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: 700; margin-bottom: 5px;">Tipo de Reclamo</label>
+                <select id="claim-type" style="width: 100%; padding: 10px; border-radius: 10px;">
+                    <option value="Demora">Demora en entrega</option>
+                    <option value="Dañado">Producto dañado</option>
+                    <option value="Incompleto">Pedido incompleto</option>
+                    <option value="Otro">Otro motivo</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; font-weight: 700; margin-bottom: 5px;">Descripción</label>
+                <textarea id="claim-desc" rows="4" style="width: 100%; padding: 10px; border-radius: 10px;"></textarea>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeClaim()" class="btn" style="flex: 1; background: #f1f5f9;">Cancelar</button>
+                <button onclick="submitClaim()" class="btn btn-primary" style="flex: 1;">Enviar Reclamo</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedOrderId = null;
+
+        async function loadOrders() {
+            const phone = document.getElementById('user-phone').value;
+            const container = document.getElementById('orders-list');
+
+            if (!phone) return alert('Ingresa tu número de WhatsApp.');
+
+            container.innerHTML = '<div style="text-align:center;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
+
+            try {
+                const res = await fetch(`/api/my-orders?phone=${phone}`);
+                const orders = await res.json();
+
+                if (orders.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding: 40px;">No se encontraron pedidos con este número.</div>';
+                    return;
+                }
+
+                container.innerHTML = orders.map(o => `
+                    <div class="order-card">
+                        <img src="${o.product_images[0]}" style="width: 80px; height: 80px; object-fit: contain; border-radius: 10px;">
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 800;">${o.id}</div>
+                            <h4 style="font-weight: 800;">${o.product_name}</h4>
+                            <div style="margin-top: 5px;">
+                                <span class="status-badge status-${o.status}">${o.status.replace('_', ' ')}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 900; margin-bottom: 10px;">
+                                ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(o.total_amount_cop)}
+                            </div>
+                            <button onclick="openClaim('${o.id}')" class="claim-btn">Reportar Problema</button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (e) {
+                container.innerHTML = 'Error al cargar pedidos.';
+            }
+        }
+
+        function openClaim(id) {
+            selectedOrderId = id;
+            document.getElementById('claim-modal').style.display = 'flex';
+        }
+
+        function closeClaim() {
+            document.getElementById('claim-modal').style.display = 'none';
+        }
+
+        async function submitClaim() {
+            const phone = document.getElementById('user-phone').value;
+            const type = document.getElementById('claim-type').value;
+            const description = document.getElementById('claim-desc').value;
+
+            try {
+                const res = await fetch('/api/claims', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: selectedOrderId, phone, type, description })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('Reclamo enviado. Nos contactaremos contigo vía WhatsApp.');
+                    closeClaim();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) { alert('Error de conexión.'); }
+        }
+    </script>
 </body>
 
 </html>

@@ -141,17 +141,13 @@ class RadarBot {
 
             let category = 'General';
 
-            // --- CATEGORIZACIÓN EXPRESS (Alta Prioridad) ---
-            if (lowTitle.match(/watch|seiko|casio|citizen|tissot|garmin|reloj/)) category = 'Relojes';
-            else if (lowTitle.match(/rtx|gtx|radeon|rx \d000|graphics card|gpu|motherboard|z790|b650|am5|lga1700|processor|ryzen|intel core|ddr5|ddr4|ram kit|samsung 990|wd black sn850/)) category = 'PC Components';
-            else if (lowTitle.match(/jordan|dunk|yeezy|air max|ultraboost|new balance|asics|on cloud|sneaker|retro high|og/)) category = 'Sneakers';
-
-            // --- CATEGORIZACIÓN ESTÁNDAR ---
-            else if (lowTitle.match(/laptop|desktop|monitor|ssd|ram|cpu|keyboard|mouse|headphone|earbud|tablet|phone|iphone|apple|ipad|macbook/)) category = 'Tecnología';
-            else if (lowTitle.match(/ps5|xbox|nintendo|switch|game|steam|controller|console/)) category = 'Gamer';
-            else if (lowTitle.match(/shoe|shirt|pant|dress|bag|hoodie|jacket|clothing|apparel|under armour|adidas|nike|puma/)) category = 'Moda';
-            else if (lowTitle.match(/vacuum|cooker|fryer|coffee|bed|furniture|kitchen/)) category = 'Hogar';
-            else if (lowTitle.match(/supplement|protein|vitamin|gym|exercise|teeth/)) category = 'Salud';
+            // --- CATEGORIZACIÓN PRD (OBLIGATORIO) ---
+            if (lowTitle.match(/watch|seiko|casio|citizen|tissot|garmin|reloj|wearable|apple watch|galaxy watch/))
+                category = 'Relojes & Wearables';
+            else if (lowTitle.match(/rtx|gtx|radeon|gpu|motherboard|processor|ryzen|intel core|ssd|ram|laptop|desktop|monitor|tablet|iphone|ipad|macbook|headphone|earbud|apple|ps5|xbox|nintendo|switch/))
+                category = 'Electrónica Premium';
+            else if (lowTitle.match(/jordan|dunk|sneaker|shoe|shirt|pant|hoodie|jacket|clothing|nike|adidas|puma|reebok|new balance|asics/))
+                category = 'Lifestyle & Street';
 
             const cleanTitle = title.replace(/\s*\$\d+\.?\d*\s*$/, '').trim();
 

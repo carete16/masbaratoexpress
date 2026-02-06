@@ -162,6 +162,34 @@ app.post('/api/admin/express/finalize', (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/api/admin/express/leads', (req, res) => {
+  try {
+    const items = db.prepare("SELECT * FROM leads ORDER BY created_at DESC").all();
+    res.json(items);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/express/claims', (req, res) => {
+  try {
+    const items = db.prepare(`
+      SELECT c.*, u.full_name as user_name, o.id as order_display_id 
+      FROM claims c
+      JOIN users u ON c.user_id = u.id
+      JOIN orders o ON c.order_id = o.id
+      ORDER BY c.created_at DESC
+    `).all();
+    res.json(items);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/express/claims/status', (req, res) => {
+  const { id, status } = req.body;
+  try {
+    db.prepare("UPDATE claims SET status = ? WHERE id = ?").run(status, id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/express/trm', (req, res) => {
   try {
     const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
@@ -170,9 +198,56 @@ app.get('/api/express/trm', (req, res) => {
 });
 
 app.post('/api/subscribe', (req, res) => {
-  // Mock para el formulario de negocios
-  console.log('Nueva Solicitud de Negocio:', req.body);
-  res.json({ success: true });
+  const { name, phone, email, product, link, qty, msg, is_business_import } = req.body;
+  try {
+    const id = 'LEAD-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const meta = JSON.stringify({ product, link, qty });
+    db.prepare(`
+      INSERT INTO leads (id, full_name, phone, email, subject, message, meta_data)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name, phone, email || '', is_business_import ? 'business_import' : 'contact', msg || '', meta);
+
+    res.json({ success: true, id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 7. CLIENTES: MIS PEDIDOS Y RECLAMOS
+app.get('/api/my-orders', (req, res) => {
+  const { phone } = req.query; // Buscamos por teléfono como método simple de seguimiento
+  if (!phone) return res.json([]);
+  try {
+    const orders = db.prepare(`
+      SELECT o.*, p.name as product_name, p.images as product_images
+      FROM orders o
+      JOIN products p ON o.product_id = p.id
+      JOIN users u ON o.user_id = u.id
+      WHERE u.phone = ?
+      ORDER BY o.created_at DESC
+    `).all(phone);
+
+    res.json(orders.map(o => ({
+      ...o,
+      product_images: JSON.parse(o.product_images || '[]')
+    })));
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/claims', (req, res) => {
+  const { order_id, phone, type, description } = req.body;
+  try {
+    const user = db.prepare('SELECT id FROM users WHERE phone = ?').get(phone);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const id = 'CLM-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    db.prepare(`
+      INSERT INTO claims (id, order_id, user_id, type, description)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(id, order_id, user.id, type, description);
+
+    res.json({ success: true, claim_id: id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 7. PROXY DE IMÁGENES (Para evitar problemas de CORS y Mixed Content)
