@@ -3,6 +3,8 @@ const express = require('express');
 const path = require('path');
 const db = require('./src/database/db');
 const PriceEngine = require('./src/core/PriceEngine');
+const RadarBot = require('./src/core/Bot1_Scraper');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -171,6 +173,84 @@ app.post('/api/subscribe', (req, res) => {
   // Mock para el formulario de negocios
   console.log('Nueva Solicitud de Negocio:', req.body);
   res.json({ success: true });
+});
+
+// 7. PROXY DE IMÁGENES (Para evitar problemas de CORS y Mixed Content)
+app.get('/api/proxy-image', async (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl) return res.status(400).send('URL missing');
+  try {
+    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    res.set('Content-Type', response.headers['content-type']);
+    res.send(response.data);
+  } catch (e) {
+    res.status(500).send('Error proxying image');
+  }
+});
+
+// 8. ADMIN EXPRESS: ANALIZAR URL (IA MAGIC)
+app.post('/api/admin/express/analyze', async (req, res) => {
+  const { url } = req.body;
+  try {
+    // Simulación de análisis con RadarBot
+    const result = {
+      url: url,
+      title: "Producto Detectado de USA",
+      price: 99.99,
+      weight: 4.5,
+      categoria: "Lifestyle & Street",
+      image: "https://placehold.co/400x400?text=Detecting..."
+    };
+
+    // Si la URL es de Amazon/eBay, podríamos intentar algo más real en el futuro
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/express/manual-post', (req, res) => {
+  const { title, price, weight, category, url } = req.body;
+  try {
+    const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
+    const trm_offset = db.prepare('SELECT value FROM settings WHERE key = "trm_offset"').get().value;
+    const cost_lb = db.prepare('SELECT value FROM settings WHERE key = "cost_lb_default"').get().value;
+
+    const calc = PriceEngine.calculate({
+      price_usd: price, weight_lb: weight, trm, trm_offset, cost_lb_usd: cost_lb
+    });
+
+    const id = 'EXPR-' + Math.random().toString(36).substr(2, 7).toUpperCase();
+    db.prepare(`
+        INSERT INTO products (
+            id, name, description, images, category, source_link, 
+            price_usd, trm_applied, weight_lb, price_cop_final, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'agotado')
+    `).run(id, title, "Importación Express desde USA", JSON.stringify(["https://placehold.co/600x600?text=Express"]),
+      category, url, price, calc.trm_applied, calc.weight_used, calc.final_cop);
+
+    res.json({ success: true, id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 9. ADMIN EXPRESS: MERCADOLIBRE SEARCH
+app.post('/api/admin/express/meli-search', async (req, res) => {
+  const { title } = req.body;
+  try {
+    const query = encodeURIComponent(title);
+    const meliUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${query}&limit=5`;
+    const response = await axios.get(meliUrl);
+
+    const results = response.data.results;
+    if (results.length > 0) {
+      const avgPrice = results.reduce((acc, curr) => acc + curr.price, 0) / results.length;
+      res.json({
+        success: true,
+        avgPrice,
+        link: `https://listado.mercadolibre.com.co/${query}`
+      });
+    } else {
+      res.json({ success: false });
+    }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // --- ROUTES PARA PÁGINAS ---

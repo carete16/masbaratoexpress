@@ -109,13 +109,61 @@ db.exec(schema);
 
 // Valores iniciales por defecto si no existen
 const defaultSettings = [
-  ['trm_base', '3650'],
-  ['trm_offset', '300'],
-  ['cost_lb_default', '6'],
-  ['min_weight_default', '4']
+    ['trm_base', '3650'],
+    ['trm_offset', '300'],
+    ['cost_lb_default', '6'],
+    ['min_weight_default', '4']
 ];
 
 const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
 defaultSettings.forEach(s => insertSetting.run(s));
+
+// SEED PRODUCTS (Opcional - solo para desarrollo inicial)
+const seedProducts = [
+    {
+        id: 'SEED-1',
+        name: 'Apple Watch Series 9 GPS 41mm',
+        description: 'El reloj más avanzado de Apple con sensor de oxígeno y pantalla siempre activa.',
+        images: JSON.stringify(['https://m.media-amazon.com/images/I/71XvO7Z6qPL._AC_SL1500_.jpg']),
+        category: 'Relojes & Wearables',
+        source_link: 'https://amazon.com',
+        price_usd: 329.00,
+        weight_lb: 1.0,
+        price_cop_final: 1545000,
+        status: 'disponible'
+    },
+    {
+        id: 'SEED-2',
+        name: 'Nike Air Max Excee Mens Sneakers',
+        description: 'Estilo icónico inspirado en las Air Max 90 con comodidad moderna.',
+        images: JSON.stringify(['https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/e9fd843e-c6e0-47bf-a859-cd9f01832049/air-max-excee-shoes-609vps.png']),
+        category: 'Lifestyle & Street',
+        source_link: 'https://nike.com',
+        price_usd: 75.00,
+        weight_lb: 4.5,
+        price_cop_final: 485000,
+        status: 'disponible'
+    },
+    {
+        id: 'SEED-3',
+        name: 'Logitech G PRO X Mechanical Keyboard',
+        description: 'Diseño compacto tenkeyless para profesionales del gaming.',
+        images: JSON.stringify(['https://resource.logitechg.com/w_692,c_limit,q_auto,f_auto,dpr_1.0/d_transparent.gif/content/dam/gaming/en/products/pro-keyboard/pro-keyboard-gallery-1.png?v=1']),
+        category: 'Electrónica Premium',
+        source_link: 'https://logitech.com',
+        price_usd: 129.00,
+        weight_lb: 4.0,
+        price_cop_final: 720000,
+        status: 'disponible'
+    }
+];
+
+const insertProduct = db.prepare(`
+  INSERT OR IGNORE INTO products (
+    id, name, description, images, category, source_link, price_usd, weight_lb, price_cop_final, status
+  ) VALUES (@id, @name, @description, @images, @category, @source_link, @price_usd, @weight_lb, @price_cop_final, @status)
+`);
+
+seedProducts.forEach(p => insertProduct.run(p));
 
 module.exports = db;
