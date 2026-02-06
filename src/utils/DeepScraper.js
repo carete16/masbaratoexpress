@@ -57,7 +57,7 @@ class DeepScraper {
                 );
             }
 
-            await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+            await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
             const data = await page.evaluate(() => {
                 let offerPrice = 0;
