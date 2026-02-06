@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MasbaratoExpress | Importaciones USA a Colombia</title>
+    <meta name="description" content="Precio final en Colombia. Sin sorpresas. Importación directa desde USA.">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <header>
+        <a href="/" class="logo">Masbarato<span>Express</span></a>
+        <nav>
+            <a href="/catalog">Catálogo</a>
+            <a href="/como-funciona">Cómo Funciona</a>
+            <a href="/negocios">Para Negocios</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/mis-pedidos" class="btn btn-primary"><i class="fa-solid fa-box-open"></i> Mis Pedidos</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="global-tag">🇨🇴 Importaciones USA → Colombia</div>
+        <h1>Precio final en Colombia. <span>Sin sorpresas.</span></h1>
+        <p>Nos encargamos de impuestos, envío y nacionalización. Tú eliges, nosotros lo traemos a tu puerta.</p>
+        <div class="hero-btns">
+            <a href="#catalog" class="btn btn-primary btn-lg">Explorar Catálogo <i
+                    class="fa-solid fa-arrow-right"></i></a>
+            <a href="/importar" class="btn" style="background:white; border: 1px solid var(--border-color);">Importar
+                por Encargo</a>
+        </div>
+    </section>
+
+    <main class="container" id="catalog">
+        <div class="section-header"
+            style="padding: 0 5%; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <h2 style="font-size: 2rem; font-weight: 800;">Top de la Semana</h2>
+                <p style="color: var(--text-muted);">Productos verificados con el mejor precio del mercado.</p>
+            </div>
+            <div class="filters">
+                <!-- Categorías -->
+                <select class="btn" style="background:white; border: 1px solid var(--border-color); font-weight:700;">
+                    <option>Todas las Categorías</option>
+                    <option>Electrónica Premium</option>
+                    <option>Lifestyle & Street</option>
+                    <option>Relojes & Wearables</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="product-grid" id="product-container">
+            <!-- Cargando productos vía JS -->
+            <div class="card" style="height: 400px; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color: var(--primary);"></i>
+            </div>
+        </div>
+    </main>
+
+    <section class="features" style="padding: 80px 5%; background: white; margin-top: 50px;">
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; text-align: center;">
+            <div>
+                <i class="fa-solid fa-shield-halved fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
+                <h3 style="font-weight: 800; margin-bottom: 10px;">Compra Protegida</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Paga el 50% al iniciar y el resto cuando el
+                    producto esté listo para entrega.</p>
+            </div>
+            <div>
+                <i class="fa-solid fa-plane-up fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
+                <h3 style="font-weight: 800; margin-bottom: 10px;">Envío Express</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Logística propia desde Miami hasta cualquier
+                    ciudad de Colombia.</p>
+            </div>
+            <div>
+                <i class="fa-solid fa-hand-holding-dollar fa-3x"
+                    style="color: var(--primary); margin-bottom: 20px;"></i>
+                <h3 style="font-weight: 800; margin-bottom: 10px;">Cero Sorpresas</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">El precio que ves es el precio final. Incluye
+                    nacionalización e impuestos.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px;">
+            <div>
+                <a href="/" class="logo"
+                    style="color: white; margin-bottom: 20px; display: block;">Masbarato<span>Express</span></a>
+                <p style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">Especialistas en traer lo mejor del mundo a
+                    Colombia al mejor precio.</p>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 20px;">Explorar</h4>
+                <ul style="list-style: none; color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                    <li style="margin-bottom: 10px;"><a href="/catalog"
+                            style="color: inherit; text-decoration: none;">Catálogo Completo</a></li>
+                    <li style="margin-bottom: 10px;"><a href="/importar"
+                            style="color: inherit; text-decoration: none;">Importar por Encargo</a></li>
+                    <li style="margin-bottom: 10px;"><a href="/negocios"
+                            style="color: inherit; text-decoration: none;">Canal Negocios</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 20px;">Ayuda</h4>
+                <ul style="list-style: none; color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                    <li style="margin-bottom: 10px;"><a href="/terminos"
+                            style="color: inherit; text-decoration: none;">Términos y Condiciones</a></li>
+                    <li style="margin-bottom: 10px;"><a href="/privacidad"
+                            style="color: inherit; text-decoration: none;">Política de Privacidad</a></li>
+                    <li style="margin-bottom: 10px;"><a href="/contacto"
+                            style="color: inherit; text-decoration: none;">Soporte WhatsApp</a></li>
+                </ul>
+            </div>
+        </div>
+        <div
+            style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 50px; padding-top: 20px; text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.4);">
+            &copy; 2026 MasbaratoExpress. Marcamos la diferencia en cada entrega.
+        </div>
+    </footer>
+
+    <script src="/js/app.js"></script>
+</body>
+
+</html>

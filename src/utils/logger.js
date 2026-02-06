@@ -1,18 +1,10 @@
-const winston = require('winston');
-
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-    ),
-    transports: [
-        new winston.transports.File({ filename: 'error.log', level: 'error' }),
-        new winston.transports.File({ filename: 'combined.log' }),
-        new winston.transports.Console({
-            format: winston.format.simple(),
-        }),
-    ],
-});
+/**
+ * LOGGER SENCILLO
+ */
+const logger = {
+    info: (msg) => console.log(`[INFO] ${new Date().toLocaleTimeString()}: ${msg}`),
+    warn: (msg) => console.warn(`[WARN] ${new Date().toLocaleTimeString()}: ${msg}`),
+    error: (msg) => console.error(`[ERROR] ${new Date().toLocaleTimeString()}: ${msg}`)
+};
 
 module.exports = logger;
