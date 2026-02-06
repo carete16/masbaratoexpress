@@ -505,6 +505,24 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'src/web/public/index.html'));
 });
 
+// TEMPORARY DEBUG ENDPOINT - REMOVE AFTER DIAGNOSIS
+app.get('/api/debug/db-status', (req, res) => {
+  try {
+    const counts = db.prepare("SELECT status, COUNT(*) as count FROM products GROUP BY status").all();
+    const pending = db.prepare("SELECT id, name, category, price_usd, weight_lb, source_link FROM products WHERE status = 'pendiente' LIMIT 10").all();
+    const all = db.prepare("SELECT id, name, status, category FROM products").all();
+
+    res.json({
+      counts,
+      pending_products: pending,
+      all_products: all,
+      timestamp: new Date().toISOString()
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message, stack: e.stack });
+  }
+});
+
 // Iniciar
 app.listen(PORT, () => {
   console.log(`🚀 MasbaratoExpress corriendo en puerto ${PORT}`);
