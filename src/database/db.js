@@ -120,6 +120,43 @@ CREATE TABLE IF NOT EXISTS leads (
 
 db.exec(schema);
 
+// --- MIGRATION: Actualizar constraint de 'status' para incluir 'pendiente' ---
+try {
+    const tableInfo = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='products'").get();
+    if (tableInfo && !tableInfo.sql.includes("'pendiente'")) {
+        console.log("🛠️ Migrando tabla products para incluir estado 'pendiente'...");
+        db.transaction(() => {
+            // 1. Renombrar tabla vieja
+            db.exec("ALTER TABLE products RENAME TO products_old");
+
+            // 2. Crear nueva tabla con el esquema actualizado (incluido en la variable schema)
+            db.exec(schema);
+
+            // 3. Copiar datos
+            db.exec(`
+                INSERT INTO products (
+                    id, name, description, images, category, status, 
+                    delivery_time_est, warranty, source_link, price_usd, 
+                    trm_applied, tax_usa_perc, weight_lb, cost_lb_usd, 
+                    margin_perc, price_cop_final, created_at, updated_at
+                )
+                SELECT 
+                    id, name, description, images, category, status, 
+                    delivery_time_est, warranty, source_link, price_usd, 
+                    trm_applied, tax_usa_perc, weight_lb, cost_lb_usd, 
+                    margin_perc, price_cop_final, created_at, updated_at
+                FROM products_old
+            `);
+
+            // 4. Eliminar tabla vieja
+            db.exec("DROP TABLE products_old");
+        })();
+        console.log("✅ Migración de base de datos completada con éxito.");
+    }
+} catch (e) {
+    console.error("❌ Fallo en la migración de DB:", e.message);
+}
+
 // Valores iniciales por defecto si no existen
 const defaultSettings = [
     ['trm_base', '3650'],
