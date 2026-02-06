@@ -4,8 +4,8 @@ set -o errexit
 
 echo "🚀 Iniciando construcción optimizada..."
 
-# Usar npm ci es más rápido y limpio para despliegues
-npm ci
+# Usar npm install es más seguro si hay desincronización de lockfile
+npm install
 
 # Instalar Chrome solo si no está en caché (esto ahorra mucho tiempo)
 if [ ! -d "$PUPPETEER_CACHE_DIR" ]; then
