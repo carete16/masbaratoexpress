@@ -130,6 +130,8 @@ app.get('/api/admin/express/pending', (req, res) => {
   console.log("[ADMIN] Cargando ofertas PENDIENTES...");
   try {
     const items = db.prepare("SELECT * FROM products WHERE status = 'pendiente' ORDER BY created_at DESC").all();
+    console.log(`[ADMIN] Encontrados ${items.length} productos pendientes`);
+
     const formatted = items.map(item => {
       let tienda = 'Tienda';
       try {
@@ -140,15 +142,21 @@ app.get('/api/admin/express/pending', (req, res) => {
 
       return {
         ...item,
+        // Mapeo de campos para compatibilidad con frontend
+        title: item.name || 'Producto',
+        categoria: item.category || 'Electrónica Premium',
+        link: item.source_link,
         price_offer: item.price_usd,
         weight: item.weight_lb,
         tienda: tienda.toUpperCase(),
         image: JSON.parse(item.images || '[]')[0] || 'https://placehold.co/400x400'
       };
     });
+
+    console.log(`[ADMIN] Enviando ${formatted.length} productos formateados`);
     res.json(formatted);
   } catch (e) {
-    console.error("[ADMIN ERROR] Fallo al cargar pendientes:", e.message);
+    console.error("[ADMIN ERROR] Fallo al cargar pendientes:", e.message, e.stack);
     res.status(500).json({ error: e.message });
   }
 });
@@ -167,6 +175,10 @@ app.get('/api/admin/express/published', (req, res) => {
 
       return {
         ...item,
+        // Mapeo de campos para compatibilidad con frontend
+        title: item.name || 'Producto',
+        categoria: item.category || 'Electrónica Premium',
+        link: item.source_link,
         price_offer: item.price_usd,
         weight: item.weight_lb,
         tienda: tienda.toUpperCase(),
@@ -175,7 +187,7 @@ app.get('/api/admin/express/published', (req, res) => {
     });
     res.json(formatted);
   } catch (e) {
-    console.error("[ADMIN ERROR] Fallo al cargar publicadas:", e.message);
+    console.error("[ADMIN ERROR] Fallo al cargar publicadas:", e.message, e.stack);
     res.status(500).json({ error: e.message });
   }
 });

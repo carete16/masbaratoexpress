@@ -318,7 +318,10 @@
                 else if (currentTab === 'claims') renderClaims(res.data);
                 else renderItems(res.data);
 
-            } catch (e) { container.innerHTML = '<div class="text-center py-5 text-danger">Error al cargar datos.</div>'; }
+            } catch (e) {
+                console.error("Error cargando datos:", e);
+                container.innerHTML = `<div class="text-center py-5 text-danger">Error al cargar datos: ${e.message || 'Desconocido'}</div>`;
+            }
         }
 
         function renderItems(items) {
