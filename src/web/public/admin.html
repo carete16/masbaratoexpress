@@ -317,10 +317,15 @@
                         </div>
                     </div>
 
-                    <!-- INFO MERCADOLIBRE AUTO -->
                     <div id="modal-meli-info" style="display:none;"></div>
 
-                    <h6 class="small fw-bold text-muted mb-2">SELECCIONAR IMAGEN PRINCIPAL</h6>
+                    <h6 class="small fw-bold text-muted mb-2">GALERÍA DE IMÁGENES</h6>
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" id="manual-img-url" class="form-control"
+                            placeholder="¿Falta alguna foto? Pega el enlace aquí...">
+                        <button class="btn btn-outline-primary fw-bold" type="button" onclick="addManualImage()"><i
+                                class="fa-solid fa-plus"></i></button>
+                    </div>
                     <div id="modal-gallery" class="d-flex gap-2 overflow-auto pb-2 mb-2" style="white-space:nowrap;">
                         <!-- Gallery populated by JS -->
                     </div>
@@ -695,6 +700,50 @@
         let currentAnalysis = null;
         let selectedProductImage = null;
 
+        function renderGallery() {
+            const galleryContainer = document.getElementById('modal-gallery');
+            galleryContainer.innerHTML = '';
+
+            let imgs = currentAnalysis.images || [];
+            if (currentAnalysis.image && !imgs.includes(currentAnalysis.image)) imgs.unshift(currentAnalysis.image);
+            // Deduplicate
+            imgs = [...new Set(imgs)];
+            currentAnalysis.images = imgs;
+
+            if (!selectedProductImage && imgs.length > 0) selectedProductImage = imgs[0];
+
+            imgs.forEach(img => {
+                const div = document.createElement('div');
+                div.className = 'gallery-item';
+                div.style.cssText = 'width: 80px; height: 80px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; position: relative; flex-shrink: 0;';
+                // Intentar carga directa, fallback a proxy
+                div.innerHTML = `<img src="${img}" style="width:100%; height:100%; object-fit: cover;" onerror="this.onerror=null;this.src='/api/proxy-image?url=${encodeURIComponent(img)}'">`;
+
+                if (img === selectedProductImage) {
+                    div.style.borderColor = '#0d6efd';
+                    div.style.boxShadow = '0 0 0 2px rgba(13, 110, 253, 0.25)';
+                }
+
+                div.onclick = () => {
+                    selectedProductImage = img;
+                    renderGallery();
+                };
+                galleryContainer.appendChild(div);
+            });
+        }
+
+        function addManualImage() {
+            const inp = document.getElementById('manual-img-url');
+            const url = inp.value.trim();
+            if (url) {
+                if (!currentAnalysis.images) currentAnalysis.images = [];
+                currentAnalysis.images.unshift(url);
+                selectedProductImage = url; // Seleccionar la nueva
+                renderGallery();
+                inp.value = '';
+            }
+        }
+
         async function postManual() {
             const urlInput = document.getElementById('manualUrl');
             const url = urlInput.value.trim();
@@ -711,7 +760,7 @@
                 });
 
                 currentAnalysis = res.data;
-                selectedProductImage = currentAnalysis.image; // Default main image
+                selectedProductImage = currentAnalysis.image; // Default
 
                 // 2. Llenar Modal
                 document.getElementById('modal-title').value = currentAnalysis.title;
@@ -740,27 +789,7 @@
                 }
 
                 // 3. Renderizar Galería
-                const galleryContainer = document.getElementById('modal-gallery');
-                galleryContainer.innerHTML = '';
-
-                // Asegurar array único
-                const uniqueImages = [...new Set(currentAnalysis.images || [currentAnalysis.image])];
-
-                uniqueImages.forEach(img => {
-                    const div = document.createElement('div');
-                    div.className = 'gallery-item';
-                    div.style.cssText = 'width: 80px; height: 80px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; position: relative;';
-                    div.innerHTML = `<img src="/api/proxy-image?url=${encodeURIComponent(img)}" style="width:100%; height:100%; object-fit: cover;">`;
-
-                    if (img === selectedProductImage) div.style.borderColor = '#0d6efd';
-
-                    div.onclick = () => {
-                        document.querySelectorAll('.gallery-item').forEach(el => el.style.borderColor = 'transparent');
-                        div.style.borderColor = '#0d6efd';
-                        selectedProductImage = img;
-                    };
-                    galleryContainer.appendChild(div);
-                });
+                renderGallery();
 
                 // 4. Mostrar Modal
                 const modal = new bootstrap.Modal(document.getElementById('importModal'));

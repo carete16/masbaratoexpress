@@ -258,7 +258,15 @@ app.post('/api/admin/express/manual-post', (req, res) => {
     });
 
     const id = 'PROD-' + Math.random().toString(36).substr(2, 7).toUpperCase();
-    const imageJson = JSON.stringify(images || []);
+
+    // Procesar imágenes
+    let imageJson = '[]';
+    try {
+      if (Array.isArray(images)) imageJson = JSON.stringify(images);
+      else if (typeof images === 'string') imageJson = JSON.stringify([images]);
+      else imageJson = JSON.stringify(["https://placehold.co/600x600?text=No+Image"]);
+    } catch (e) { console.error("Error procesando imagen para DB", e); }
+
     const operationalTrm = calc.trm_applied;
     const finalWeight = calc.weight_used;
     const finalCop = calc.final_cop;
@@ -270,14 +278,14 @@ app.post('/api/admin/express/manual-post', (req, res) => {
             margin_perc, tax_usa_perc, meli_price, meli_link,
             status
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')
-    `).run(id, title, "Importación Express desde USA", imageJson,
+    `).run(id, title, "", imageJson, // Descripción vacía a petición usuario
       category, url, price, operationalTrm, finalWeight, finalCop,
       finalMargin, finalTax, meli_price || 0, meli_link || "");
 
     console.log(`[ADMIN] Producto guardado con éxito como PENDIENTE.`);
-    res.json({ success: true, product_id: id, price_calculated: finalCop });
+    res.json({ success: true, id, price_calculated: finalCop });
   } catch (e) {
-    console.error("[ADMIN ERROR] Fallo al crear producto manualmente:", e.message, e.stack);
+    console.error("[ADMIN ERROR] Falla en manual-post:", e.message);
     res.status(500).json({ error: e.message });
   }
 });
@@ -453,6 +461,42 @@ app.post('/api/admin/express/analyze', async (req, res) => {
       scraperResult = await DeepScraper.scrape(finalUrl);
     } catch (e) {
       console.error("[ANALYZE] Error en scraping:", e);
+    }
+
+    // RESCUE 911: Si DeepScraper falla o precio es absurdo ($1)
+    if (!scraperResult || !scraperResult.offerPrice || scraperResult.offerPrice <= 1) {
+      try {
+        console.log("[ANALYZE] ⚠️ DeepScraper dudoso. Ejecutando Rescate Axios...");
+        const axRes = await axios.get(finalUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9'
+          }, timeout: 5000
+        });
+        const h = axRes.data;
+        // Intentar regex precios comunes Amazon
+        const m1 = h.match(/<span class="a-offscreen">\$([\d\.]+)<\/span>/);
+        const m2 = h.match(/"price":{"amount":([\d\.]+)/);
+        const m3 = h.match(/class="a-price-whole">([\d\.,]+)/); // A veces sin decimales
+
+        let rescuePrice = 0;
+        if (m1) rescuePrice = parseFloat(m1[1]);
+        else if (m2) rescuePrice = parseFloat(m2[1]);
+        else if (m3) rescuePrice = parseFloat(m3[1].replace(/,/g, ''));
+
+        if (rescuePrice > 1) {
+          scraperResult = scraperResult || {};
+          scraperResult.offerPrice = rescuePrice;
+          console.log("[ANALYZE] ✅ Precio rescatado:", rescuePrice);
+        }
+
+        // Rescate Título
+        if (!scraperResult || !scraperResult.title) {
+          scraperResult = scraperResult || {};
+          const tMatch = h.match(/<title>(.*?)<\/title>/);
+          if (tMatch) scraperResult.title = tMatch[1].replace(/Amazon\.com: | : .*/g, '').trim();
+        }
+      } catch (ex) { console.error("Rescate fallido:", ex.message); }
     }
 
     // 4. ✨ NEW: MERCADOLIBRE AUTO-SEARCH (CONDITION=NEW) ✨
