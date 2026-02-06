@@ -4,6 +4,7 @@ const path = require('path');
 const db = require('./src/database/db');
 const PriceEngine = require('./src/core/PriceEngine');
 const RadarBot = require('./src/core/Bot1_Scraper');
+const LinkTransformer = require('./src/utils/LinkTransformer');
 const axios = require('axios');
 
 const app = express();
@@ -263,21 +264,25 @@ app.get('/api/proxy-image', async (req, res) => {
   }
 });
 
-// 8. ADMIN EXPRESS: ANALIZAR URL (IA MAGIC)
+// 8. ADMIN EXPRESS: ANALIZAR URL (IA MAGIC + LINK TRANSFORMER)
 app.post('/api/admin/express/analyze', async (req, res) => {
   const { url } = req.body;
   try {
-    // Simulación de análisis con RadarBot
+    // 1. Transformar y Limpiar Link (Resolución Slickdeals -> Store URL -> Afiliación propia)
+    const finalUrl = await LinkTransformer.transform(url);
+
+    // 2. Extraer metadatos básicos (Hostname de la tienda final)
+    const hostname = new URL(finalUrl).hostname.replace('www.', '');
+
     const result = {
-      url: url,
-      title: "Producto Detectado de USA",
-      price: 99.99,
-      weight: 4.5,
-      categoria: "Lifestyle & Street",
-      image: "https://placehold.co/400x400?text=Detecting..."
+      url: finalUrl,
+      title: "Producto detectado en " + hostname.split('.')[0].toUpperCase(),
+      price: 1, // Placeholder
+      weight: 4, // Mínimo PRD
+      categoria: "Electrónica Premium",
+      image: "https://placehold.co/400x400?text=Scan+Complete"
     };
 
-    // Si la URL es de Amazon/eBay, podríamos intentar algo más real en el futuro
     res.json(result);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

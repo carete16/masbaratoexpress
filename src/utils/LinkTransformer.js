@@ -1,77 +1,130 @@
 const logger = require('./logger');
 const axios = require('axios');
+const { URL } = require('url');
 
 /**
- * LinkTransformer: El motor de limpieza y monetización.
- * Versión MASBARATO EXPRESS - CORE ENGINE
+ * LinkTransformer: Motor de Limpieza Cosmética y Monetización MASBARATO EXPRESS
+ * Diseñado por Antigravity para alineación total con PRD de Afiliación.
  */
 class LinkTransformer {
     constructor() {
-        require('dotenv').config();
-        this.tags = {
-            sovrn_key: process.env.SOVRN_API_KEY || '',
-            sovrn_subid: process.env.SOVRN_SUBID || 'masbarato_deals',
-            amazon: process.env.AMAZON_TAG || 'masbaratodeals-20',
+        // Códigos oficiales solicitados por el usuario
+        this.affiliates = {
+            amazon: 'MASBARATO-20',
+            newegg: 'masbaratoexpress',
+            walmart: 'masbaratoexpress',
+            bestbuy: 'MBEXPRESS'
         };
     }
 
-    // Seguir redirecciones reales (Slickdeals, etc.)
-    async resolverRedirect(url) {
+    /**
+     * Resuelve redirecciones solo si es estrictamente necesario (Slickdeals, redirectores).
+     * Evitamos tocar Amazon/BestBuy directamente para prevenir bloqueos de IP.
+     */
+    async resolveLink(url) {
+        const lowUrl = url.toLowerCase();
+        // Si ya es un link directo de tienda, no lo rastreamos (evitar 403)
+        if (lowUrl.includes('amazon.') || lowUrl.includes('newegg.') || lowUrl.includes('walmart.') || lowUrl.includes('bestbuy.')) {
+            return url;
+        }
+
         try {
-            // Algunos sitios bloquean bots, intentamos con un User-Agent real
-            const res = await axios.get(url, {
+            // Usamos un timeout corto para redirecciones
+            const response = await axios.get(url, {
                 maxRedirects: 10,
                 timeout: 5000,
-                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+                }
             });
-            return res.request.res.responseUrl || res.config.url;
+            return response.request.res.responseUrl || response.config.url || url;
         } catch (e) {
-            // logger.warn(`⚠️ Error resolviendo redirect para ${url}: ${e.message}`);
             return url;
         }
     }
 
-    detectarTienda(url) {
-        if (url.includes("amazon.")) return "amazon";
-        if (url.includes("walmart.")) return "walmart";
-        if (url.includes("bestbuy.")) return "bestbuy";
-        if (url.includes("target.")) return "target";
-        if (url.includes("ebay.")) return "ebay";
-        return "otro";
+    /**
+     * Limpia parámetros de rastreo
+     */
+    cleanParams(urlStr) {
+        try {
+            const url = new URL(urlStr);
+            const blacklist = [
+                'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+                'tag', 'ref', 'ascsubtag', 'creative', 'camp', 'affid', 'affname',
+                'asubid', 'asid', 'ranmid', 'raneaid', 'ransiteid', 'clickid',
+                'gclid', 'fbclid', 'linkcode', 'linkid', 'afsrc', 'tr_id'
+            ];
+
+            const keysToDelete = [];
+            url.searchParams.forEach((value, key) => {
+                const lowKey = key.toLowerCase();
+                if (blacklist.includes(lowKey) || lowKey.startsWith('utm_')) {
+                    keysToDelete.push(key);
+                }
+            });
+
+            keysToDelete.forEach(key => url.searchParams.delete(key));
+            return url.toString();
+        } catch (e) {
+            return urlStr;
+        }
     }
 
-    limpiarURL(url) {
-        return url.split("?")[0];
+    /**
+     * Extrae ID el producto para Amazon
+     */
+    getAmazonBase(urlStr) {
+        // Regex mejorada para capturar ASIN en diferentes formatos
+        const asinMatch = urlStr.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
+        if (asinMatch) {
+            return `https://www.amazon.com/dp/${asinMatch[1]}/`;
+        }
+        return urlStr;
     }
 
-    extraerASIN(url) {
-        const match = url.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
-        return match ? (match[1] || match[2]) : null;
-    }
+    /**
+     * Proceso principal
+     */
+    async transform(inputUrl) {
+        if (!inputUrl || typeof inputUrl !== 'string') return '';
 
-    async transform(url) {
-        if (!url) return url;
+        // 1. Resolver redirecciones (Evitando tiendas directas)
+        let resolvedUrl = await this.resolveLink(inputUrl.trim());
 
-        // 1. Resolver redirecciones reales
-        const urlFinal = await this.resolverRedirect(url);
-        const tienda = this.detectarTienda(urlFinal);
+        // 2. Limpieza de parámetros
+        let cleanUrl = this.cleanParams(resolvedUrl);
 
-        // 2. Lógica por tienda
-        if (tienda === "amazon") {
-            const asin = this.extraerASIN(urlFinal);
-            if (asin) {
-                logger.info(`🎯 Amazon ASIN: ${asin} (vía MASBARATO CORE)`);
-                return `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
+        // 3. Inyectar afiliado
+        let finalUrl = cleanUrl;
+        try {
+            const urlObj = new URL(cleanUrl);
+            const lowUrl = cleanUrl.toLowerCase();
+
+            if (lowUrl.includes('amazon.')) {
+                const base = this.getAmazonBase(cleanUrl);
+                const baseUrlObj = new URL(base);
+                baseUrlObj.searchParams.set('tag', this.affiliates.amazon);
+                finalUrl = baseUrlObj.toString();
             }
+            else if (lowUrl.includes('newegg.com')) {
+                urlObj.searchParams.set('cm_sp', this.affiliates.newegg);
+                finalUrl = urlObj.toString();
+            }
+            else if (lowUrl.includes('walmart.com')) {
+                urlObj.searchParams.set('affp1', this.affiliates.walmart);
+                finalUrl = urlObj.toString();
+            }
+            else if (lowUrl.includes('bestbuy.com')) {
+                urlObj.searchParams.set('ref', this.affiliates.bestbuy);
+                finalUrl = urlObj.toString();
+            }
+        } catch (e) {
+            finalUrl = cleanUrl.split('?')[0];
         }
 
-        // 3. Sovrn (Otras tiendas)
-        if (this.tags.sovrn_key) {
-            const limpia = this.limpiarURL(urlFinal);
-            return `https://redirect.viglink.com?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(limpia)}`;
-        }
-
-        return this.limpiarURL(urlFinal);
+        logger.info(`🔗 Transformación: [IN] ${inputUrl.substring(0, 30)}... -> [OUT] ${finalUrl.substring(0, 50)}...`);
+        return finalUrl;
     }
 }
 
