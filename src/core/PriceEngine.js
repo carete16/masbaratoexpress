@@ -17,25 +17,29 @@ class PriceEngine {
             min_weight = 4
         } = input;
 
-        // 1. Asegurar tipos numéricos y peso mínimo
+        // PROMPT TÉCNICO: precio_usd + 30% margen + 7% tax + envío (peso * tarifa)
         const p_usd = parseFloat(price_usd) || 0;
         const w_lb = parseFloat(weight_lb) || 0;
         const m_weight = parseFloat(min_weight) || 4;
 
-        const finalWeight = Math.max(w_lb, m_weight);
+        // 1. Aplicar margen del 30% (Multiplicador 1.30)
+        const price_with_margin = p_usd * 1.30;
 
-        // 2. Costos de importación
+        // 2. Aplicar Tax USA del 7% (sobre precio con margen)
+        const price_with_tax = price_with_margin * 1.07;
+
+        // 3. Calcular peso con +1 libra de seguridad (según requerimiento técnico)
+        // Usamos el peso mayor entre (real + 1) y el mínimo legal (4lbs)
+        const finalWeight = Math.max(w_lb + 1, m_weight);
         const shippingCost = finalWeight * (parseFloat(cost_lb_usd) || 6);
-        const taxCost = p_usd * (parseFloat(tax_usa_perc) || 7) / 100;
-        const marginCost = p_usd * (parseFloat(margin_perc) || 30) / 100;
 
-        // 3. Total USD
-        const totalUsd = p_usd + shippingCost + taxCost + marginCost;
+        // 4. Subtotal USD final
+        const totalUsd = price_with_tax + shippingCost;
 
-        // 4. Tasa Operativa
+        // 5. Tasa Operativa (TRM + 300)
         const operationalTrm = parseFloat(trm) + parseFloat(trm_offset);
 
-        // 5. Precio Final COP
+        // 6. Precio Final COP (Redondeado SIEMPRE hacia arriba a la milena)
         const rawCop = totalUsd * operationalTrm;
         const finalCop = Math.ceil(rawCop / 1000) * 1000;
 
@@ -43,8 +47,8 @@ class PriceEngine {
             price_usd: p_usd,
             weight_used: finalWeight,
             shipping_usd: shippingCost,
-            tax_usd: taxCost,
-            margin_usd: marginCost,
+            tax_usd: price_with_tax - price_with_margin, // Informativo
+            margin_usd: price_with_margin - p_usd, // Informativo
             total_usd: totalUsd,
             trm_applied: operationalTrm,
             final_cop: finalCop

@@ -105,17 +105,10 @@ class LinkTransformer {
                 baseUrlObj.searchParams.set('tag', this.affiliates.amazon);
                 finalUrl = baseUrlObj.toString();
             }
-            else if (lowUrl.includes('newegg.com')) {
-                urlObj.searchParams.set('cm_sp', this.affiliates.newegg);
-                finalUrl = urlObj.toString();
-            }
-            else if (lowUrl.includes('walmart.com')) {
-                urlObj.searchParams.set('affp1', this.affiliates.walmart);
-                finalUrl = urlObj.toString();
-            }
-            else if (lowUrl.includes('bestbuy.com')) {
-                urlObj.searchParams.set('ref', this.affiliates.bestbuy);
-                finalUrl = urlObj.toString();
+            // Otras tiendas: No insertar afiliados manuales (Usar Sovrn de forma externa/automática)
+            // Simplemente devolvemos la URL limpia sin parámetros de terceros
+            else {
+                finalUrl = cleanUrl;
             }
         } catch (e) {
             // Fallback si no es una URL válida

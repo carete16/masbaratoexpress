@@ -31,7 +31,7 @@ app.get('/api/config', (req, res) => {
 // 2. PRODUCTOS (CATÁLOGO)
 app.get('/api/products', (req, res) => {
   try {
-    const query = "SELECT id, name, category, price_cop_final, images, status FROM products ORDER BY created_at DESC";
+    const query = "SELECT id, name, category, price_cop_final, images, status FROM products WHERE status = 'disponible' ORDER BY created_at DESC";
     const products = db.prepare(query).all();
 
     // Parsear imágenes (vienen como JSON string)
@@ -128,15 +128,30 @@ app.post('/api/admin/products', (req, res) => {
 // 6. ADMIN: ACCIONES ADICIONALES (EXPRESS)
 app.get('/api/admin/express/pending', (req, res) => {
   try {
-    const items = db.prepare("SELECT * FROM products WHERE status = 'agotado' OR status IS NULL").all();
-    res.json(items);
+    const items = db.prepare("SELECT * FROM products WHERE status = 'pendiente' ORDER BY created_at DESC").all();
+    // Renombrar campos para compatibilidad con admin.html
+    const formatted = items.map(item => ({
+      ...item,
+      price_offer: item.price_usd,
+      weight: item.weight_lb,
+      tienda: new URL(item.source_link || 'https://tienda.com').hostname.replace('www.', '').split('.')[0],
+      image: JSON.parse(item.images || '[]')[0] || 'https://placehold.co/400x400'
+    }));
+    res.json(formatted);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/admin/express/published', (req, res) => {
   try {
-    const items = db.prepare("SELECT * FROM products WHERE status = 'disponible'").all();
-    res.json(items);
+    const items = db.prepare("SELECT * FROM products WHERE status = 'disponible' ORDER BY updated_at DESC").all();
+    const formatted = items.map(item => ({
+      ...item,
+      price_offer: item.price_usd,
+      weight: item.weight_lb,
+      tienda: new URL(item.source_link || 'https://tienda.com').hostname.replace('www.', '').split('.')[0],
+      image: JSON.parse(item.images || '[]')[0] || 'https://placehold.co/400x400'
+    }));
+    res.json(formatted);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -329,17 +344,17 @@ app.post('/api/admin/express/manual-post', (req, res) => {
     });
 
     const id = 'EXPR-' + Math.random().toString(36).substr(2, 7).toUpperCase();
-    console.log(`[ADMIN] Insertando producto con ID: ${id}`);
+    console.log(`[ADMIN] Insertando producto con ID: ${id} en estado PENDIENTE`);
 
     db.prepare(`
         INSERT INTO products (
             id, name, description, images, category, source_link, 
             price_usd, trm_applied, weight_lb, price_cop_final, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'agotado')
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')
     `).run(id, title, "Importación Express desde USA", JSON.stringify(["https://placehold.co/600x600?text=Express"]),
       category, url, price, calc.trm_applied, calc.weight_used, calc.final_cop);
 
-    console.log(`[ADMIN] Producto guardado con éxito.`);
+    console.log(`[ADMIN] Producto guardado con éxito como PENDIENTE.`);
     res.json({ success: true, id });
   } catch (e) {
     console.error("[ADMIN ERROR] Falla en manual-post:", e.message);

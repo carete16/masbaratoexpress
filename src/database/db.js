@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     images TEXT, -- JSON array de URLs
     category TEXT CHECK(category IN ('Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables')),
-    status TEXT CHECK(status IN ('disponible', 'agotado')) DEFAULT 'disponible',
+    status TEXT CHECK(status IN ('disponible', 'agotado', 'pendiente')) DEFAULT 'pendiente',
     delivery_time_est TEXT DEFAULT '10-15 días hábiles',
     warranty TEXT DEFAULT 'Garantía básica de 30 días',
     
