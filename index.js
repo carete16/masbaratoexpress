@@ -36,7 +36,10 @@ app.get('/api/status', (req, res) => {
   }
 });
 
-// --- ROUTES PARA PÁGINAS ---
+app.get('/api/time', (req, res) => {
+  res.json({ deployed_at: '2026-02-06 12:15 PM', server_time: new Date().toISOString() });
+});
+// --- ROUTES PARA PÁGINAS ---
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
