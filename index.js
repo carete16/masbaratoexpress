@@ -45,7 +45,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/admin.html'));
+  res.sendFile(path.join(__dirname, 'public/admin_dark_v4.html'));
 });
 
 app.get('/express', (req, res) => {
