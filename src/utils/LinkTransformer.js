@@ -4,11 +4,10 @@ const { URL } = require('url');
 
 /**
  * LinkTransformer: Motor de Limpieza Cosmética y Monetización MASBARATO EXPRESS
- * Diseñado por Antigravity para alineación total con PRD de Afiliación.
+ * Corregido para evitar errores de sintaxis y cierres inesperados.
  */
 class LinkTransformer {
     constructor() {
-        // Códigos oficiales solicitados por el usuario
         this.affiliates = {
             amazon: 'MASBARATO-20',
             newegg: 'masbaratoexpress',
@@ -18,20 +17,20 @@ class LinkTransformer {
     }
 
     /**
-     * Resuelve redirecciones solo si es estrictamente necesario (Slickdeals, redirectores).
-     * Evitamos tocar Amazon/BestBuy directamente para prevenir bloqueos de IP.
+     * Resuelve redirecciones solo si es estrictamente necesario.
      */
     async resolveLink(url) {
+        if (!url) return '';
         const lowUrl = url.toLowerCase();
-        // Si ya es un link directo de tienda, no lo rastreamos (evitar 403)
+
+        // No rastrear si ya es un link directo de tienda
         if (lowUrl.includes('amazon.') || lowUrl.includes('newegg.') || lowUrl.includes('walmart.') || lowUrl.includes('bestbuy.')) {
             return url;
         }
 
         try {
-            // Usamos un timeout corto para redirecciones
             const response = await axios.get(url, {
-                maxRedirects: 10,
+                maxRedirects: 8,
                 timeout: 5000,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
@@ -75,7 +74,6 @@ class LinkTransformer {
      * Extrae ID el producto para Amazon
      */
     getAmazonBase(urlStr) {
-        // Regex mejorada para capturar ASIN en diferentes formatos
         const asinMatch = urlStr.match(/\/(?:dp|gp\/product)\/([A-Z0-9]{10})/i);
         if (asinMatch) {
             return `https://www.amazon.com/dp/${asinMatch[1]}/`;
@@ -89,7 +87,7 @@ class LinkTransformer {
     async transform(inputUrl) {
         if (!inputUrl || typeof inputUrl !== 'string') return '';
 
-        // 1. Resolver redirecciones (Evitando tiendas directas)
+        // 1. Resolver redirecciones
         let resolvedUrl = await this.resolveLink(inputUrl.trim());
 
         // 2. Limpieza de parámetros
@@ -120,10 +118,13 @@ class LinkTransformer {
                 finalUrl = urlObj.toString();
             }
         } catch (e) {
-            finalUrl = cleanUrl.split('?')[0];
+            // Fallback si no es una URL válida
+            if (cleanUrl.includes('?')) {
+                finalUrl = cleanUrl.split('?')[0];
+            }
         }
 
-        logger.info(`🔗 Transformación: [IN] ${inputUrl.substring(0, 30)}... -> [OUT] ${finalUrl.substring(0, 50)}...`);
+        logger.info(`🔗 Transform: [OUT] ${finalUrl.substring(0, 60)}...`);
         return finalUrl;
     }
 }

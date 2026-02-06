@@ -272,11 +272,16 @@ app.post('/api/admin/express/analyze', async (req, res) => {
     const finalUrl = await LinkTransformer.transform(url);
 
     // 2. Extraer metadatos básicos (Hostname de la tienda final)
-    const hostname = new URL(finalUrl).hostname.replace('www.', '');
+    let hostname = 'Tienda';
+    try {
+      hostname = new URL(finalUrl).hostname.replace('www.', '').split('.')[0].toUpperCase();
+    } catch (err) {
+      console.error("Error parsing finalUrl:", finalUrl);
+    }
 
     const result = {
       url: finalUrl,
-      title: "Producto detectado en " + hostname.split('.')[0].toUpperCase(),
+      title: "Producto detectado en " + hostname,
       price: 1, // Placeholder
       weight: 4, // Mínimo PRD
       categoria: "Electrónica Premium",
