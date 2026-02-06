@@ -466,10 +466,11 @@ app.post('/api/admin/express/analyze', async (req, res) => {
     // RESCUE 911: Si DeepScraper falla o precio es absurdo ($1)
     if (!scraperResult || !scraperResult.offerPrice || scraperResult.offerPrice <= 1) {
       try {
-        console.log("[ANALYZE] ⚠️ DeepScraper dudoso. Ejecutando Rescate Axios...");
+        console.log("[ANALYZE] ⚠️ DeepScraper dudoso. Ejecutando Rescate Axios (Modo iPhone)...");
         const axRes = await axios.get(finalUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9'
           }, timeout: 5000
         });
@@ -490,11 +491,31 @@ app.post('/api/admin/express/analyze', async (req, res) => {
           console.log("[ANALYZE] ✅ Precio rescatado:", rescuePrice);
         }
 
+        // Rescate Imágenes (og:image)
+        if (!scraperResult || !scraperResult.images || scraperResult.images.length === 0) {
+          const imgMatch = h.match(/<meta property="og:image" content="(.*?)"/);
+          if (imgMatch && !imgMatch[1].includes('captcha')) {
+            scraperResult = scraperResult || {};
+            if (!scraperResult.images) scraperResult.images = [];
+            scraperResult.images.push(imgMatch[1]);
+            scraperResult.image = imgMatch[1];
+            console.log("[ANALYZE] ✅ Imagen rescatada (og:image):", imgMatch[1]);
+          }
+        }
+
         // Rescate Título
         if (!scraperResult || !scraperResult.title) {
           scraperResult = scraperResult || {};
           const tMatch = h.match(/<title>(.*?)<\/title>/);
-          if (tMatch) scraperResult.title = tMatch[1].replace(/Amazon\.com: | : .*/g, '').trim();
+          if (tMatch) {
+            let cleanT = tMatch[1].replace(/Amazon\.com: | : .*/g, '').replace(/en Amazon/gi, '').trim();
+            if (cleanT.length > 5 && !cleanT.includes('Captcha')) scraperResult.title = cleanT;
+            else {
+              // Extraer ASIN como ultimo recurso
+              const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})/);
+              if (asinMatch) scraperResult.title = `Producto Referencia ${asinMatch[1]}`;
+            }
+          }
         }
       } catch (ex) { console.error("Rescate fallido:", ex.message); }
     }
@@ -550,7 +571,7 @@ app.post('/api/admin/express/analyze', async (req, res) => {
       categoria: categoria,
       image: image,
       images: images,
-      tienda: hostname,
+      tienda: "",
       meli_price: meliData.price,
       meli_link: meliData.link
     };
