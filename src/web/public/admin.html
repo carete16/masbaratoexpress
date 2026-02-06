@@ -595,14 +595,19 @@
         async function saveChanges(id) {
             const priceInput = document.getElementById(`price-${id}`).value.replace(',', '.');
             const weightInput = document.getElementById(`weight-${id}`).value.replace(',', '.');
+            const marginInput = document.getElementById(`margin-${id}`).value;
+            const taxInput = document.getElementById(`tax-${id}`).value;
 
             const p = parseFloat(priceInput) || 0;
             const w = parseFloat(weightInput) || 0;
+            const m = parseFloat(marginInput) || 30;
+            const t = parseFloat(taxInput) || 7;
+
             const title = document.getElementById(`title-${id}`).value;
             const categoria = document.getElementById(`cat-${id}`).value;
-            const calc = calculateFinal(p, w);
+            const calc = calculateFinal(p, w, m, t);
 
-            if (w <= 0) { alert("⚠️ El peso debe ser mayor a 0 (Usa punto o coma para decimales)"); return; }
+            if (w <= 0) { alert("⚠️ El peso debe ser mayor a 0"); return; }
 
             try {
                 const response = await axios.post(API_URL + '/admin/express/update', {
@@ -611,7 +616,9 @@
                     price_offer: p,
                     weight: w,
                     price_cop: calc.finalCOP,
-                    categoria
+                    categoria,
+                    margin: m,
+                    tax: t
                 }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
 
                 if (response.data.success) {
@@ -626,24 +633,29 @@
         async function toggleStatus(id, activate) {
             const priceVal = document.getElementById(`price-${id}`)?.value.replace(',', '.') || "0";
             const weightVal = document.getElementById(`weight-${id}`)?.value.replace(',', '.') || "0";
+            const marginVal = document.getElementById(`margin-${id}`)?.value || "30";
+            const taxVal = document.getElementById(`tax-${id}`)?.value || "7";
 
             const p = parseFloat(priceVal) || 0;
             const w = parseFloat(weightVal) || 0;
+            const m = parseFloat(marginVal) || 30;
+            const t = parseFloat(taxVal) || 7;
+
             const title = document.getElementById(`title-${id}`)?.value;
             const categoria = document.getElementById(`cat-${id}`)?.value || 'Lifestyle & Street';
-            const calc = calculateFinal(p, w);
+            const calc = calculateFinal(p, w, m, t);
 
             if (activate && w <= 0) { alert("⚠️ Define un peso antes de aprobar."); return; }
 
             try {
                 if (activate) {
+                    // Update first to ensure values are saved
+                    await axios.post(API_URL + '/admin/express/update', {
+                        id, title, price_offer: p, weight: w, price_cop: calc.finalCOP, categoria, margin: m, tax: t
+                    }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
+
                     await axios.post(API_URL + '/admin/express/approve', {
-                        id,
-                        title,
-                        price_offer: p,
-                        weight: w,
-                        price_cop: calc.finalCOP,
-                        categoria
+                        id, title, price_offer: p, weight: w, price_cop: calc.finalCOP, categoria
                     }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
                 } else {
                     await axios.post(API_URL + '/admin/express/finalize', { id }, {

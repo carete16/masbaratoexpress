@@ -192,14 +192,29 @@ app.get('/api/admin/express/published', (req, res) => {
   }
 });
 
+// --- MIGRACIÓN PREVENTIVA ---
+try {
+  db.prepare("ALTER TABLE products ADD COLUMN margin_perc REAL DEFAULT 30").run();
+  console.log("Columna margin_perc agregada.");
+} catch (e) { }
+try {
+  db.prepare("ALTER TABLE products ADD COLUMN tax_usa_perc REAL DEFAULT 7").run();
+  console.log("Columna tax_usa_perc agregada.");
+} catch (e) { }
+
 app.post('/api/admin/express/update', (req, res) => {
-  const { id, title, price_offer, weight, price_cop, categoria } = req.body;
+  const { id, title, price_offer, weight, price_cop, categoria, margin, tax } = req.body;
   try {
+    const m = margin !== undefined ? margin : 30;
+    const t = tax !== undefined ? tax : 7;
+
     db.prepare(`
       UPDATE products 
-      SET name = ?, price_usd = ?, weight_lb = ?, price_cop_final = ?, category = ?, updated_at = CURRENT_TIMESTAMP
+      SET name = ?, price_usd = ?, weight_lb = ?, price_cop_final = ?, category = ?, 
+          margin_perc = ?, tax_usa_perc = ?,
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(title, price_offer, weight, price_cop, categoria, id);
+    `).run(title, price_offer, weight, price_cop, categoria, m, t, id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
