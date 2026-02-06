@@ -702,8 +702,72 @@ app.post('/api/admin/express/manual-post', (req, res) => {
   }
 });
 
-// 9. ADMIN EXPRESS:// 11. MERCADOLIBRE SEARCH (SERVER-SIDE PROXY)
-// 11. MERCADOLIBRE SEARCH (SERVER-SIDE PROXY)
+// 9. ADMIN: LISTAR PRODUCTOS PENDIENTES O PUBLICADOS
+app.get('/api/admin/express/list', async (req, res) => {
+  const { tab } = req.query;
+  try {
+    let query = "SELECT * FROM products";
+    if (tab === 'published') query += " WHERE status = 'publicado'";
+    else query += " WHERE status = 'pendiente'";
+    query += " ORDER BY created_at DESC";
+
+    const items = db.prepare(query).all();
+    res.json(items);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 10. ADMIN: ACTUALIZAR PRODUCTO
+app.post('/api/admin/express/update', async (req, res) => {
+  const { id, title, price_offer, weight, price_cop, categoria, margin, tax } = req.body;
+  try {
+    db.prepare(`
+      UPDATE products SET 
+        name = ?, price_usd = ?, weight_lb = ?, price_cop_final = ?, 
+        category = ?, margin_perc = ?, tax_usa_perc = ?
+      WHERE id = ?
+    `).run(title, price_offer, weight, price_cop, categoria, margin, tax, id);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 11. ADMIN: BORRAR PRODUCTO
+app.post('/api/admin/express/delete', async (req, res) => {
+  const { id } = req.body;
+  try {
+    db.prepare("DELETE FROM products WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 12. ADMIN: APROBAR (Cambiar estado a publicado)
+app.post('/api/admin/express/approve', async (req, res) => {
+  const { id } = req.body;
+  try {
+    db.prepare("UPDATE products SET status = 'publicado' WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 13. ADMIN: FINALIZAR/OCULTAR
+app.post('/api/admin/express/finalize', async (req, res) => {
+  const { id } = req.body;
+  try {
+    db.prepare("UPDATE products SET status = 'agotado' WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 14. MERCADOLIBRE SEARCH (SERVER-SIDE PROXY)
 app.get('/api/admin/express/search-ml', async (req, res) => {
   const { query } = req.query;
   // Mejor encabezado para evitar 403 y SOLO NUEVOS

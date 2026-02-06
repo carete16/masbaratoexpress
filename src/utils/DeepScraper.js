@@ -206,6 +206,32 @@ class DeepScraper {
                     officialPrice = clean(document.querySelector('[data-test="product-price-reduced"]')?.innerText || document.querySelector('.is--strikethrough')?.innerText);
                     image = document.querySelector('img[data-fade-in]')?.src || document.querySelector('meta[property="og:image"]')?.content;
                 }
+                else {
+                    // --- FALLBACK UNIVERSAL (Metatags & OG) ---
+                    title = document.querySelector('meta[property="og:title"]')?.content ||
+                        document.querySelector('meta[name="twitter:title"]')?.content ||
+                        document.title;
+
+                    const metaPrice = document.querySelector('meta[property="og:price:amount"]')?.content ||
+                        document.querySelector('meta[property="product:price:amount"]')?.content ||
+                        document.querySelector('[itemprop="price"]')?.content ||
+                        document.querySelector('meta[name="twitter:data1"]')?.content; // A veces BestBuy/Others
+
+                    if (metaPrice) offerPrice = clean(metaPrice);
+
+                    image = document.querySelector('meta[property="og:image"]')?.content ||
+                        document.querySelector('meta[name="twitter:image"]')?.content ||
+                        document.querySelector('link[rel="image_src"]')?.href;
+
+                    description = document.querySelector('meta[property="og:description"]')?.content ||
+                        document.querySelector('meta[name="description"]')?.content;
+
+                    // Si el precio sigue en 0, búsqueda desesperada en texto
+                    if (offerPrice <= 0) {
+                        const priceMatch = document.body.innerText.match(/\$\s*([0-9]{1,5}(?:[\.,][0-9]{2})?)/);
+                        if (priceMatch) offerPrice = clean(priceMatch[0]);
+                    }
+                }
 
                 // --- EXTRAER GALERÍA DE IMÁGENES ---
                 let images = [];
