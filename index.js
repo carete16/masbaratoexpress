@@ -127,32 +127,57 @@ app.post('/api/admin/products', (req, res) => {
 
 // 6. ADMIN: ACCIONES ADICIONALES (EXPRESS)
 app.get('/api/admin/express/pending', (req, res) => {
+  console.log("[ADMIN] Cargando ofertas PENDIENTES...");
   try {
     const items = db.prepare("SELECT * FROM products WHERE status = 'pendiente' ORDER BY created_at DESC").all();
-    // Renombrar campos para compatibilidad con admin.html
-    const formatted = items.map(item => ({
-      ...item,
-      price_offer: item.price_usd,
-      weight: item.weight_lb,
-      tienda: new URL(item.source_link || 'https://tienda.com').hostname.replace('www.', '').split('.')[0],
-      image: JSON.parse(item.images || '[]')[0] || 'https://placehold.co/400x400'
-    }));
+    const formatted = items.map(item => {
+      let tienda = 'Tienda';
+      try {
+        if (item.source_link && item.source_link.includes('http')) {
+          tienda = new URL(item.source_link).hostname.replace('www.', '').split('.')[0];
+        }
+      } catch (e) { console.error("Error parsing tienda URL:", item.source_link); }
+
+      return {
+        ...item,
+        price_offer: item.price_usd,
+        weight: item.weight_lb,
+        tienda: tienda.toUpperCase(),
+        image: JSON.parse(item.images || '[]')[0] || 'https://placehold.co/400x400'
+      };
+    });
     res.json(formatted);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("[ADMIN ERROR] Fallo al cargar pendientes:", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get('/api/admin/express/published', (req, res) => {
+  console.log("[ADMIN] Cargando ofertas PUBLICADAS...");
   try {
     const items = db.prepare("SELECT * FROM products WHERE status = 'disponible' ORDER BY updated_at DESC").all();
-    const formatted = items.map(item => ({
-      ...item,
-      price_offer: item.price_usd,
-      weight: item.weight_lb,
-      tienda: new URL(item.source_link || 'https://tienda.com').hostname.replace('www.', '').split('.')[0],
-      image: JSON.parse(item.images || '[]')[0] || 'https://placehold.co/400x400'
-    }));
+    const formatted = items.map(item => {
+      let tienda = 'Tienda';
+      try {
+        if (item.source_link && item.source_link.includes('http')) {
+          tienda = new URL(item.source_link).hostname.replace('www.', '').split('.')[0];
+        }
+      } catch (e) { console.error("Error parsing tienda URL:", item.source_link); }
+
+      return {
+        ...item,
+        price_offer: item.price_usd,
+        weight: item.weight_lb,
+        tienda: tienda.toUpperCase(),
+        image: JSON.parse(item.images || '[]')[0] || 'https://placehold.co/400x400'
+      };
+    });
     res.json(formatted);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("[ADMIN ERROR] Fallo al cargar publicadas:", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/admin/express/update', (req, res) => {
