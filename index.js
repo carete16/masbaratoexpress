@@ -408,12 +408,38 @@ app.post('/api/claims', (req, res) => {
 app.get('/api/proxy-image', async (req, res) => {
   const imageUrl = req.query.url;
   if (!imageUrl) return res.status(400).send('URL missing');
+
+  // Detectar Referer adecuado para burlar anti-hotlink
+  let referer = '';
   try {
-    const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    if (imageUrl.includes('amazon')) referer = 'https://www.amazon.com/';
+    else if (imageUrl.includes('nike')) referer = 'https://www.nike.com/';
+    else if (imageUrl.includes('ebay')) referer = 'https://www.ebay.com/';
+    else referer = new URL(imageUrl).origin + '/';
+  } catch (e) { referer = 'https://www.google.com/'; }
+
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': referer,
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Sec-Fetch-Dest': 'image',
+        'Sec-Fetch-Mode': 'no-cors',
+        'Sec-Fetch-Site': 'cross-site'
+      },
+      timeout: 15000
+    });
+
+    // Propagar tipo de contenido y cachear agresivamente
     res.set('Content-Type', response.headers['content-type']);
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache 24h
     res.send(response.data);
   } catch (e) {
-    res.status(500).send('Error proxying image');
+    console.error(`[PROXY ERROR] Falló carga de: ${imageUrl} - ${e.message}`);
+    // Último recurso: Redirección directa (el navegador del cliente podría tener acceso si tiene cookies)
+    res.redirect(imageUrl);
   }
 });
 
@@ -557,9 +583,21 @@ app.post('/api/admin/express/analyze', async (req, res) => {
     if (lowText.match(/watch|reloj|wearable|garmin|fitbit|smartwatch/i)) {
       categoria = "Relojes & Wearables";
       if (!scraperResult?.weight) weight = 1;
-    } else if (lowText.match(/shoe|sneaker|nike|adidas|jordan|clothing|shirt|hoodie|pant|zapat|tenis/i)) {
+    } else if (lowText.match(/shoe|sneaker|nike|adidas|jordan|clothing|shirt|hoodie|pant|zapat|tenis|botas|camisa|ropa/i)) {
       categoria = "Lifestyle & Street";
-      if (!scraperResult?.weight) weight = 2;
+      if (!scraperResult?.weight) weight = 3;
+    } else if (lowText.match(/vitamin|suplement|proteina|collagen|salud|health|belleza|piel|skin/i)) {
+      categoria = "Salud & Belleza";
+      if (!scraperResult?.weight) weight = 1;
+    } else if (lowText.match(/toy|juguete|fiesta|party|lego|barbie|funko|juego/i)) {
+      categoria = "Juguetes & Hobbies";
+    } else if (lowText.match(/laptop|computer|pc|macbook|ipad|tablet|monitor|tecno/i)) {
+      categoria = "Tecnología & Cómputo";
+    } else if (lowText.match(/audio|headphone|audifono|parlante|bose|sony|jbl/i)) {
+      categoria = "Audio Profesional";
+    } else if (lowText.match(/perfume|fragrancia|locion|cologne/i)) {
+      categoria = "Perfumes Originales";
+      if (!scraperResult?.weight) weight = 1;
     }
 
     // Generar JSON seguro para frontend
