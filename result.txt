@@ -1,2 +1,0 @@
-[dotenv@17.2.3] injecting env (12) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
-https://www.ebay.com/itm/123456789012?mkcid=1&mkrid=711-53200-19255-0&siteid=0&campid=5339000000&customid=masbarato&toolid=10001&mkevt=1

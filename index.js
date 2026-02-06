@@ -85,36 +85,58 @@ app.post('/api/orders', (req, res) => {
 // 5. ADMIN: CREAR PRODUCTO (Inyección de Motor de Precios)
 app.post('/api/admin/products', (req, res) => {
   const { name, description, images, category, source_link, price_usd, weight_lb } = req.body;
-
   try {
-    // Obtener config actual para el cálculo
     const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
     const trm_offset = db.prepare('SELECT value FROM settings WHERE key = "trm_offset"').get().value;
     const cost_lb = db.prepare('SELECT value FROM settings WHERE key = "cost_lb_default"').get().value;
 
-    // Calcular con el Motor de Precios
     const calc = PriceEngine.calculate({
-      price_usd,
-      weight_lb,
-      trm,
-      trm_offset,
-      cost_lb_usd: cost_lb
+      price_usd, weight_lb, trm, trm_offset, cost_lb_usd: cost_lb
     });
 
     const id = 'PROD-' + Math.random().toString(36).substr(2, 7).toUpperCase();
-
     db.prepare(`
-            INSERT INTO products (
-                id, name, description, images, category, source_link, 
-                price_usd, trm_applied, weight_lb, price_cop_final
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-      id, name, description, JSON.stringify(images || []), category, source_link,
-      price_usd, calc.trm_applied, calc.weight_used, calc.final_cop
-    );
+        INSERT INTO products (
+            id, name, description, images, category, source_link, 
+            price_usd, trm_applied, weight_lb, price_cop_final
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name, description, JSON.stringify(images || []), category, source_link,
+      price_usd, calc.trm_applied, calc.weight_used, calc.final_cop);
 
     res.json({ success: true, product_id: id, price_calculated: calc.final_cop });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 6. ADMIN: ACCIONES ADICIONALES
+app.post('/api/admin/products/delete', (req, res) => {
+  try {
+    db.prepare('DELETE FROM products WHERE id = ?').run(req.body.id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/express/trm', (req, res) => {
+  try {
+    const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
+    res.json({ success: true, trm: parseFloat(trm) });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- ROUTES PARA PÁGINAS ---
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/index.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/admin.html'));
+});
+
+app.get('/catalog', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/catalog.html'));
+});
+
+app.get('/mis-pedidos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/mis-pedidos.html'));
 });
 
 // Fallback to index.html for SPA behavior if needed
