@@ -267,6 +267,71 @@
         <div id="main-container"></div>
     </div>
 
+    <!-- IMPORTER MODAL -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-primary">🚀 Verificar Datos de Importación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted">TÍTULO DEL PRODUCTO</label>
+                        <textarea id="modal-title" class="form-control fw-bold fs-5" rows="2"></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted">CATEGORÍA</label>
+                            <select id="modal-cat" class="form-select fw-bold">
+                                <option value="Electrónica Premium">💻 Electrónica Premium</option>
+                                <option value="Lifestyle & Street">👟 Lifestyle & Street</option>
+                                <option value="Relojes & Wearables">⌚ Relojes & Wearables</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6 col-md-3">
+                            <label class="small fw-bold text-muted">PRECIO USD</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" id="modal-price" class="form-control fw-bold">
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="small fw-bold text-muted">PESO (LBS)</label>
+                            <div class="input-group">
+                                <input type="number" id="modal-weight" class="form-control fw-bold">
+                                <span class="input-group-text">lbs</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="small fw-bold text-muted">MARGEN %</label>
+                            <input type="number" id="modal-margin" class="form-control fw-bold text-center">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="small fw-bold text-muted">TAX USA %</label>
+                            <input type="number" id="modal-tax" class="form-control fw-bold text-center">
+                        </div>
+                    </div>
+
+                    <h6 class="small fw-bold text-muted mb-2">SELECCIONAR IMAGEN PRINCIPAL</h6>
+                    <div id="modal-gallery" class="d-flex gap-2 overflow-auto pb-2 mb-2" style="white-space:nowrap;">
+                        <!-- Gallery populated by JS -->
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button onclick="confirmImport()" class="btn btn-primary btn-lg fw-bold rounded-3">
+                            <i class="fa-solid fa-cloud-arrow-up me-2"></i> GUARDAR EN PENDIENTES
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api';
         let currentTab = 'pending';
@@ -568,10 +633,15 @@
 
             document.getElementById(`cop-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
             document.getElementById(`profit-val-${id}`).innerText = `+$${calc.profitVal.toFixed(2)} USD`;
+            document.getElementById(`tax-val-${id}`).id = `tax-val-${id}`;
             document.getElementById(`tax-val-${id}`).innerText = `+$${calc.taxUSD.toFixed(2)} USD`;
             document.getElementById(`ship-val-${id}`).innerText = `+$${calc.shipUSD.toFixed(2)} USD`;
             document.getElementById(`total-val-${id}`).innerText = `$${calc.totalUSD.toFixed(2)} USD`;
         }
+
+        // --- NUEVA LÓGICA DE IMPORTACIÓN CON MODAL ---
+        let currentAnalysis = null;
+        let selectedProductImage = null;
 
         async function postManual() {
             const urlInput = document.getElementById('manualUrl');
@@ -579,40 +649,158 @@
             if (!url) return;
 
             const btn = document.getElementById('btnProcess');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ANALIZANDO...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> BUSCANDO DATOS...';
             btn.disabled = true;
 
             try {
-                // PRIMERO: Analizar con la IA
-                const analysisRes = await axios.post(API_URL + '/admin/express/analyze', { url }, {
+                // 1. Analizar URL (Scraping Real)
+                const res = await axios.post(API_URL + '/admin/express/analyze', { url }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
-                const data = analysisRes.data;
+                currentAnalysis = res.data;
+                selectedProductImage = currentAnalysis.image; // Default main image
 
-                // SEGUNDO: Enviar a la base de datos con los datos detectados
+                // 2. Llenar Modal
+                document.getElementById('modal-title').value = currentAnalysis.title;
+                document.getElementById('modal-price').value = currentAnalysis.price;
+                document.getElementById('modal-weight').value = currentAnalysis.weight;
+                document.getElementById('modal-margin').value = 30; // Default
+                document.getElementById('modal-tax').value = 7; // Default
+                document.getElementById('modal-cat').value = currentAnalysis.categoria;
+
+                // 3. Renderizar Galería
+                const galleryContainer = document.getElementById('modal-gallery');
+                galleryContainer.innerHTML = '';
+
+                // Asegurar array único
+                const uniqueImages = [...new Set(currentAnalysis.images || [currentAnalysis.image])];
+
+                uniqueImages.forEach(img => {
+                    const div = document.createElement('div');
+                    div.className = 'gallery-item';
+                    div.style.cssText = 'width: 80px; height: 80px; cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; position: relative;';
+                    div.innerHTML = `<img src="/api/proxy-image?url=${encodeURIComponent(img)}" style="width:100%; height:100%; object-fit: cover;">`;
+
+                    if (img === selectedProductImage) div.style.borderColor = '#0d6efd';
+
+                    div.onclick = () => {
+                        document.querySelectorAll('.gallery-item').forEach(el => el.style.borderColor = 'transparent');
+                        div.style.borderColor = '#0d6efd';
+                        selectedProductImage = img;
+                    };
+                    galleryContainer.appendChild(div);
+                });
+
+                // 4. Mostrar Modal
+                const modal = new bootstrap.Modal(document.getElementById('importModal'));
+                modal.show();
+
+            } catch (e) {
+                alert("Error al analizar: " + (e.response?.data?.error || e.message));
+            } finally {
+                btn.innerHTML = 'PROCESAR';
+                btn.disabled = false;
+                urlInput.value = '';
+            }
+        }
+
+        async function confirmImport() {
+            if (!currentAnalysis) return;
+
+            const title = document.getElementById('modal-title').value;
+            const price = parseFloat(document.getElementById('modal-price').value) || 0;
+            const weight = parseFloat(document.getElementById('modal-weight').value) || 0;
+            const margin = parseFloat(document.getElementById('modal-margin').value) || 30;
+            const tax = parseFloat(document.getElementById('modal-tax').value) || 7;
+            const category = document.getElementById('modal-cat').value;
+            const images = currentAnalysis.images || [selectedProductImage];
+
+            // Poner la imagen seleccionada PRIMERO en el array
+            const finalImages = [selectedProductImage, ...images.filter(x => x !== selectedProductImage)];
+
+            try {
                 const response = await axios.post(API_URL + '/admin/express/manual-post', {
-                    url: data.url,
-                    price: data.price,
-                    weight: data.weight,
-                    category: data.categoria,
-                    title: data.title
+                    url: currentAnalysis.url,
+                    title,
+                    price,
+                    weight,
+                    category,
+                    margin,
+                    tax,
+                    images: finalImages
                 }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
                 if (response.data.success) {
-                    urlInput.value = '';
-                    alert(`✅ IA DETECTÓ:\n📦 Título: ${data.title}\n⚖️ Peso: ${data.weight} lbs\n🏷️ Cat: ${data.categoria}\n\nAgregado a PENDIENTES.`);
-                    switchTab('pending');
+                    // Cerrar modal
+                    bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+
+                    // Mostrar Toast/Alert
+                    const toast = document.createElement('div');
+                    toast.className = 'alert alert-success position-fixed top-0 start-50 translate-middle-x mt-4 shadow-lg';
+                    toast.style.zIndex = '9999';
+                    toast.innerHTML = `✅ <b>${title}</b> agregado exitosamente a pendientes.`;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+
+                    loadData(); // Recargar lista
                 }
             } catch (e) {
-                console.error(e);
-                const errorMsg = e.response?.data?.error || e.message;
-                alert("❌ Falló el servidor: " + errorMsg);
+                alert("Error al guardar: " + e.message);
             }
-            btn.innerHTML = 'PROCESAR';
-            btn.disabled = false;
+        }
+
+        // --- MERCADOLIBRE (CLIENTE + SERVER HIBRIDO) ---
+        async function searchMeli(id) {
+            const titleInput = document.getElementById(`title-${id}`);
+            if (!titleInput) return;
+            const query = titleInput.value;
+
+            const btn = event.target; // El botón pulsado
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> BUSCANDO...';
+            btn.disabled = true;
+
+            try {
+                // Intentar primero búsqueda server-side
+                const res = await axios.get(`${API_URL}/admin/express/search-ml?query=${encodeURIComponent(query)}`);
+
+                const box = document.getElementById(`meli-box-${id}`);
+                const priceSpan = document.getElementById(`meli-price-${id}`);
+                const linkA = document.getElementById(`meli-link-${id}`);
+
+                box.style.display = 'block';
+
+                if (res.data.error || res.data.fallbackLink || (!res.data.length && !res.data[0]?.average_id)) {
+                    // Fallback si falla o devuelve formato fallback
+                    const url = res.data.fallbackLink || `https://listado.mercadolibre.com.co/${encodeURIComponent(query)}`;
+                    priceSpan.innerHTML = '<span class="text-muted">Ver lista manual</span>';
+                    linkA.href = url;
+                    // Abrir automáticamente si falló el server
+                    if (res.data.error) window.open(url, '_blank');
+                } else {
+                    // Datos reales (si funciona el array server-side)
+                    // Asumiendo que el server devuelve array de resultados
+                    if (Array.isArray(res.data) && res.data.length > 0) {
+                        const first = res.data[0];
+                        const price = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(first.price);
+                        priceSpan.innerHTML = `<span class="text-dark fw-bold">${price}</span>`;
+                        linkA.href = first.link;
+                    } else {
+                        priceSpan.innerText = "No encontrado";
+                        linkA.href = `https://listado.mercadolibre.com.co/${encodeURIComponent(query)}`;
+                    }
+                }
+
+            } catch (e) {
+                // Error de red absoluto
+                window.open(`https://listado.mercadolibre.com.co/${encodeURIComponent(query)}`, '_blank');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
         function renderLeads(leads) {

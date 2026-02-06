@@ -207,10 +207,39 @@ class DeepScraper {
                     image = document.querySelector('img[data-fade-in]')?.src || document.querySelector('meta[property="og:image"]')?.content;
                 }
 
-                if (!image) image = document.querySelector('meta[property="og:image"]')?.content;
-                if (!title) title = document.querySelector('meta[property="og:title"]')?.content || document.title;
+                // --- EXTRAER GALERÍA DE IMÁGENES ---
+                let images = [];
 
-                return { offerPrice, officialPrice, title, image, description, isUnavailable, weight, finalUrl: window.location.href, coupon: couponInfo };
+                if (window.location.hostname.includes('amazon.com')) {
+                    // Amazon Main Image
+                    if (image) images.push(image);
+
+                    // Amazon Alt Images (Thumbnails logic)
+                    const thumbz = document.querySelectorAll('#altImages li.item img, #imageBlock .a-list-item img, .imageThumbnail img');
+                    thumbz.forEach(img => {
+                        let src = img.src;
+                        // Convertir thumbnail a full res (Hack básico de Amazon URL)
+                        // Ejemplo: ..._.jpg -> Quitar ._SS40_.jpg
+                        // Las URLs de Amazon suelen tener ._AC_US40_.jpg o similar.
+                        // Quitamos la parte del resize para obtener alta calidad.
+                        if (src && !src.includes('play-icon-overlay')) {
+                            const cleanSrc = src.replace(/\._[A-Z]{2,}\d+_/, ''); // Remover resize flag
+                            if (!images.includes(cleanSrc)) images.push(cleanSrc);
+                        }
+                    });
+                } else {
+                    // Fallback genérico para otras tiendas
+                    if (image) images.push(image);
+                    const allImgs = document.querySelectorAll('.gallery img, .product-images img, [data-test="product-image"] img');
+                    allImgs.forEach(i => {
+                        if (i.src && !images.includes(i.src)) images.push(i.src);
+                    });
+                }
+
+                // Limitar a max 5 imágenes para no saturar
+                images = images.slice(0, 5);
+
+                return { offerPrice, officialPrice, title, image, images, description, isUnavailable, weight, finalUrl: window.location.href, coupon: couponInfo };
             });
 
             if (data && data.isRedirecting) {

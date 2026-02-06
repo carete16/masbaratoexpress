@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const db = require('./src/database/db');
-const PriceEngine = require('./src/core/PriceEngine');
-const RadarBot = require('./src/core/Bot1_Scraper');
+const PriceEngine = require('./src/utils/PriceEngine'); // Changed path from core to utils
+const DeepScraper = require('./src/utils/DeepScraper'); // Importar Scraper Real
 const LinkTransformer = require('./src/utils/LinkTransformer');
 const axios = require('axios');
 
@@ -331,65 +331,63 @@ app.get('/api/proxy-image', async (req, res) => {
   }
 });
 
-// 8. ADMIN EXPRESS: ANALIZAR URL (IA MAGIC + LINK TRANSFORMER)
+// 8. ADMIN EXPRESS: ANALIZAR URL (IA + SCRAPING REAL)
 app.post('/api/admin/express/analyze', async (req, res) => {
   const { url } = req.body;
   console.log(`[ANALYZE] Recibida solicitud para analizar URL: ${url}`);
   try {
-    // 1. Transformar y Limpiar Link (Resolución Slickdeals -> Store URL -> Afiliación propia)
-    console.log(`[ANALYZE] Transformando URL: ${url}`);
+    // 1. Transformar y Limpiar Link
     const finalUrl = await LinkTransformer.transform(url);
-    console.log(`[ANALYZE] URL transformada a: ${finalUrl}`);
 
-    // 2. Extraer metadatos básicos (Hostname de la tienda final)
+    // 2. Extraer metadatos básicos por URL (Fallback)
     let hostname = 'Tienda';
-    let productTitle = "Producto detectado";
-    let categoria = "Electrónica Premium";
-    let estimatedWeight = 4;
-
     try {
-      const urlObj = new URL(finalUrl);
-      hostname = urlObj.hostname.replace('www.', '').split('.')[0].toUpperCase();
+      hostname = new URL(finalUrl).hostname.replace('www.', '').split('.')[0].toUpperCase();
+    } catch (e) { }
 
-      // 3. Detección inteligente de categoría basada en la tienda y URL
-      const lowUrl = finalUrl.toLowerCase();
-
-      // Amazon: Intentar extraer info del ASIN
-      if (lowUrl.includes('amazon.')) {
-        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})/i) || finalUrl.match(/\/gp\/product\/([A-Z0-9]{10})/i);
-        if (asinMatch) {
-          productTitle = `Producto Amazon ASIN: ${asinMatch[1]}`;
-          console.log(`[ANALYZE] ASIN detectado: ${asinMatch[1]}`);
-        }
-      }
-
-      // Categorización inteligente por keywords en URL
-      if (lowUrl.match(/watch|reloj|wearable|garmin|fitbit|smartwatch/i)) {
-        categoria = "Relojes & Wearables";
-        estimatedWeight = 1;
-      } else if (lowUrl.match(/shoe|sneaker|nike|adidas|jordan|clothing|shirt|hoodie|pant/i)) {
-        categoria = "Lifestyle & Street";
-        estimatedWeight = 2;
-      } else if (lowUrl.match(/laptop|phone|tablet|headphone|gpu|monitor|keyboard|mouse|camera|tv|console|gaming/i)) {
-        categoria = "Electrónica Premium";
-        estimatedWeight = 5;
-      }
-
-    } catch (err) {
-      console.error("[ANALYZE ERROR] Error parsing finalUrl:", finalUrl, err);
+    // 3. ✨ SCRAPING REAL CON DEEPSCRAPER ✨
+    let scraperResult = null;
+    try {
+      console.log(`[ANALYZE] Iniciando DeepScraper en: ${finalUrl}`);
+      scraperResult = await DeepScraper.scrape(finalUrl);
+    } catch (e) {
+      console.error("[ANALYZE] Error en scraping:", e);
     }
 
+    // 4. Procesar Resultados
+    let title = scraperResult?.title || "Producto detectado";
+    let price = scraperResult?.offerPrice || 1; // 1 como fallback para obligar a editar pero no romper math
+    let weight = scraperResult?.weight || 4;
+    let images = scraperResult?.images || [];
+    let image = scraperResult?.image || (images.length > 0 ? images[0] : "https://placehold.co/400x400?text=No+Image");
+
+    // Detección de Categoría
+    let categoria = "Electrónica Premium";
+    const lowText = (title + " " + finalUrl).toLowerCase();
+
+    if (lowText.match(/watch|reloj|wearable|garmin|fitbit|smartwatch/i)) {
+      categoria = "Relojes & Wearables";
+      if (!scraperResult?.weight) weight = 1;
+    } else if (lowText.match(/shoe|sneaker|nike|adidas|jordan|clothing|shirt|hoodie|pant|zapat|tenis/i)) {
+      categoria = "Lifestyle & Street";
+      if (!scraperResult?.weight) weight = 2;
+    }
+
+    // Generar JSON seguro para frontend
     const result = {
       url: finalUrl,
-      title: `${productTitle} en ${hostname}`,
-      price: 1, // Placeholder (el admin lo ajustará)
-      weight: estimatedWeight,
+      title: title,
+      price: price,
+      weight: weight,
       categoria: categoria,
-      image: "https://placehold.co/400x400?text=Scan+Complete"
+      image: image,
+      images: images, // Enviamos todas las imágenes
+      tienda: hostname
     };
 
-    console.log(`[ANALYZE] Resultado final:`, result);
+    console.log(`[ANALYZE] Resultado final:`, { ...result, images: `Array(${result.images.length})` });
     res.json(result);
+
   } catch (e) {
     console.error("[ANALYZE CRITICAL ERROR]:", e.message);
     res.status(500).json({ error: e.message });
@@ -397,7 +395,7 @@ app.post('/api/admin/express/analyze', async (req, res) => {
 });
 
 app.post('/api/admin/express/manual-post', (req, res) => {
-  const { title, price, weight, category, url } = req.body;
+  const { title, price, weight, category, url, images, margin, tax } = req.body;
   console.log(`[ADMIN] Solicitud manual-post recibida para: ${title}`);
   try {
     const getSetting = (key, fallback) => {
@@ -409,21 +407,54 @@ app.post('/api/admin/express/manual-post', (req, res) => {
     const trm_offset = getSetting('trm_offset', '300');
     const cost_lb = getSetting('cost_lb_default', '6');
 
-    console.log(`[ADMIN] Calculando precio para USD:${price} LBS:${weight} TRM:${trm}`);
-    const calc = PriceEngine.calculate({
-      price_usd: price, weight_lb: weight, trm, trm_offset, cost_lb_usd: cost_lb
-    });
+    // Usar valores custom si vienen del frontend, si no, usar defaults
+    const finalMargin = margin ? parseFloat(margin) : parseFloat(getSetting('margin_perc', '30'));
+    const finalTax = tax ? parseFloat(tax) : parseFloat(getSetting('tax_usa_perc', '7'));
+
+    console.log(`[ADMIN] Calculando precio para USD:${price} LBS:${weight} TRM:${trm} Margen:${finalMargin}% Tax:${finalTax}%`);
+
+    // Modificar PriceEngine para aceptar overrides (o calcular manualmente aquí si PriceEngine no lo soporta)
+    // Asumimos que PriceEngine soporta overrides o simulamos el objeto
+    // Nota: PriceEngine.calculate usa settings internos o parámetros. Vamos a pasarle los parámetros.
+    // Como PriceEngine puede no soportar 'margin_perc' en opciones, mejor forzamos el cálculo aquí o actualizamos PriceEngine.
+    // Para seguridad, usaremos la lógica estándar pero inyectamos los valores.
+
+    const settingsOverride = {
+      margin_perc: finalMargin,
+      tax_usa_perc: finalTax,
+      min_weight_default: 4 // default
+    };
+
+    // Si PriceEngine no acepta overrides, mejor lo hacemos directo aquí para garantizar que funcione:
+    const priceWithMargin = price * (1 + (finalMargin / 100));
+    const priceWithTax = priceWithMargin * (1 + (finalTax / 100));
+    const finalWeight = Math.max(weight + 1, 4); // +1 lb safety + min 4 lbs
+    const shippingCost = finalWeight * cost_lb;
+    const totalUsd = priceWithTax + shippingCost;
+    const operationalTrm = parseFloat(trm) + parseFloat(trm_offset);
+    const finalCop = Math.ceil((totalUsd * operationalTrm) / 1000) * 1000;
 
     const id = 'EXPR-' + Math.random().toString(36).substr(2, 7).toUpperCase();
     console.log(`[ADMIN] Insertando producto con ID: ${id} en estado PENDIENTE`);
 
+    // Procesar imágenes
+    let imageJson = '[]';
+    try {
+      if (Array.isArray(images)) imageJson = JSON.stringify(images);
+      else if (typeof images === 'string') imageJson = JSON.stringify([images]);
+      else imageJson = JSON.stringify(["https://placehold.co/600x600?text=No+Image"]);
+    } catch (e) { console.error("Error procesando imagen para DB", e); }
+
     db.prepare(`
         INSERT INTO products (
             id, name, description, images, category, source_link, 
-            price_usd, trm_applied, weight_lb, price_cop_final, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')
-    `).run(id, title, "Importación Express desde USA", JSON.stringify(["https://placehold.co/600x600?text=Express"]),
-      category, url, price, calc.trm_applied, calc.weight_used, calc.final_cop);
+            price_usd, trm_applied, weight_lb, price_cop_final, 
+            margin_perc, tax_usa_perc,
+            status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')
+    `).run(id, title, "Importación Express desde USA", imageJson,
+      category, url, price, operationalTrm, finalWeight, finalCop,
+      finalMargin, finalTax);
 
     console.log(`[ADMIN] Producto guardado con éxito como PENDIENTE.`);
     res.json({ success: true, id });
@@ -433,26 +464,37 @@ app.post('/api/admin/express/manual-post', (req, res) => {
   }
 });
 
-// 9. ADMIN EXPRESS: MERCADOLIBRE SEARCH
-app.post('/api/admin/express/meli-search', async (req, res) => {
-  const { title } = req.body;
+// 9. ADMIN EXPRESS:// 11. MERCADOLIBRE SEARCH (SERVER-SIDE PROXY)
+app.get('/api/admin/express/search-ml', async (req, res) => {
+  const { query } = req.query;
+  // Mejor encabezado para evitar 403
   try {
-    const query = encodeURIComponent(title);
-    const meliUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${query}&limit=5`;
-    const response = await axios.get(meliUrl);
+    const meliUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(query)}&limit=5`;
+    const response = await axios.get(meliUrl, {
+      headers: {
+        'User-Agent': 'MasbaratoExpress/1.0 (masbaratoexpress.com)',
+        'Authorization': '' // Public API no requiere auth, pero a veces headers vacíos ayudan
+      }
+    });
 
-    const results = response.data.results;
-    if (results.length > 0) {
-      const avgPrice = results.reduce((acc, curr) => acc + curr.price, 0) / results.length;
-      res.json({
-        success: true,
-        avgPrice,
-        link: `https://listado.mercadolibre.com.co/${query}`
-      });
+    if (response.data && response.data.results) {
+      res.json(response.data.results.map(r => ({
+        title: r.title,
+        price: r.price,
+        link: r.permalink,
+        image: r.thumbnail
+      })));
     } else {
-      res.json({ success: false });
+      res.json([]);
     }
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("ML Search Error:", e.response?.status, e.message);
+    // Si falla el server de ML (403), devolvemos "modo cliente" para que el frontend abra link directo
+    res.status(200).json({
+      error: true,
+      fallbackLink: `https://listado.mercadolibre.com.co/${encodeURIComponent(query)}`
+    });
+  }
 });
 
 // --- ROUTES PARA PÁGINAS ---
