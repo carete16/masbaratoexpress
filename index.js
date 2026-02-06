@@ -1,3 +1,4 @@
+// FORCE DEPLOY: 2026-02-06 12:15 PM - REVERSIÓN HISTÓRICA CONFIRMADA
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
