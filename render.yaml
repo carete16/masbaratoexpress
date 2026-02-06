@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: masbaratodeals-final
+    name: masbaratoexpress
     env: node
     plan: free
     buildCommand: ./render-build.sh
