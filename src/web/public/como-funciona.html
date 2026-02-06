@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cómo Funciona | MasbaratoExpress</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">Masbarato<span>Express</span></a>
+        <nav>
+            <a href="/catalog">Catálogo</a>
+            <a href="/como-funciona">Cómo Funciona</a>
+            <a href="/negocios">Para Negocios</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/mis-pedidos" class="btn btn-primary"><i class="fa-solid fa-box-open"></i> Mis Pedidos</a>
+        </div>
+    </header>
+
+    <main class="container" style="padding: 60px 5%;">
+        <section class="how-it-works">
+            <h1 style="font-size: 3rem; font-weight: 900; margin-bottom: 40px; text-align: center;">Cómo Funciona la
+                Magia 🪄</h1>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+                <div class="card">
+                    <div style="font-size: 2rem; color: var(--primary); margin-bottom: 20px;">1. Eliges tu Producto
+                    </div>
+                    <p>Navega por nuestro catálogo o envíanos un enlace de cualquier tienda en USA (Amazon, eBay,
+                        Apple).</p>
+                </div>
+                <div class="card">
+                    <div style="font-size: 2rem; color: var(--primary); margin-bottom: 20px;">2. Pagas el 50%</div>
+                    <p>Congelamos el precio en Pesos Colombianos. Sin sorpresas de TRM o impuestos sorpresa.</p>
+                </div>
+                <div class="card">
+                    <div style="font-size: 2rem; color: var(--primary); margin-bottom: 20px;">3. Nosotros Gestionamos
+                    </div>
+                    <p>Compramos, recibimos en Miami, nacionalizamos y traemos a Colombia.</p>
+                </div>
+                <div class="card">
+                    <div style="font-size: 2rem; color: var(--primary); margin-bottom: 20px;">4. Recibes en Casa</div>
+                    <p>Pagas el 50% restante cuando el producto esté listo para entrega en tu puerta.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer id="footer-placeholder"></footer>
+    <script>
+        fetch('/views/footer.html').then(res => res.text()).then(html => document.getElementById('footer-placeholder').innerHTML = html);
+    </script>
+</body>
+
+</html>

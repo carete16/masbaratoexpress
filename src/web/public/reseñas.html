@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reseñas de Clientes | MasbaratoExpress</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">Masbarato<span>Express</span></a>
+        <nav>
+            <a href="/catalog">Catálogo</a>
+            <a href="/como-funciona">Cómo Funciona</a>
+            <a href="/negocios">Para Negocios</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/mis-pedidos" class="btn btn-primary"><i class="fa-solid fa-box-open"></i> Mis Pedidos</a>
+        </div>
+    </header>
+
+    <main class="container" style="padding: 60px 5%;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h1 style="font-size: 3rem; font-weight: 900;">Lo que dicen nuestros clientes ⭐</h1>
+            <p style="color: var(--text-muted); font-size: 1.2rem;">Experiencias reales de importación importación
+                segura a Colombia.</p>
+        </div>
+
+        <div id="reviews-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+            <!-- Reseñas estáticas por ahora, se pueden dinamizar luego -->
+            <div class="card">
+                <div style="color: #f59e0b; margin-bottom: 10px;">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                        class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                <p style="font-style: italic; margin-bottom: 20px;">"Excelente servicio. Traje un iPhone 15 Pro y el
+                    precio fue exactamente el publicado. Llegó en 12 días a Medellín."</p>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div
+                        style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                        A</div>
+                    <div>
+                        <div style="font-weight: 800;">Andrés R.</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Compra Verificada</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="color: #f59e0b; margin-bottom: 10px;">
+                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                        class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                </div>
+                <p style="font-style: italic; margin-bottom: 20px;">"Muy confiables. Pagué el primer 50% y me enviaron
+                    fotos del producto cuando llegó a Miami. Súper recomendados."</p>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div
+                        style="width: 40px; height: 40px; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                        L</div>
+                    <div>
+                        <div style="font-weight: 800;">Laura G.</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Compra Verificada</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>

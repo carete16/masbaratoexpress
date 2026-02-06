@@ -107,10 +107,55 @@ app.post('/api/admin/products', (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 6. ADMIN: ACCIONES ADICIONALES
-app.post('/api/admin/products/delete', (req, res) => {
+// 6. ADMIN: ACCIONES ADICIONALES (EXPRESS)
+app.get('/api/admin/express/pending', (req, res) => {
+  try {
+    const items = db.prepare("SELECT * FROM products WHERE status = 'agotado' OR status IS NULL").all();
+    res.json(items);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/admin/express/published', (req, res) => {
+  try {
+    const items = db.prepare("SELECT * FROM products WHERE status = 'disponible'").all();
+    res.json(items);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/express/update', (req, res) => {
+  const { id, title, price_offer, weight, price_cop, categoria } = req.body;
+  try {
+    db.prepare(`
+      UPDATE products 
+      SET name = ?, price_usd = ?, weight_lb = ?, price_cop_final = ?, category = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(title, price_offer, weight, price_cop, categoria, id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/express/approve', (req, res) => {
+  const { id, title, price_offer, weight, price_cop, categoria } = req.body;
+  try {
+    db.prepare(`
+      UPDATE products 
+      SET name = ?, price_usd = ?, weight_lb = ?, price_cop_final = ?, category = ?, status = 'disponible', updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(title, price_offer, weight, price_cop, categoria, id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/express/delete', (req, res) => {
   try {
     db.prepare('DELETE FROM products WHERE id = ?').run(req.body.id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/express/finalize', (req, res) => {
+  try {
+    db.prepare("UPDATE products SET status = 'agotado' WHERE id = ?").run(req.body.id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -120,6 +165,12 @@ app.get('/api/express/trm', (req, res) => {
     const trm = db.prepare('SELECT value FROM settings WHERE key = "trm_base"').get().value;
     res.json({ success: true, trm: parseFloat(trm) });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/subscribe', (req, res) => {
+  // Mock para el formulario de negocios
+  console.log('Nueva Solicitud de Negocio:', req.body);
+  res.json({ success: true });
 });
 
 // --- ROUTES PARA PÁGINAS ---
@@ -133,6 +184,34 @@ app.get('/admin', (req, res) => {
 
 app.get('/catalog', (req, res) => {
   res.sendFile(path.join(__dirname, 'src/web/public/catalog.html'));
+});
+
+app.get('/producto', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/producto.html'));
+});
+
+app.get('/como-funciona', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/como-funciona.html'));
+});
+
+app.get('/negocios', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/negocios.html'));
+});
+
+app.get('/reseñas', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/reseñas.html'));
+});
+
+app.get('/contacto', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/contacto.html'));
+});
+
+app.get('/terminos', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/terminos.html'));
+});
+
+app.get('/privacidad', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src/web/public/privacidad.html'));
 });
 
 app.get('/mis-pedidos', (req, res) => {

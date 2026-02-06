@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importación para Negocios | MasbaratoExpress</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">Masbarato<span>Express</span></a>
+        <nav>
+            <a href="/catalog">Catálogo</a>
+            <a href="/como-funciona">Cómo Funciona</a>
+            <a href="/negocios">Para Negocios</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/mis-pedidos" class="btn btn-primary"><i class="fa-solid fa-box-open"></i> Mis Pedidos</a>
+        </div>
+    </header>
+
+    <main class="container" style="padding: 60px 4%;">
+        <section style="max-width: 800px; margin: 0 auto;">
+            <div class="global-tag" style="margin-bottom: 10px;">Aliados Corporativos 🤝</div>
+            <h1 style="font-size: 2.8rem; font-weight: 900; margin-bottom: 20px;">Importación Mayorista y para Negocios
+            </h1>
+            <p style="color: var(--text-muted); margin-bottom: 40px;">Optimiza tus costos trayendo mercancía
+                directamente de USA. Gestor logístico completo con factura comercial y nacionalización incluida.</p>
+
+            <form id="business-form" class="card" style="padding: 40px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Nombre de la Empresa / Contacto</label>
+                        <input type="text" id="biz-name" required placeholder="Ej. Tech Solutions SAS">
+                    </div>
+                    <div class="form-group">
+                        <label>WhatsApp / Teléfono</label>
+                        <input type="text" id="biz-phone" required placeholder="+57 3xx xxx xxxx">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Producto o Categoría de Interés</label>
+                    <input type="text" id="biz-product" required placeholder="Ej. Lotes de Laptops Dell Latitude">
+                </div>
+
+                <div class="form-group">
+                    <label>Enlace del Producto (Opcional)</label>
+                    <input type="url" id="biz-link" placeholder="https://amazon.com/...">
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad Estimada</label>
+                    <input type="number" id="biz-qty" min="1" required placeholder="Ej. 10 unidades">
+                </div>
+
+                <div class="form-group">
+                    <label>Comentarios Adicionales</label>
+                    <textarea id="biz-msg" rows="4" placeholder="Cuéntanos más sobre tu requerimiento..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; font-size: 1.1rem; padding: 15px;">
+                    Solicitar Cotización Corporativa <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        document.getElementById('business-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const data = {
+                name: document.getElementById('biz-name').value,
+                phone: document.getElementById('biz-phone').value,
+                product: document.getElementById('biz-product').value,
+                link: document.getElementById('biz-link').value,
+                qty: document.getElementById('biz-qty').value,
+                msg: document.getElementById('biz-msg').value,
+                is_business_import: true
+            };
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+
+            try {
+                // Endpoint para suscripción o contacto negocios
+                const res = await fetch('/api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    alert('👑 Solicitud enviada. Un asesor corporativo se contactará contigo en breve.');
+                    e.target.reset();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error al enviar la solicitud. Intenta por WhatsApp.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Solicitar Cotización Corporativa <i class="fa-solid fa-paper-plane"></i>';
+            }
+        });
+    </script>
+</body>
+
+</html>

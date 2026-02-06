@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producto | MasbaratoExpress</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .product-detail {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            padding: 40px 5%;
+            align-items: start;
+        }
+
+        .gallery {
+            display: grid;
+            gap: 15px;
+        }
+
+        .main-img {
+            width: 100%;
+            border-radius: var(--radius-md);
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            cursor: zoom-in;
+        }
+
+        .thumb-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .thumb {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .thumb:hover {
+            border-color: var(--primary);
+        }
+
+        .info-card {
+            padding: 40px;
+        }
+
+        .badge-premium {
+            background: var(--bg-main);
+            color: var(--primary);
+            padding: 6px 15px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .buy-box {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: var(--shadow-premium);
+        }
+
+        @media (max-width: 900px) {
+            .product-detail {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/" class="logo">Masbarato<span>Express</span></a>
+        <nav>
+            <a href="/catalog">Catálogo</a>
+            <a href="/como-funciona">Cómo Funciona</a>
+            <a href="/negocios">Para Negocios</a>
+        </nav>
+        <div class="header-actions">
+            <a href="/mis-pedidos" class="btn btn-primary"><i class="fa-solid fa-box-open"></i> Mis Pedidos</a>
+        </div>
+    </header>
+
+    <main id="product-root">
+        <div style="text-align: center; padding: 100px;">
+            <i class="fa-solid fa-circle-notch fa-spin fa-3x" style="color: var(--primary);"></i>
+            <p style="margin-top: 20px; font-weight: 700;">Cargando detalles premium...</p>
+        </div>
+    </main>
+
+    <script>
+        const productId = new URLSearchParams(window.location.search).get('id');
+
+        async function loadProduct() {
+            if (!productId) { window.location.href = '/'; return; }
+
+            try {
+                const res = await fetch(`/api/products/${productId}`);
+                const product = await res.json();
+
+                if (product.error) {
+                    document.getElementById('product-root').innerHTML = `<div style="text-align:center; padding: 100px;"><h2>Producto no encontrado</h2><a href="/">Volver al inicio</a></div>`;
+                    return;
+                }
+
+                const images = product.images || [];
+                const mainImg = images[0] || 'https://placehold.co/600x600?text=No+Image';
+
+                document.getElementById('product-root').innerHTML = `
+                    <div class="product-detail">
+                        <div class="gallery">
+                            <img src="${mainImg}" class="main-img" id="img-large">
+                            <div class="thumb-grid">
+                                ${images.map(img => `<img src="${img}" class="thumb" onclick="document.getElementById('img-large').src='${img}'">`).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="info-card">
+                            <div class="badge-premium">🇨🇴 ${product.category}</div>
+                            <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 15px;">${product.name}</h1>
+                            <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.8;">${product.description}</p>
+                            
+                            <div class="buy-box">
+                                <div style="margin-bottom: 20px;">
+                                    <span style="display: block; font-weight: 700; color: var(--text-muted); font-size: 0.9rem;">PRECIO FINAL COLOMBIA</span>
+                                    <span style="font-size: 2.2rem; font-weight: 900; color: var(--primary);">
+                                        ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(product.price_cop_final)}
+                                    </span>
+                                </div>
+                                
+                                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--accent-success); font-weight: 700;">
+                                        <i class="fa-solid fa-shield-check"></i> Garantía: ${product.warranty}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: var(--text-muted);">
+                                        <i class="fa-solid fa-truck-fast"></i> Entrega: ${product.delivery_time_est}
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary" onclick="initOrder('${product.id}')" style="width: 100%; justify-content: center; padding: 18px; font-size: 1.1rem;">
+                                    Comprar con el 50% <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                                
+                                <p style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 15px;">
+                                    Pago inicial sugerido: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(product.price_cop_final / 2)}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function initOrder(id) {
+            // Lógica para iniciar el flujo de WhatsApp o checkout
+            const res = await fetch(`/api/products/${id}`);
+            const p = await res.json();
+            const text = encodeURIComponent(`Hola MasbaratoExpress 🇨🇴, me interesa este producto: ${p.name}\nID: ${p.id}\nPrecio: ${new Intl.NumberFormat('es-CO').format(p.price_cop_final)}`);
+            window.open(`https://wa.me/573012722472?text=${text}`, '_blank');
+        }
+
+        loadProduct();
+    </script>
+</body>
+
+</html>
