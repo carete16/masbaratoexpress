@@ -201,9 +201,17 @@ try {
   db.prepare("ALTER TABLE products ADD COLUMN tax_usa_perc REAL DEFAULT 7").run();
   console.log("Columna tax_usa_perc agregada.");
 } catch (e) { }
+try {
+  db.prepare("ALTER TABLE products ADD COLUMN meli_price REAL DEFAULT 0").run();
+  console.log("Columna meli_price agregada.");
+} catch (e) { }
+try {
+  db.prepare("ALTER TABLE products ADD COLUMN meli_link TEXT").run();
+  console.log("Columna meli_link agregada.");
+} catch (e) { }
 
 app.post('/api/admin/express/update', (req, res) => {
-  const { id, title, price_offer, weight, price_cop, categoria, margin, tax } = req.body;
+  const { id, title, price_offer, weight, price_cop, categoria, margin, tax, meli_price, meli_link } = req.body;
   try {
     const m = margin !== undefined ? margin : 30;
     const t = tax !== undefined ? tax : 7;
@@ -211,12 +219,67 @@ app.post('/api/admin/express/update', (req, res) => {
     db.prepare(`
       UPDATE products 
       SET name = ?, price_usd = ?, weight_lb = ?, price_cop_final = ?, category = ?, 
-          margin_perc = ?, tax_usa_perc = ?,
+          margin_perc = ?, tax_usa_perc = ?, meli_price = ?, meli_link = ?,
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(title, price_offer, weight, price_cop, categoria, m, t, id);
+    `).run(title, price_offer, weight, price_cop, categoria, m, t, meli_price, meli_link, id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/admin/express/manual-post', (req, res) => {
+  const { title, price, weight, category, url, images, margin, tax, meli_price, meli_link } = req.body;
+  console.log(`[ADMIN] Solicitud manual-post recibida para: ${title}`);
+  try {
+    const getSetting = (key, fallback) => {
+      const res = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+      return res ? res.value : fallback;
+    };
+
+    const trm = parseFloat(getSetting('trm_base', '3650'));
+    const trm_offset = parseFloat(getSetting('trm_offset', '300'));
+    const cost_lb = parseFloat(getSetting('cost_lb_default', '6'));
+    const min_weight = parseFloat(getSetting('min_weight_default', '4'));
+    const tax_usa_perc = parseFloat(getSetting('tax_usa_perc', '7'));
+    const margin_perc = parseFloat(getSetting('margin_perc', '30'));
+
+    const finalMargin = margin !== undefined ? parseFloat(margin) : margin_perc;
+    const finalTax = tax !== undefined ? parseFloat(tax) : tax_usa_perc;
+
+    const calc = PriceEngine.calculate({
+      price_usd: parseFloat(price) || 0,
+      weight_lb: parseFloat(weight) || 0,
+      trm: trm,
+      trm_offset: trm_offset,
+      cost_lb_usd: cost_lb,
+      min_weight: min_weight,
+      tax_usa_perc: finalTax,
+      margin_perc: finalMargin
+    });
+
+    const id = 'PROD-' + Math.random().toString(36).substr(2, 7).toUpperCase();
+    const imageJson = JSON.stringify(images || []);
+    const operationalTrm = calc.trm_applied;
+    const finalWeight = calc.weight_used;
+    const finalCop = calc.final_cop;
+
+    db.prepare(`
+        INSERT INTO products (
+            id, name, description, images, category, source_link, 
+            price_usd, trm_applied, weight_lb, price_cop_final, 
+            margin_perc, tax_usa_perc, meli_price, meli_link,
+            status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')
+    `).run(id, title, "Importación Express desde USA", imageJson,
+      category, url, price, operationalTrm, finalWeight, finalCop,
+      finalMargin, finalTax, meli_price || 0, meli_link || "");
+
+    console.log(`[ADMIN] Producto guardado con éxito como PENDIENTE.`);
+    res.json({ success: true, product_id: id, price_calculated: finalCop });
+  } catch (e) {
+    console.error("[ADMIN ERROR] Fallo al crear producto manualmente:", e.message, e.stack);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.post('/api/admin/express/approve', (req, res) => {
@@ -346,7 +409,30 @@ app.get('/api/proxy-image', async (req, res) => {
   }
 });
 
-// 8. ADMIN EXPRESS: ANALIZAR URL (IA + SCRAPING REAL)
+// --- TRM SYSTEM ---
+let cachedTRM = { value: 4100, date: null };
+async function updateTRM() {
+  try {
+    const res = await axios.get('https://www.datos.gov.co/resource/32sa-8pi3.json?$limit=1&$order=vigenciahasta%20DESC');
+    if (res.data && res.data.length > 0) {
+      cachedTRM = { value: parseFloat(res.data[0].valor), date: new Date() };
+      console.log("TRM Actualizada:", cachedTRM.value);
+    }
+  } catch (e) {
+    console.error("Error actualizando TRM:", e.message);
+    // Fallback a API secundaria si falla la gubernamental
+    try {
+      const res2 = await axios.get('https://trm-colombia.vercel.app/api/latest');
+      if (res2.data && res2.data.valor) cachedTRM = { value: parseFloat(res2.data.valor), date: new Date() };
+    } catch (e2) { }
+  }
+}
+updateTRM(); // Al iniciar
+setInterval(updateTRM, 12 * 60 * 60 * 1000); // Cada 12h
+
+app.get('/api/admin/trm', (req, res) => res.json(cachedTRM));
+
+// 8. ADMIN EXPRESS: ANALIZAR URL (IA + SCRAPING REAL + MELI AUTO)
 app.post('/api/admin/express/analyze', async (req, res) => {
   const { url } = req.body;
   console.log(`[ANALYZE] Recibida solicitud para analizar URL: ${url}`);
@@ -355,7 +441,7 @@ app.post('/api/admin/express/analyze', async (req, res) => {
     const finalUrl = await LinkTransformer.transform(url);
 
     // 2. Extraer metadatos básicos por URL (Fallback)
-    let hostname = 'Tienda';
+    let hostname = 'TIENDA';
     try {
       hostname = new URL(finalUrl).hostname.replace('www.', '').split('.')[0].toUpperCase();
     } catch (e) { }
@@ -369,9 +455,32 @@ app.post('/api/admin/express/analyze', async (req, res) => {
       console.error("[ANALYZE] Error en scraping:", e);
     }
 
-    // 4. Procesar Resultados
+    // 4. ✨ NEW: MERCADOLIBRE AUTO-SEARCH (CONDITION=NEW) ✨
+    let meliData = { price: 0, link: '' };
+    const searchTitle = scraperResult?.title || "";
+    if (searchTitle) {
+      try {
+        const cleanQuery = searchTitle.replace(/[^a-zA-Z0-9\sñÑáéíóúÁÉÍÓÚ]/g, '').split(/\s+/).slice(0, 6).join(' ');
+        console.log(`[ANALYZE] Buscando competencia en ML para: "${cleanQuery}"`);
+        const meliUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&condition=new&limit=5`;
+
+        const meliRes = await axios.get(meliUrl, { headers: { 'User-Agent': 'MasbaratoExpress/1.0' } });
+
+        if (meliRes.data && meliRes.data.results && meliRes.data.results.length > 0) {
+          const results = meliRes.data.results;
+          const topN = results.slice(0, 3);
+          const avgPrice = topN.reduce((acc, curr) => acc + curr.price, 0) / topN.length;
+          meliData = { price: avgPrice, link: results[0].permalink };
+        }
+      } catch (e) {
+        console.error("Error ML Auto-Search:", e.message);
+        meliData.link = `https://listado.mercadolibre.com.co/${encodeURIComponent(searchTitle)}/_Condicion_Nuevo`;
+      }
+    }
+
+    // 5. Procesar Resultados
     let title = scraperResult?.title || "Producto detectado";
-    let price = scraperResult?.offerPrice || 1; // 1 como fallback para obligar a editar pero no romper math
+    let price = scraperResult?.offerPrice || 1;
     let weight = scraperResult?.weight || 4;
     let images = scraperResult?.images || [];
     let image = scraperResult?.image || (images.length > 0 ? images[0] : "https://placehold.co/400x400?text=No+Image");
@@ -396,8 +505,10 @@ app.post('/api/admin/express/analyze', async (req, res) => {
       weight: weight,
       categoria: categoria,
       image: image,
-      images: images, // Enviamos todas las imágenes
-      tienda: hostname
+      images: images,
+      tienda: hostname,
+      meli_price: meliData.price,
+      meli_link: meliData.link
     };
 
     console.log(`[ANALYZE] Resultado final:`, { ...result, images: `Array(${result.images.length})` });
@@ -480,15 +591,16 @@ app.post('/api/admin/express/manual-post', (req, res) => {
 });
 
 // 9. ADMIN EXPRESS:// 11. MERCADOLIBRE SEARCH (SERVER-SIDE PROXY)
+// 11. MERCADOLIBRE SEARCH (SERVER-SIDE PROXY)
 app.get('/api/admin/express/search-ml', async (req, res) => {
   const { query } = req.query;
-  // Mejor encabezado para evitar 403
+  // Mejor encabezado para evitar 403 y SOLO NUEVOS
   try {
-    const meliUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(query)}&limit=5`;
+    const meliUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(query)}&condition=new&limit=5`;
     const response = await axios.get(meliUrl, {
       headers: {
         'User-Agent': 'MasbaratoExpress/1.0 (masbaratoexpress.com)',
-        'Authorization': '' // Public API no requiere auth, pero a veces headers vacíos ayudan
+        'Authorization': ''
       }
     });
 
@@ -504,10 +616,9 @@ app.get('/api/admin/express/search-ml', async (req, res) => {
     }
   } catch (e) {
     console.error("ML Search Error:", e.response?.status, e.message);
-    // Si falla el server de ML (403), devolvemos "modo cliente" para que el frontend abra link directo
     res.status(200).json({
       error: true,
-      fallbackLink: `https://listado.mercadolibre.com.co/${encodeURIComponent(query)}`
+      fallbackLink: `https://listado.mercadolibre.com.co/${encodeURIComponent(query)}/_Condicion_Nuevo`
     });
   }
 });
