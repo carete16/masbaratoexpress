@@ -332,12 +332,31 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
 // 6.5.3 ANALIZAR LINK PARA POST MANUAL (ADMIN)
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL requerida' });
   try {
+    const start = Date.now();
+    console.log(`[MANUAL-MODE] 🔍 Normalizando link: ${url.substring(0, 60)}...`);
+
     const LinkTransformer = require('./src/utils/LinkTransformer');
     const finalUrl = await LinkTransformer.transform(url);
     const store = LinkTransformer.detectarTienda(finalUrl);
-    res.json({ url: finalUrl, store });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+
+    console.log(`[MANUAL-MODE] ✅ Listo en ${Date.now() - start}ms | Tienda: ${store}`);
+
+    res.json({
+      url: finalUrl,
+      store,
+      title: '',
+      price: 0,
+      image: '',
+      weight: 0,
+      categoria: 'Lifestyle & Street',
+      isManualNotice: true
+    });
+  } catch (e) {
+    console.error("[MANUAL-MODE ERR]", e.message);
+    res.status(500).json({ error: "Error al procesar el enlace." });
+  }
 });
 
 // 6.5.4 CREAR BORRADOR MANUAL (ADMIN)
@@ -502,38 +521,7 @@ app.get('/api/proxy-image', async (req, res) => {
   }
 });
 
-// --- RUTA DE NORMALIZAR LINK (MODO 100% MANUAL - SIN SCRAPING) ---
-app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
-  const { url } = req.body;
-  if (!url) return res.status(400).json({ error: 'URL requerida' });
 
-  try {
-    const start = Date.now();
-    console.log(`[MANUAL-MODE] � Normalizando link: ${url.substring(0, 60)}...`);
-
-    // 1. Solo normalizar el link (monetizar/limpiar)
-    const finalUrl = await LinkTransformer.transform(url);
-
-    // 2. Retornar campos VACÍOS para llenado manual (Sin scraping, sin esperas)
-    const storeName = LinkTransformer.detectarTienda(finalUrl);
-    console.log(`[MANUAL-MODE] ✅ Listo en ${Date.now() - start}ms | Tienda: ${storeName}`);
-
-    res.json({
-      title: '',
-      price: 0,
-      image: '',
-      weight: 0,
-      store: storeName,
-      url: finalUrl,
-      categoria: 'Lifestyle & Street',
-      isManualNotice: true // Aviso para el frontend
-    });
-
-  } catch (e) {
-    console.error("[MANUAL-MODE ERR]", e.message);
-    res.status(500).json({ error: "Error al procesar el enlace." });
-  }
-});
 
 app.get('/api/admin/stats', authMiddleware, (req, res) => {
   try {
@@ -573,41 +561,7 @@ app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 7.5 PUBLICACIÓN MANUAL EXPRESS (ADMIN) - ¡AHORA INSTANTÁNEO!
-app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
-  const { url, price, weight, category, title, image, store } = req.body;
-  const { saveDeal } = require('./src/database/db');
-  const crypto = require('crypto');
 
-  try {
-    // Generar ID único basado en el link
-    const id = crypto.createHash('md5').update(url).digest('hex').substring(0, 12);
-
-    // Guardar directamente saltándose el "Crawler" pesado
-    const success = saveDeal({
-      id,
-      link: url,
-      original_link: url,
-      title: title || '', // Vacío para forzar manual en frontend
-      price_offer: parseFloat(price) || 0,
-      weight: parseFloat(weight) || 0,
-      image: image || '', // Vacío para forzar manual
-      categoria: category || 'Lifestyle & Street',
-      status: 'pending_express',
-      tienda: store || 'Tienda USA'
-    });
-
-    if (success) {
-      console.log(`[EXPRESS-POST] ✅ Guardado directo: ${title.substring(0, 40)}`);
-      res.json({ success: true, message: 'Agregado a Pendientes al instante.' });
-    } else {
-      res.status(400).json({ error: 'Fallo al guardar en la base de datos.' });
-    }
-  } catch (e) {
-    console.error("[EXPRESS-POST ERR]", e.message);
-    res.status(500).json({ error: e.message });
-  }
-});
 
 // 7.5 OPTIMIZAR TÍTULO CON IA (ADMIN)
 app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) => {
