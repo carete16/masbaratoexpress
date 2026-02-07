@@ -282,14 +282,13 @@ app.get('/api/admin/express/pending', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 6.5.1 PUBLICADAS EXPRESS (ADMIN)
+// 6.5.1 PUBLICADAS EXPRESS (ADMIN) - Vista completa sin filtros restrictivos
 app.get('/api/admin/express/published', authMiddleware, (req, res) => {
   try {
     const deals = db.prepare(`
         SELECT * FROM published_deals 
         WHERE status IN ('published', 'expired') 
-        AND (price_cop > 0 OR categoria IN ('Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables') OR title LIKE '%Express%')
-        ORDER BY posted_at DESC LIMIT 50
+        ORDER BY posted_at DESC LIMIT 200
     `).all();
     res.json(deals);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -304,6 +303,23 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// 6.5.2.5 ARCHIVAR OFERTA (NUEVO - Backup histórico)
+app.post('/api/admin/express/archive', authMiddleware, (req, res) => {
+  const { id } = req.body;
+  try {
+    db.prepare("UPDATE published_deals SET status = 'archived' WHERE id = ?").run(id);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET Archivados
+app.get('/api/admin/express/archived', authMiddleware, (req, res) => {
+  try {
+    const deals = db.prepare("SELECT * FROM published_deals WHERE status = 'archived' ORDER BY posted_at DESC").all();
+    res.json(deals);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // 6.5.3 ELIMINAR OFERTA (ADMIN)
 app.post('/api/admin/express/delete', authMiddleware, (req, res) => {
   const { id } = req.body;
@@ -313,21 +329,30 @@ app.post('/api/admin/express/delete', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 6.6 APROBAR EXPRESS (ADMIN)
 app.post('/api/admin/express/approve', authMiddleware, async (req, res) => {
-  const { id, price_cop, price_offer, title, weight, categoria } = req.body;
-  console.log(`💾 Guardando cambio para ${id}: Título: ${title}, Peso: ${weight}, Cat: ${categoria}`);
+  const { id, price_cop, price_offer, title, weight, categoria, image, gallery } = req.body;
+
+  // VALIDACIÓN CRÍTICA DE PRECIO (REFACTORIZADA)
+  const pOffer = parseFloat(price_offer) || 0;
+  if (pOffer <= 0) {
+    console.error(`🚫 [REJECTED] Intento de publicar ID ${id} con precio ${pOffer}`);
+    return res.status(400).json({ error: "Precio USD inválido" });
+  }
+
+  console.log(`💾 Aprobando ${id}: ${title} | Imagen: ${image ? 'Sí' : 'No'}`);
   try {
     const updated = db.prepare(`
         UPDATE published_deals 
-        SET status = 'published', price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?, posted_at = CURRENT_TIMESTAMP
+        SET status = 'published', price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?, image = ?, gallery = ?, posted_at = CURRENT_TIMESTAMP
         WHERE id = ?
     `).run(
       parseFloat(price_cop) || 0,
-      parseFloat(price_offer) || 0,
+      pOffer,
       title,
       parseFloat(weight) || 0,
       categoria || 'Lifestyle & Street',
+      image,
+      gallery || null,
       id
     );
 
@@ -338,18 +363,28 @@ app.post('/api/admin/express/approve', authMiddleware, async (req, res) => {
 
 // 6.7 ACTUALIZAR SIN CAMBIAR ESTADO (ADMIN)
 app.post('/api/admin/express/update', authMiddleware, async (req, res) => {
-  const { id, price_cop, price_offer, title, weight, categoria } = req.body;
+  const { id, price_cop, price_offer, title, weight, categoria, image, gallery } = req.body;
+
+  // VALIDACIÓN CRÍTICA DE PRECIO (REFACTORIZADA)
+  const pOffer = parseFloat(price_offer) || 0;
+  if (pOffer <= 0) {
+    console.error(`🚫 [REJECTED-UPDATE] Intento de guardar ID ${id} con precio ${pOffer}`);
+    return res.status(400).json({ error: "Precio USD inválido" });
+  }
+
   try {
     db.prepare(`
         UPDATE published_deals 
-        SET price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?
+        SET price_cop = ?, price_offer = ?, title = ?, weight = ?, categoria = ?, image = ?, gallery = ?
         WHERE id = ?
     `).run(
       parseFloat(price_cop) || 0,
-      parseFloat(price_offer) || 0,
+      pOffer,
       title,
       parseFloat(weight) || 0,
       categoria || 'Lifestyle & Street',
+      image,
+      gallery || null,
       id
     );
     res.json({ success: true });
@@ -392,103 +427,36 @@ app.get('/api/proxy-image', async (req, res) => {
   }
 });
 
-// --- RUTA DE ANALIZAR LINK (VERSIÓN ULTRA-RÁPIDA, CHEERIO Y DICCIONARIO PRO) ---
+// --- RUTA DE NORMALIZAR LINK (MODO 100% MANUAL - SIN SCRAPING) ---
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL requerida' });
 
   try {
     const start = Date.now();
-    const cheerio = require('cheerio');
-    console.log(`[FAST-ANALYZE] 🚀 Link: ${url.substring(0, 60)}...`);
+    console.log(`[MANUAL-MODE] � Normalizando link: ${url.substring(0, 60)}...`);
 
-    // 1. Transformar link (Instantáneo ahora)
+    // 1. Solo normalizar el link (monetizar/limpiar)
     const finalUrl = await LinkTransformer.transform(url);
 
-    // 2. Descarga de HTML súper ligera
-    const axRes = await axios.get(finalUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        'Cache-Control': 'no-cache'
-      },
-      timeout: 10000
-    });
-
-    const $ = cheerio.load(axRes.data);
-    let result = { title: 'Producto USA', price: 0, image: '', url: finalUrl, weight: 3.5 };
-
-    // 1. EXTRAER PRECIO
-    const priceTxt = $('.a-price .a-offscreen').first().text() ||
-      $('#priceblock_ourprice').text() ||
-      $('#priceblock_dealprice').text() ||
-      $('.a-color-price').first().text();
-
-    if (priceTxt) {
-      const match = priceTxt.match(/[\d\.]+/);
-      if (match) result.price = parseFloat(match[0]);
-    }
-
-    // 2. EXTRAER IMAGEN (Multi-selector)
-    result.image = $('#landingImage').attr('src') ||
-      $('#main-image').attr('src') ||
-      $('meta[property="og:image"]').attr('content') ||
-      $('#imgBlkFront').attr('src');
-
-    if (!result.image) {
-      const dynImg = $('#imgTagWrapperId img').attr('data-a-dynamic-image');
-      if (dynImg) {
-        try {
-          result.image = Object.keys(JSON.parse(dynImg))[0];
-        } catch (e) { }
-      }
-    }
-
-    if (result.image) {
-      // Limpiar URLs de imagen de Amazon (sacar el ._AC_...)
-      result.image = result.image.replace(/\._[A-Z0-9_,]+\./g, '.');
-    }
-
-    // 3. EXTRAER TÍTULO Y TRADUCIR
-    let rawT = $('#productTitle').text().trim() || $('title').text().trim();
-
-    // Limpiar toda la basura de Amazon
-    rawT = rawT.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '')
-      .replace(/\s*[:|-]?\s*Amazon\.com\s*/gi, '')
-      .replace(/Amazon\.com/gi, '')
-      .trim();
-
-    if (rawT && rawT.length > 2) {
-      const AI = require('./src/core/AIProcessor');
-      // DICCIONARIO DE EMERGENCIA para asegurar español
-      const emergencyDict = {
-        'flask': 'Termo/Frasco', 'adventure': 'Aventura', 'leakproof': 'hermético',
-        'hip': 'de bolsillo', 'hinge': 'bisagra', 'steel': 'acero', 'insulated': 'térmico'
-      };
-
-      let translated = AI.pseudoTranslate(rawT);
-      for (let [eng, esp] of Object.entries(emergencyDict)) {
-        translated = translated.replace(new RegExp(`\\b${eng}\\b`, 'gi'), esp);
-      }
-      result.title = translated;
-    }
-
-    console.log(`[FAST-ANALYZE] ✅ LISTO EN ${Date.now() - start}ms | ${result.title}`);
+    // 2. Retornar campos VACÍOS para llenado manual (Sin scraping, sin esperas)
+    const storeName = LinkTransformer.detectarTienda(finalUrl);
+    console.log(`[MANUAL-MODE] ✅ Listo en ${Date.now() - start}ms | Tienda: ${storeName}`);
 
     res.json({
-      title: result.title,
-      price: result.price || 0,
-      image: result.image || '',
-      weight: result.weight,
-      store: 'Amazon',
+      title: '',
+      price: 0,
+      image: '',
+      weight: 0,
+      store: storeName,
       url: finalUrl,
-      categoria: 'Lifestyle & Street'
+      categoria: 'Lifestyle & Street',
+      isManualNotice: true // Aviso para el frontend
     });
 
   } catch (e) {
-    console.error("[FAST-ANALYZE ERR]", e.message);
-    res.status(500).json({ error: "Fallo de conexión o bloqueo de tienda. Intenta de nuevo." });
+    console.error("[MANUAL-MODE ERR]", e.message);
+    res.status(500).json({ error: "Error al procesar el enlace." });
   }
 });
 
@@ -532,7 +500,7 @@ app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
 
 // 7.5 PUBLICACIÓN MANUAL EXPRESS (ADMIN) - ¡AHORA INSTANTÁNEO!
 app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
-  const { url, price, weight, category, title, image } = req.body;
+  const { url, price, weight, category, title, image, store } = req.body;
   const { saveDeal } = require('./src/database/db');
   const crypto = require('crypto');
 
@@ -545,13 +513,13 @@ app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
       id,
       link: url,
       original_link: url,
-      title: title || 'Producto Importado',
+      title: title || '', // Vacío para forzar manual en frontend
       price_offer: parseFloat(price) || 0,
       weight: parseFloat(weight) || 0,
-      image: image || 'https://placehold.co/400?text=Masbarato+Express',
+      image: image || '', // Vacío para forzar manual
       categoria: category || 'Lifestyle & Street',
       status: 'pending_express',
-      tienda: 'Amazon USA'
+      tienda: store || 'Tienda USA'
     });
 
     if (success) {
@@ -649,4 +617,17 @@ app.post('/api/admin/purge', authMiddleware, (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
   CoreProcessor.start();
+
+  // --- AUTO-PINGER: Evitar que Render entre en reposo ---
+  const SITE_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  console.log(`📡 Auto-Pinger activado para: ${SITE_URL}`);
+
+  setInterval(async () => {
+    try {
+      await axios.get(`${SITE_URL}/api/status`);
+      console.log(`💓 Keep-alive ping exitoso a las ${new Date().toLocaleTimeString()}`);
+    } catch (e) {
+      console.error(`💔 Error en keep-alive ping: ${e.message}`);
+    }
+  }, 10 * 60 * 1000); // Cada 10 minutos (Render suele dormir a los 15)
 });

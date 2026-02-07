@@ -198,6 +198,36 @@
             background: var(--primary);
             color: white;
         }
+
+        .manual-alert-premium {
+            background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 100%);
+            border-left: 5px solid var(--accent-yellow);
+            color: #92400e;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            animation: pulse-yellow 2s infinite;
+        }
+
+        @keyframes pulse-yellow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+            }
+        }
+
+        .img-preview-mini:hover {
+            border-color: var(--primary) !important;
+            transform: scale(1.05);
+            transition: all 0.2s;
+        }
     </style>
 </head>
 
@@ -229,21 +259,45 @@
     <div class="container">
         <!-- Dashboard Params -->
         <div class="row mb-5 g-4">
-            <div class="col-md-3">
-                <div class="card p-3 border-0 shadow-sm rounded-4">
-                    <label class="small fw-bold mb-2">Dólar Operativo</label>
-                    <input type="number" id="globalDolarOp" class="form-control" value="3928" onchange="refreshView()">
+            <div class="col-md-1">
+                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
+                    <label class="small fw-bold mb-2 text-primary" style="font-size:0.6rem">Dólar</label>
+                    <input type="number" id="globalDolarOp" class="form-control fw-bold form-control-sm" value="3928"
+                        onchange="saveConfig(); refreshView()">
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card p-3 border-0 shadow-sm rounded-4">
-                    <label class="small fw-bold mb-2">Costo Libra ($USD)</label>
-                    <input type="number" id="globalRate" class="form-control" value="6" onchange="refreshView()">
+            <div class="col-md-1">
+                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
+                    <label class="small fw-bold mb-2 text-primary" style="font-size:0.6rem">$/Libre</label>
+                    <input type="number" id="globalRate" class="form-control fw-bold form-control-sm" value="6"
+                        onchange="saveConfig(); refreshView()">
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-1">
+                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
+                    <label class="small fw-bold mb-2 text-success" style="font-size:0.6rem">Gan %</label>
+                    <input type="number" id="globalProfit" class="form-control fw-bold form-control-sm" value="30"
+                        onchange="saveConfig(); refreshView()">
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
+                    <label class="small fw-bold mb-2 text-danger" style="font-size:0.6rem">Tax %</label>
+                    <input type="number" id="globalTax" class="form-control fw-bold form-control-sm" value="7"
+                        onchange="saveConfig(); refreshView()">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <!-- Search -->
+                <div class="card p-3 border-0 shadow-sm rounded-4 h-100" style="background: #f8fafc;">
+                    <label class="small fw-bold mb-2"><i class="fa-solid fa-search me-1"></i> Buscar producto...</label>
+                    <input type="text" id="searchTerm" class="form-control" placeholder="Filtrar por nombre..."
+                        oninput="renderItemsFiltered()">
+                </div>
+            </div>
+            <div class="col-md-4">
                 <!-- Quick Post -->
-                <div class="card p-3 border-0 shadow-sm rounded-4" style="background: #eff6ff;">
+                <div class="card p-3 border-0 shadow-sm rounded-4 h-100" style="background: #eff6ff;">
                     <label class="small fw-bold mb-2">Auto-Post Links (Amazon, etc)</label>
                     <div class="input-group">
                         <input type="text" id="manualUrl" class="form-control" placeholder="Pega el enlace aquí...">
@@ -258,6 +312,8 @@
                     onclick="switchTab('pending')">PENDIENTES</button></li>
             <li class="nav-item"><button class="nav-link" id="tab-published" onclick="switchTab('published')">PUBLICADAS
                     / VIVO</button></li>
+            <li class="nav-item"><button class="nav-link" id="tab-archived" onclick="switchTab('archived')">HISTORIAL /
+                    ARCHIVO</button></li>
         </ul>
 
         <div id="main-container"></div>
@@ -271,28 +327,56 @@
             currentTab = tab;
             document.getElementById('tab-pending').classList.toggle('active', tab === 'pending');
             document.getElementById('tab-published').classList.toggle('active', tab === 'published');
+            document.getElementById('tab-archived').classList.toggle('active', tab === 'archived');
             loadData();
         }
 
         function calculateFinal(priceUSD, weightLbs) {
             const dolarOp = parseInt(document.getElementById('globalDolarOp').value) || 3928;
             const shipRate = parseFloat(document.getElementById('globalRate').value) || 6;
+            const profitPercent = (parseFloat(document.getElementById('globalProfit').value) || 0) / 100;
+            const taxPercent = (parseFloat(document.getElementById('globalTax').value) || 0) / 100;
 
             // Limpieza y validación de peso
             let w = weightLbs;
             if (typeof w === 'string') w = parseFloat(w.replace(',', '.')) || 0;
             if (isNaN(w) || w < 0) w = 0;
 
-            const profitVal = priceUSD * 0.30;
-            const taxUSD = priceUSD * 0.07;
+            const pUSD = parseFloat(priceUSD) || 0;
+            if (pUSD <= 0) return null; // NO CALCULAR SI EL PRECIO ES 0 O MENOR
+
+            const profitVal = pUSD * profitPercent;
+            const taxUSD = pUSD * taxPercent;
 
             // Regla: Peso Real redondeado hacia arriba por libra
             const shipUSD = Math.ceil(w) * shipRate;
 
-            const totalUSD = priceUSD + profitVal + taxUSD + shipUSD;
+            const totalUSD = pUSD + profitVal + taxUSD + shipUSD;
             const finalCOP = Math.ceil(totalUSD * dolarOp / 1000) * 1000;
 
-            return { profitVal, taxUSD, shipUSD, totalUSD, finalCOP, dolarOp };
+            return { profitVal, taxUSD, shipUSD, totalUSD, finalCOP, dolarOp, profitPercent, taxPercent };
+        }
+
+        let ALL_ITEMS = [];
+
+        function saveConfig() {
+            const config = {
+                dolar: document.getElementById('globalDolarOp').value,
+                rate: document.getElementById('globalRate').value,
+                profit: document.getElementById('globalProfit').value,
+                tax: document.getElementById('globalTax').value
+            };
+            localStorage.setItem('express_config', JSON.stringify(config));
+        }
+
+        function loadConfig() {
+            const config = JSON.parse(localStorage.getItem('express_config'));
+            if (config) {
+                document.getElementById('globalDolarOp').value = config.dolar;
+                document.getElementById('globalRate').value = config.rate;
+                document.getElementById('globalProfit').value = config.profit;
+                document.getElementById('globalTax').value = config.tax;
+            }
         }
 
         async function loadData() {
@@ -300,12 +384,26 @@
             container.innerHTML = '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>';
 
             try {
-                const endpoint = currentTab === 'pending' ? '/admin/express/pending' : '/admin/express/published';
+                let endpoint = '/admin/express/pending';
+                if (currentTab === 'published') endpoint = '/admin/express/published';
+                if (currentTab === 'archived') endpoint = '/admin/express/archived';
+
                 const res = await axios.get(API_URL + endpoint, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
-                renderItems(res.data);
+                ALL_ITEMS = res.data;
+                renderItemsFiltered();
             } catch (e) { container.innerHTML = '<div class="text-center py-5 text-danger">Error al cargar datos.</div>'; }
+        }
+
+        function renderItemsFiltered() {
+            const term = document.getElementById('searchTerm').value.toLowerCase();
+            const filtered = ALL_ITEMS.filter(item =>
+                (item.title || '').toLowerCase().includes(term) ||
+                (item.tienda || '').toLowerCase().includes(term) ||
+                (item.id || '').toLowerCase().includes(term)
+            );
+            renderItems(filtered);
         }
 
         function renderItems(items) {
@@ -315,8 +413,8 @@
 
             items.forEach(item => {
                 const priceUSD = parseFloat(item.price_offer) || 0;
-                // --- LÓGICA DE IA EN TIEMPO REAL SI LOS VALORES VIENEN VACÍOS ---
-                const iaValue = guessIA(item.title);
+                const isFreshManual = !item.title || item.title === '';
+                const iaValue = guessIA(item.title || '');
                 const itemWeight = parseFloat(item.weight) || 0;
                 const finalWeight = (itemWeight > 0) ? itemWeight : iaValue.weight;
                 const finalCat = (item.categoria && item.categoria !== 'General' && item.categoria !== 'Oferta') ? item.categoria : iaValue.cat;
@@ -327,52 +425,96 @@
 
                 const card = document.createElement('div');
                 card.className = 'card card-deal';
+                if (isFreshManual) card.style.border = "3px solid #f59e0b";
 
                 card.innerHTML = `
                 <div class="row g-0 align-items-center">
-                    <div class="col-md-2 p-4">
-                    <div class="img-container mx-auto mb-3"><img src="/api/proxy-image?url=${encodeURIComponent(item.image)}"></div>
-                    <div class="badge bg-primary px-3 py-1 mb-2 w-100">${item.tienda.toUpperCase()}</div>
-                    <div class="fw-bold text-center text-primary" style="font-size: 1.2rem;">$${priceUSD.toFixed(2)} USD</div>
-                </div>
-                <div class="col-md-6 p-4 border-end">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label class="small fw-bold text-muted">TÍTULO (EDITABLE)</label>
-                        <button onclick="applyIA('${item.id}')" class="btn-ia-magic"><i class="fa-solid fa-wand-sparkles"></i> RE-CALCULAR IA</button>
+                    <div class="col-md-2 p-4 text-center border-end">
+                        <div class="img-container mx-auto mb-3 shadow-sm" id="preview-box-${item.id}" style="position:relative;">
+                            <img src="${item.image ? '/api/proxy-image?url=' + encodeURIComponent(item.image) : 'https://placehold.co/400?text=SIN+FOTO'}">
+                            ${!item.image ? '<div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.7); font-weight:800; color:var(--accent-red); font-size:0.7rem;">REQUERIDO</div>' : ''}
+                        </div>
+                        <div class="badge bg-primary px-3 py-1 mb-2 w-100">${item.tienda.toUpperCase()}</div>
+                        <div class="fw-bold text-center text-primary mb-2" style="font-size: 1.2rem;">$${priceUSD.toFixed(2)} USD</div>
+                        <label class="xsmall fw-bold text-muted d-block text-start mb-1" style="font-size:0.6rem;">URL IMAGEN PRINCIPAL:</label>
+                        <input type="text" class="form-control form-control-sm xsmall ${!item.image ? 'border-danger' : ''}" id="img-${item.id}" value="${item.image || ''}" oninput="updateRow('${item.id}')" placeholder="Link de foto">
                     </div>
-                    <textarea class="form-control fw-bold border mb-3" rows="2" style="font-size: 1rem; border-radius: 10px;" id="title-${item.id}">${item.title}</textarea>
                     
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6">
-                            <label class="small fw-bold text-muted mb-1">CATEGORÍA <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
-                            <select id="cat-${item.id}" class="form-select fw-bold" style="border-radius: 10px;">
-                                <option value="Electrónica Premium" ${finalCat == 'Electrónica Premium' ? 'selected' : ''}>💻 Electrónica Premium</option>
-                                <option value="Lifestyle & Street" ${finalCat == 'Lifestyle & Street' ? 'selected' : ''}>👟 Lifestyle & Street</option>
-                                <option value="Relojes & Wearables" ${finalCat == 'Relojes & Wearables' ? 'selected' : ''}>⌚ Relojes & Wearables</option>
-                            </select>
+                    <div class="col-md-6 p-4">
+                        ${isFreshManual ? `
+                            <div class="manual-alert-premium">
+                                <i class="fa-solid fa-wand-sparkles fa-bounce me-2"></i> 
+                                <strong>MODO MANUAL REQUERIDO:</strong> Este enlace (Sovrn/Afiliado) no permite la extracción automática. 
+                                <br><small>Por favor, ingresa el Título, Precio y una Imagen manualmente para poder publicar.</small>
+                            </div>` : ''}
+                        
+                        <div id="price-warning-${item.id}" class="alert alert-danger py-1 px-3 mb-3 small fw-bold ${priceUSD > 0 ? 'd-none' : ''}">
+                            <i class="fa-solid fa-circle-xmark me-2"></i> ERROR: Debes ingresar el precio real del producto en USD.
                         </div>
-                        <div class="col-md-3">
-                            <label class="small fw-bold text-muted mb-1">PRECIO USD</label>
-                            <input type="number" id="price-${item.id}" value="${priceUSD}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="small fw-bold text-muted">TÍTULO DEL PRODUCTO ${!item.title ? '<span class="text-danger">* REQUERIDO</span>' : ''}</label>
+                            ${!isFreshManual && item.title ? `<button onclick="applyIA('${item.id}')" class="btn-ia-magic"><i class="fa-solid fa-wand-sparkles"></i> LIMPIAR TITULO</button>` : ''}
                         </div>
-                        <div class="col-md-3">
-                            <label class="small fw-bold text-muted mb-1">PESO LBS <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
-                            <input type="text" id="weight-${item.id}" value="${finalWeight}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')">
+                        <textarea class="form-control fw-bold border mb-3 ${!item.title ? 'border-danger' : ''}" rows="2" style="font-size: 1.1rem; border-radius: 12px; background: ${!item.title ? '#fff9f9' : '#fff'}" id="title-${item.id}" placeholder="Nombre del producto aquí...">${item.title || ''}</textarea>
+                        
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="small fw-bold text-muted mb-1">CATEGORÍA <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
+                                <select id="cat-${item.id}" class="form-select fw-bold" style="border-radius: 10px;">
+                                    <option value="Electrónica Premium" ${finalCat == 'Electrónica Premium' ? 'selected' : ''}>💻 Electrónica Premium</option>
+                                    <option value="Lifestyle & Street" ${finalCat == 'Lifestyle & Street' ? 'selected' : ''}>👟 Lifestyle & Street</option>
+                                    <option value="Relojes & Wearables" ${finalCat == 'Relojes & Wearables' ? 'selected' : ''}>⌚ Relojes & Wearables</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold text-muted mb-1">PRECIO USD ${priceUSD <= 0 ? '<span class="text-danger">*</span>' : ''}</label>
+                                <input type="number" id="price-${item.id}" value="${priceUSD}" class="form-control fw-bold text-center border-primary shadow-sm" oninput="updateRow('${item.id}')" placeholder="0.00" style="font-size: 1.1rem;">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold text-muted mb-1">PESO LBS <span class="badge bg-light text-primary border" style="font-size: 0.6rem;">🤖 IA</span></label>
+                                <input type="text" id="weight-${item.id}" value="${finalWeight}" class="form-control fw-bold text-center" oninput="updateRow('${item.id}')" style="font-size: 1.1rem;">
+                            </div>
+                        </div>
+
+                    <!-- GALERÍA SECUNDARIA (HASTA 6 Imágenes) -->
+                    <div class="gallery-editor mt-3 p-3 rounded-4 bg-light border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                             <label class="small fw-bold text-muted mb-0"><i class="fa-solid fa-images me-2"></i> GALERÍA SECUNDARIA (OPCIONAL - LINKS)</label>
+                             <span class="badge bg-white border text-primary" style="font-size: 0.6rem;">6 SLOTS DISPONIBLES</span>
+                        </div>
+                        <div class="row g-2">
+                            ${(() => {
+                        let gallery = [];
+                        try { gallery = JSON.parse(item.gallery || '[]'); } catch (e) { }
+                        let html = '';
+                        for (let i = 0; i < 6; i++) {
+                            const val = gallery[i] || '';
+                            html += `
+                                            <div class="col-4 col-md-2">
+                                                <div class="img-preview-mini mb-1 border rounded shadow-sm" style="height: 50px; overflow:hidden; background: #fff; display:flex; align-items:center; justify-content:center;">
+                                                    <img src="${val ? '/api/proxy-image?url=' + encodeURIComponent(val) : 'https://placehold.co/100?text=+'}" id="gal-prev-${item.id}-${i}" style="max-width:100%; max-height:100%; object-fit:contain;">
+                                                </div>
+                                                <input type="text" class="form-control form-control-sm xsmall gallery-input-${item.id}" value="${val}" oninput="updateGalleryPreview('${item.id}', ${i})" style="font-size: 0.6rem; padding: 2px 4px;" placeholder="Link...">
+                                            </div>`;
+                        }
+                        return html;
+                    })()}
                         </div>
                     </div>
 
-                    <div class="breakdown" style="background: #f1f5f9; border-radius: 15px; padding: 15px;">
+                    <div class="breakdown mt-3" style="background: #f1f5f9; border-radius: 15px; padding: 15px;">
                         <h6 class="small fw-bold text-uppercase mb-3" style="letter-spacing: 1px;"><i class="fa-solid fa-calculator me-2"></i>Desglose Matemático</h6>
                         <div class="d-flex justify-content-between mb-1 small">
-                            <span>Precio Base:</span>
-                            <span class="fw-bold">$${priceUSD.toFixed(2)} USD</span>
+                            <span>Precio Base (USD):</span>
+                            <span class="fw-bold" id="base-val-${item.id}">$${priceUSD.toFixed(2)} USD</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1 small">
-                            <span>Ganancia (30%):</span>
+                            <span id="label-profit-${item.id}">Ganancia (${(calc.profitPercent * 100).toFixed(0)}%):</span>
                             <span class="text-success fw-bold" id="profit-val-${item.id}">+$${calc.profitVal.toFixed(2)} USD</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1 small">
-                            <span>Tax USA (7%):</span>
+                            <span id="label-tax-${item.id}">Tax USA (${(calc.taxPercent * 100).toFixed(0)}%):</span>
                             <span class="fw-bold" id="tax-val-${item.id}">+$${calc.taxUSD.toFixed(2)} USD</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2 pb-2 border-bottom small">
@@ -400,14 +542,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 p-4 text-center d-flex flex-column justify-content-center">
+                <div class="col-md-4 p-4 text-center d-flex flex-column justify-content-center border-start">
                     <span class="small text-muted fw-bold mb-1">SUBTOTAL FINAL A RECAUDAR</span>
-                    <div class="price-cop-display mb-4" id="cop-${item.id}" style="font-size: 2.5rem;">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
+                    <div class="price-cop-display mb-1" id="cop-${item.id}" style="font-size: 2.5rem;">$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}</div>
+                    <div class="text-success fw-bold small mb-4" style="font-size: 0.7rem;">Precio final en Colombia. Sin sorpresas.</div>
                         
                         ${isPending ?
                         `
                             <button onclick="toggleStatus('${item.id}', true)" class="btn btn-primary fw-bold p-3 w-100 rounded-4 mb-2">APROBAR Y PUBLICAR <i class="fa-solid fa-paper-plane ms-2"></i></button>
                             <button onclick="saveChanges('${item.id}')" class="btn btn-outline-primary btn-sm fw-bold w-100 rounded-3 mb-2"><i class="fa-solid fa-check me-1"></i> GUARDAR SIN PUBLICAR</button>
+                            <button onclick="copyToWA('${item.id}')" class="btn btn-success btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#25d366; border:none;"><i class="fa-brands fa-whatsapp me-1"></i> COPIAR PARA WHATSAPP</button>
                             <button onclick="searchMeli('${item.id}')" class="btn btn-warning btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#fff3e0; color:#e65100; border:1px solid #ffcc80;"><i class="fa-solid fa-search me-1"></i> COMPARAR CON MERCADOLIBRE</button>
                         ` :
                         `
@@ -419,11 +563,16 @@
                                 </label>
                             </div>
                             <button onclick="saveChanges('${item.id}')" class="btn btn-info btn-sm text-white fw-bold w-100 rounded-3 mb-2"><i class="fa-solid fa-floppy-disk me-1"></i> GUARDAR CAMBIOS</button>
+                            <button onclick="copyToWA('${item.id}')" class="btn btn-success btn-sm fw-bold w-100 rounded-3 mb-2" style="background:#25d366; border:none;"><i class="fa-brands fa-whatsapp me-1"></i> COPIAR PARA WHATSAPP</button>
                             `
                     }
                         
                         <div class="mt-4 d-flex justify-content-center gap-4">
-                            <a href="${item.link}" target="_blank" class="small fw-bold text-primary text-decoration-none">VER LINK</a>
+                            <a href="${item.link}" target="_blank" class="small fw-bold text-primary text-decoration-none">VER LINK ORIGIAL</a>
+                            ${currentTab === 'archived' ?
+                        `<button onclick="toggleStatus('${item.id}', true)" class="btn btn-link p-0 text-success small fw-bold text-decoration-none">RE-ESTABLECER</button>` :
+                        `<button onclick="archiveItem('${item.id}')" class="btn btn-link p-0 text-warning small fw-bold text-decoration-none">ARCHIVAR</button>`
+                    }
                             <button onclick="removeItem('${item.id}')" class="btn btn-link p-0 text-danger small fw-bold text-decoration-none">ELIMINAR</button>
                         </div>
                     </div>
@@ -483,13 +632,23 @@
         async function saveChanges(id) {
             const priceInput = document.getElementById(`price-${id}`).value.replace(',', '.');
             const weightInput = document.getElementById(`weight-${id}`).value.replace(',', '.');
+            const title = document.getElementById(`title-${id}`).value;
+            const image = document.getElementById(`img-${id}`)?.value || '';
+            const categoria = document.getElementById(`cat-${id}`).value;
+
+            // Coleccionar Galería
+            const galleryInputs = document.querySelectorAll(`.gallery-input-${id}`);
+            const gallery = Array.from(galleryInputs).map(input => input.value).filter(val => val !== '');
 
             const p = parseFloat(priceInput) || 0;
             const w = parseFloat(weightInput) || 0;
-            const title = document.getElementById(`title-${id}`).value;
-            const categoria = document.getElementById(`cat-${id}`).value;
             const calc = calculateFinal(p, w);
 
+            // VALIDACIONES CRÍTICAS (FRONTEND)
+            if (p <= 0) {
+                alert("❌ ERROR: Precio USD inválido. Debe ser mayor a 0 para continuar.");
+                return;
+            }
             if (w <= 0) { alert("⚠️ El peso debe ser mayor a 0 (Usa punto o coma para decimales)"); return; }
 
             try {
@@ -499,21 +658,31 @@
                     price_offer: p,
                     weight: w,
                     price_cop: calc.finalCOP,
-                    categoria
+                    categoria,
+                    image,
+                    gallery: JSON.stringify(gallery)
                 }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
 
                 if (response.data.success) {
                     alert("✅ Guardado correctamente.");
                     loadData();
                 } else {
-                    alert("⚠️ Error al guardar");
+                    alert("⚠️ " + (response.data.error || "Error al guardar"));
                 }
-            } catch (e) { alert("❌ Error de conexión al guardar"); }
+            } catch (e) {
+                const msg = e.response?.data?.error || "Error de conexión al guardar";
+                alert("❌ ERROR: " + msg);
+            }
         }
 
         async function toggleStatus(id, activate) {
             const priceVal = document.getElementById(`price-${id}`)?.value.replace(',', '.') || "0";
             const weightVal = document.getElementById(`weight-${id}`)?.value.replace(',', '.') || "0";
+            const image = document.getElementById(`img-${id}`)?.value || '';
+
+            // Coleccionar Galería
+            const galleryInputs = document.querySelectorAll(`.gallery-input-${id}`);
+            const gallery = Array.from(galleryInputs).map(input => input.value).filter(val => val !== '');
 
             const p = parseFloat(priceVal) || 0;
             const w = parseFloat(weightVal) || 0;
@@ -521,7 +690,10 @@
             const categoria = document.getElementById(`cat-${id}`)?.value || 'Lifestyle & Street';
             const calc = calculateFinal(p, w);
 
-            if (activate && w <= 0) { alert("⚠️ Define un peso antes de aprobar."); return; }
+            if (activate && (p <= 0 || w <= 0 || !title || !image)) {
+                alert("⚠️ Para aprobar necesitas: Precio USD inválido (debe ser > 0), Título, Peso > 0 e Imagen.");
+                return;
+            }
 
             try {
                 if (activate) {
@@ -531,7 +703,9 @@
                         price_offer: p,
                         weight: w,
                         price_cop: calc.finalCOP,
-                        categoria
+                        categoria,
+                        image,
+                        gallery: JSON.stringify(gallery)
                     }, { headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' } });
                 } else {
                     await axios.post(API_URL + '/admin/express/finalize', { id }, {
@@ -539,22 +713,78 @@
                     });
                 }
                 loadData();
-            } catch (e) { alert("Error al actualizar estado"); }
+            } catch (e) {
+                const msg = e.response?.data?.error || "Error al actualizar estado";
+                alert("❌ ERROR: " + msg);
+            }
         }
 
         function updateRow(id) {
             const pInput = document.getElementById(`price-${id}`).value.replace(',', '.');
             const wInput = document.getElementById(`weight-${id}`).value.replace(',', '.');
+            const imgInput = document.getElementById(`img-${id}`).value;
 
             const p = parseFloat(pInput) || 0;
             const w = parseFloat(wInput) || 0;
+
+            // Alerta visual de precio obligatorio
+            const warn = document.getElementById(`price-warning-${id}`);
+            if (warn) {
+                if (p <= 0) warn.classList.remove('d-none');
+                else warn.classList.add('d-none');
+            }
+
             const calc = calculateFinal(p, w);
 
+            // ACTUALIZACIÓN DE UI SEGÚN VALIDEZ
+            const copDisplay = document.getElementById(`cop-${id}`);
+            const totalUSDDisplay = document.getElementById(`total-val-${id}`);
+            const btnApprove = document.querySelector(`button[onclick="toggleStatus('${id}', true)"]`);
+
+            if (!calc) {
+                if (copDisplay) copDisplay.innerHTML = '<span class="text-danger" style="font-size: 1.5rem; font-weight: 800;"><i class="fa-solid fa-triangle-exclamation"></i> PRECIO USD <br>REQUERIDO</span>';
+                if (totalUSDDisplay) totalUSDDisplay.innerText = "INVALIDO";
+                if (btnApprove) btnApprove.disabled = true;
+
+                // Limpiar desglose si es inválido
+                const profitEl = document.getElementById(`profit-val-${id}`);
+                const taxEl = document.getElementById(`tax-val-${id}`);
+                const shipEl = document.getElementById(`ship-val-${id}`);
+                if (profitEl) profitEl.innerText = "-";
+                if (taxEl) taxEl.innerText = "-";
+                if (shipEl) shipEl.innerText = "-";
+                return;
+            }
+
+            if (btnApprove) btnApprove.disabled = false;
+
+            // Actualizar preview de imagen principal
+            const preview = document.getElementById(`preview-box-${id}`);
+            if (preview && imgInput) {
+                preview.innerHTML = `<img src="/api/proxy-image?url=${encodeURIComponent(imgInput)}">`;
+            }
+
             document.getElementById(`cop-${id}`).innerText = `$ ${new Intl.NumberFormat('es-CO').format(calc.finalCOP)}`;
+            document.getElementById(`base-val-${id}`).innerText = `$${p.toFixed(2)} USD`;
             document.getElementById(`profit-val-${id}`).innerText = `+$${calc.profitVal.toFixed(2)} USD`;
             document.getElementById(`tax-val-${id}`).innerText = `+$${calc.taxUSD.toFixed(2)} USD`;
             document.getElementById(`ship-val-${id}`).innerText = `+$${calc.shipUSD.toFixed(2)} USD`;
             document.getElementById(`total-val-${id}`).innerText = `$${calc.totalUSD.toFixed(2)} USD`;
+
+            // Actualizar etiquetas de porcentaje dinámicamente
+            const pLabel = document.getElementById(`label-profit-${id}`);
+            const tLabel = document.getElementById(`label-tax-${id}`);
+            if (pLabel) pLabel.innerText = `Ganancia (${(calc.profitPercent * 100).toFixed(0)}%):`;
+            if (tLabel) tLabel.innerText = `Tax USA (${(calc.taxPercent * 100).toFixed(0)}%):`;
+        }
+
+        function updateGalleryPreview(itemId, index) {
+            const inputs = document.querySelectorAll(`.gallery-input-${itemId}`);
+            const val = inputs[index].value;
+            const img = document.getElementById(`gal-prev-${itemId}-${index}`);
+            if (img) {
+                img.src = val ? '/api/proxy-image?url=' + encodeURIComponent(val) : 'https://placehold.co/100?text=+';
+            }
         }
 
         async function postManual() {
@@ -563,43 +793,72 @@
             if (!url) return;
 
             const btn = document.getElementById('btnProcess');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ANALIZANDO...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
             btn.disabled = true;
 
             try {
-                // PRIMERO: Analizar con la IA
+                // NORMALIZAR LINK
                 const analysisRes = await axios.post(API_URL + '/admin/express/analyze', { url }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
                 const data = analysisRes.data;
 
-                // SEGUNDO: Enviar a la base de datos con los datos detectados
+                // Crear el ghost en la DB con la tienda detectada
                 const response = await axios.post(API_URL + '/admin/express/manual-post', {
                     url: data.url,
-                    price: data.price,
-                    weight: data.weight,
-                    category: data.categoria,
-                    title: data.title,
-                    image: data.image
+                    price: 0,
+                    weight: 0,
+                    category: 'Lifestyle & Street',
+                    title: '',
+                    image: '',
+                    store: data.store
                 }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
                 if (response.data.success) {
                     urlInput.value = '';
-                    alert(`✅ IA DETECTÓ:\n📦 Título: ${data.title}\n⚖️ Peso: ${data.weight} lbs\n🏷️ Cat: ${data.categoria}\n\nAgregado a PENDIENTES.`);
+                    alert(`📋 NORMALIZACIÓN COMPLETADA:\nTienda detectada: ${data.store}\n\nLos enlaces afiliados (Sovrn) no proporcionan información del producto. El precio, título e imagen deben ingresarse manualmente en la fila que aparecerá ahora.`);
                     switchTab('pending');
                 }
             } catch (e) {
                 console.error(e);
-                alert("❌ Falló el análisis de IA. Intenta con otro link o verifica el servidor.");
+                alert("❌ Falló el procesamiento del link.");
             }
             btn.innerHTML = 'PROCESAR';
             btn.disabled = false;
         }
 
+        function copyToWA(id) {
+            const title = document.getElementById(`title-${id}`).value;
+            const cop = document.getElementById(`cop-${id}`).innerText;
+            const usd = document.getElementById(`price-${id}`).value;
+            const origin = window.location.origin;
+            const link = `${origin}/go/${id}`;
+
+            const text = `🔥 *OFERTA MASBARATO EXPRESS* 🇨🇴\n\n*Producto:* ${title}\n*Precio Final Colombia:* ${cop}\n*Precio Ref USA:* $${usd} USD\n\n✅ *Todo Incluido (Impuestos + Envío)*\n🚀 Recibe en 10-15 días\n\n🔗 *Ver y Comprar aquí:* ${link}\n\n_¡Pocas unidades disponibles!_`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert("📋 ¡Texto listo para pegar en WhatsApp!");
+            }).catch(err => {
+                console.error("Error al copiar:", err);
+                alert("No se pudo copiar el texto.");
+            });
+        }
+
+        async function archiveItem(id) {
+            if (!confirm("¿Seguro que deseas archivar esta oferta? (Se moverá al historial)")) return;
+            try {
+                await axios.post(API_URL + '/admin/express/archive', { id }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+                loadData();
+            } catch (e) { alert("Error al archivar"); }
+        }
+
         async function removeItem(id) {
+            if (!confirm("¿Seguro que deseas eliminar esta oferta?")) return;
             try {
                 await axios.post(API_URL + '/admin/express/delete', { id }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
@@ -664,6 +923,7 @@
         }
 
         function refreshView() { loadData(); }
+        loadConfig();
         fetchTRM();
         loadData();
     </script>

@@ -22,9 +22,10 @@ try {
       CREATE TABLE IF NOT EXISTS published_deals (
         id TEXT PRIMARY KEY,
         link TEXT UNIQUE,
+        original_link TEXT,
         title TEXT,
         price_official REAL,
-        price_offer REAL,
+        price_offer REAL NOT NULL CHECK(price_offer > 0),
         image TEXT,
         tienda TEXT DEFAULT 'Amazon USA',
         categoria TEXT DEFAULT 'Tecnología',
@@ -49,6 +50,7 @@ try {
   try { db.exec("ALTER TABLE published_deals ADD COLUMN comment_count INTEGER DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN price_cop REAL DEFAULT 0"); } catch (e) { }
   try { db.exec("ALTER TABLE published_deals ADD COLUMN weight REAL DEFAULT 0"); } catch (e) { }
+  try { db.exec("ALTER TABLE published_deals ADD COLUMN gallery TEXT"); } catch (e) { }
 
   // --- TABLAS EXTRA ---
   db.exec(`
@@ -103,28 +105,39 @@ const getComments = (dealId) => {
 };
 
 const saveDeal = (deal) => {
-  const isPending = deal.status === 'pending_express';
+  const isPending = deal.status === 'pending_express' || deal.status === 'ghost';
+  const pOffer = parseFloat(deal.price_offer) || 0;
 
-  // --- SEGURIDAD RELAJADA PARA PENDIENTES ---
+  // --- VALIDACIÓN CRÍTICA DE PRECIO (BACKEND) ---
+  if (!isPending && pOffer <= 0) {
+    logger.error(`🚫 ERROR CRÍTICO: Intento de publicar sin precio válido ($${pOffer}) para "${deal.title}".`);
+    throw new Error("Precio USD inválido");
+  }
+
+  // --- SEGURIDAD PARA PUBLICADAS ---
   if (!isPending) {
     if (deal.price_offer > 10000 && !deal.title?.toLowerCase().includes('car')) {
       logger.warn(`🚫 BLOQUEO: Precio sospechoso ($${deal.price_offer}) para "${deal.title}".`);
       return false;
     }
     if (!deal.image || deal.image.includes('favicon') || deal.image.includes('placehold.co')) {
-      logger.warn(`🚫 BLOQUEO: Imagen inválida.`);
+      logger.warn(`🚫 BLOQUEO: Imagen inválida o inexistente para publicación.`);
+      return false;
+    }
+    if (!deal.title || deal.title.length < 5) {
+      logger.warn(`🚫 BLOQUEO: Título insuficiente para publicación.`);
       return false;
     }
   } else {
-    // Si es pendiente y no tiene imagen, poner una por defecto para que no falle el insert
+    // Si es pendiente y no tiene imagen, poner una por defecto para la fila en admin
     if (!deal.image) deal.image = 'https://placehold.co/400?text=Masbarato+Express';
   }
 
   try {
     const stmt = db.prepare(`
         INSERT OR REPLACE INTO published_deals 
-        (id, link, original_link, title, price_official, price_offer, image, tienda, categoria, description, coupon, is_historic_low, score, status, price_cop, weight)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, link, original_link, title, price_official, price_offer, image, gallery, tienda, categoria, description, coupon, is_historic_low, score, status, price_cop, weight)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
     return stmt.run(
       deal.id,
@@ -134,6 +147,7 @@ const saveDeal = (deal) => {
       deal.price_official || 0,
       deal.price_offer || 0,
       deal.image,
+      deal.gallery || null,
       deal.tienda || 'Oferta USA',
       deal.categoria || 'Oferta',
       deal.description || '',

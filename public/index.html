@@ -716,79 +716,104 @@
                     padding: 20px;
                 }
             }
+        }
 
-            @media (min-width: 769px) and (max-width: 1024px) {
+        @media (min-width: 769px) and (max-width: 1024px) {
 
-                /* Estilos específicos Tablet */
-                .deal-grid {
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 25px;
-                    padding: 0 30px;
-                }
-
-                .hero-banner h1 {
-                    font-size: 3rem;
-                }
+            /* Estilos específicos Tablet */
+            .deal-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 25px;
+                padding: 0 30px;
             }
 
-            @media (min-width: 1025px) {
-
-                .mobile-header,
-                .bottom-nav {
-                    display: none;
-                }
-
-                /* PC: 3 columnas o 4 según ancho */
-                .deal-grid {
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                }
+            .hero-banner h1 {
+                font-size: 3rem;
             }
+        }
 
-            /* IMAGE ZOOM MODAL */
-            .zoom-modal {
+        @media (min-width: 1025px) {
+
+            .mobile-header,
+            .bottom-nav {
                 display: none;
-                position: fixed;
-                z-index: 9999;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.9);
-                align-items: center;
-                justify-content: center;
-                backdrop-filter: blur(5px);
             }
 
-            .zoom-modal-content {
-                max-width: 90%;
-                max-height: 90%;
-                background: white;
-                border-radius: 20px;
-                padding: 10px;
-                position: relative;
+            /* PC: 3 columnas o 4 según ancho */
+            .deal-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             }
+        }
 
-            .zoom-modal img {
-                max-width: 100%;
-                max-height: 80vh;
-                border-radius: 15px;
-                display: block;
-            }
+        /* IMAGE ZOOM MODAL */
+        .zoom-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
 
-            .zoom-modal-close {
-                position: absolute;
-                top: -50px;
-                right: 0;
-                color: white;
-                font-size: 30px;
-                cursor: pointer;
-                background: none;
-                border: none;
-            }
+        .zoom-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            background: white;
+            border-radius: 20px;
+            padding: 10px;
+            position: relative;
+        }
 
-            .image-container img {
-                cursor: zoom-in;
-            }
+        .zoom-modal img {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 15px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .gallery-thumbs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .thumb-small {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            object-fit: contain;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .thumb-small.active {
+            border-color: var(--primary);
+        }
+
+        .zoom-modal-close {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .image-container img {
+            cursor: zoom-in;
+        }
     </style>
 </head>
 
@@ -1004,6 +1029,7 @@
         <div class="zoom-modal-content" onclick="event.stopPropagation()">
             <button class="zoom-modal-close" onclick="closeZoom()"><i class="fa-solid fa-xmark"></i></button>
             <img id="zoomImg" src="" alt="Zoom">
+            <div id="galleryThumbs" class="gallery-thumbs"></div>
             <p id="zoomTitle" style="margin-top: 15px; font-weight: 800; text-align: center; color: var(--text-main);">
             </p>
         </div>
@@ -1055,8 +1081,9 @@
                 card.style.opacity = isExpired ? '0.7' : '1';
 
                 card.innerHTML = `
-                    <div class="image-container" onclick="openZoom('${deal.image}', '${deal.title.replace(/'/g, "\\'")}')">
+                    <div class="image-container" onclick='openZoom(${JSON.stringify(deal.image)}, ${JSON.stringify(deal.title)}, ${deal.gallery || "[]"})'>
                         ${isExpired ? '<div class="badge-cop" style="background:#64748b">AGOTADA</div>' : '<div class="badge-cop"><i class="fa-solid fa-check"></i> 🇨🇴 Todo Incluido</div>'}
+                        ${deal.gallery && JSON.parse(deal.gallery).length > 0 ? '<div style="position:absolute; bottom:10px; right:10px; background:rgba(255,255,255,0.9); padding:5px 8px; border-radius:8px; font-size:0.7rem; font-weight:bold; color:var(--primary); box-shadow:0 4px 10px rgba(0,0,0,0.1);"><i class="fa-solid fa-images"></i> +${JSON.parse(deal.gallery).length}</div>' : ''}
                         <img src="/api/proxy-image?url=${encodeURIComponent(deal.image)}" alt="${deal.title}" loading="lazy" 
                              style="${isExpired ? 'filter: grayscale(1);' : ''}"
                              onerror="this.src='https://placehold.co/400x300/f8fafc/64748b?text=Express'">
@@ -1067,6 +1094,7 @@
                         <div class="price-section">
                             <span class="price-label">Precio Final Colombia</span>
                             <span class="price-cop" style="${isExpired ? 'color: #94a3b8;' : ''}">${isExpired ? 'AGOTADA' : currentPrice}</span>
+                            <div class="text-success fw-bold mt-1" style="font-size: 0.65rem;">Precio final en Colombia. Sin sorpresas.</div>
                         </div>
 
                         ${isExpired ? `
@@ -1191,9 +1219,29 @@
         });
 
         fetchDeals();
-        function openZoom(img, title) {
-            document.getElementById('zoomImg').src = '/api/proxy-image?url=' + encodeURIComponent(img);
+        function openZoom(mainImg, title, gallery = []) {
+            const zoomImg = document.getElementById('zoomImg');
+            zoomImg.src = '/api/proxy-image?url=' + encodeURIComponent(mainImg);
             document.getElementById('zoomTitle').innerText = title;
+
+            const thumbsContainer = document.getElementById('galleryThumbs');
+            thumbsContainer.innerHTML = '';
+
+            if (gallery && gallery.length > 0) {
+                const allImages = [mainImg, ...gallery];
+                allImages.forEach((imgUrl, idx) => {
+                    const img = document.createElement('img');
+                    img.src = '/api/proxy-image?url=' + encodeURIComponent(imgUrl);
+                    img.className = 'thumb-small' + (idx === 0 ? ' active' : '');
+                    img.onclick = () => {
+                        zoomImg.src = '/api/proxy-image?url=' + encodeURIComponent(imgUrl);
+                        document.querySelectorAll('.thumb-small').forEach(t => t.classList.remove('active'));
+                        img.classList.add('active');
+                    };
+                    thumbsContainer.appendChild(img);
+                });
+            }
+
             document.getElementById('zoomModal').style.display = 'flex';
         }
 

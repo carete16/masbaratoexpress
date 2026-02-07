@@ -32,14 +32,22 @@ class LinkTransformer {
     }
 
     detectarTienda(url) {
-        if (url.includes("amazon.")) return "amazon";
-        if (url.includes("walmart.")) return "walmart";
-        if (url.includes("ebay.")) return "ebay";
-        return "otro";
+        const u = url.toLowerCase();
+        if (u.includes("amazon.")) return "Amazon US";
+        if (u.includes("walmart.")) return "Walmart";
+        if (u.includes("ebay.")) return "eBay";
+        if (u.includes("bestbuy.")) return "BestBuy";
+        if (u.includes("nike.")) return "Nike";
+        if (u.includes("adidas.")) return "Adidas";
+        if (u.includes("target.")) return "Target";
+        return "Tienda USA";
     }
 
     limpiarURL(url) {
-        return url.split("?")[0];
+        if (!url) return '';
+        // Eliminar parámetros de tracking comunes pero mantener la base
+        const clean = url.split("?")[0];
+        return clean;
     }
 
     extraerASIN(url) {
@@ -50,20 +58,34 @@ class LinkTransformer {
     async transform(url) {
         if (!url) return url;
 
-        // 1. BYPASS TOTAL PARA TIENDAS DIRECTAS (MÁXIMA VELOCIDAD)
-        if (url.includes('amazon.com') || url.includes('nike.com') || url.includes('ebay.com')) {
+        // 1. Detección de Tienda
+        const tiendaId = this.detectarTienda(url);
+
+        // 2. BYPASS TOTAL PARA TIENDAS DIRECTAS (MÁXIMA VELOCIDAD)
+        const isDirect = url.includes('amazon.com') || url.includes('walmart.com') || url.includes('bestbuy.com') || url.includes('nike.com') || url.includes('ebay.com');
+
+        if (isDirect) {
+            let final = url;
             if (url.includes('amazon.com')) {
                 const asin = this.extraerASIN(url);
-                if (asin) return `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
+                if (asin) final = `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
+                else final = this.limpiarURL(url);
+            } else {
+                final = this.limpiarURL(url);
             }
-            return url.split('?')[0];
+
+            // Si hay Sovrn, envolverlo (opcional según el usuario, pero usualmente se prefiere Sovrn para todo lo no-Amazon)
+            if (!url.includes('amazon.com') && this.tags.sovrn_key) {
+                return `https://redirect.viglink.com?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(final)}`;
+            }
+            return final;
         }
 
-        // 2. Resolver redirecciones
+        // 3. Resolver redirecciones para links cortos (bitly, etc)
         const urlFinal = await this.resolverRedirect(url);
-        const tienda = this.detectarTienda(urlFinal);
+        const tiendaFinal = this.detectarTienda(urlFinal);
 
-        if (tienda === "amazon") {
+        if (tiendaFinal === "Amazon US") {
             const asin = this.extraerASIN(urlFinal);
             if (asin) return `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
         }
