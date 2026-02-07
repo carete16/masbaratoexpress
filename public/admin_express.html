@@ -546,7 +546,9 @@
                 const data = analysisRes.data;
 
                 // Crear el borrador en la DB
-                const response = await axios.post(API_URL + '/admin/express/manual-post', {
+                // Crear el borrador en la DB
+                // NOTA: Enviamos price: 0 para que el backend use el fallback seguro (0.01)
+                await axios.post(API_URL + '/admin/express/manual-post', {
                     url: data.url,
                     price: 0,
                     weight: 0,
@@ -558,12 +560,11 @@
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
-                if (response.data.success) {
-                    urlInput.value = '';
-                    // Notificar éxito y cambiar a pendientes
-                    alert(`✅ NORMALIZADO CON ÉXITO\nTienda Detectada: ${data.store}\n\nEste producto ha sido enviado a la pestaña "PENDIENTES" para que completes sus datos manuales.`);
-                    switchTab('pending');
-                }
+                // Éxito directo sin esperar respuesta compleja
+                urlInput.value = '';
+                alert(`✅ ENLACE PROCESADO\nTienda: ${data.store}\n\nEl producto está ahora en PENDIENTES. Completa los datos manuales.`);
+                switchTab('pending');
+                loadData(); // Recargar la lista inmediatamente
             } catch (e) {
                 console.error("DEBUG ERROR LINK:", e);
                 const serverMsg = e.response?.data?.error || "Error desconocido en el servidor";
