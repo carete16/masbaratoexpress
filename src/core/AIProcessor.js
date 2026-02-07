@@ -19,10 +19,16 @@ class AIProcessor {
         }
 
         try {
-            const prompt = `Actúa como un experto en Growth Hacking y Ventas para un canal de ofertas.
-Convierte este título de producto aburrido en un título MAGNÉTICO y CORTO (máximo 80 caracteres) que denote urgencia o gran oportunidad. 
-Usa emojis adecuados. El idioma debe ser ESPAÑOL.
-SOLO responde con el nuevo título, nada más.
+            const prompt = `Actúa como un experto en Copywriting y Growth Hacking para un canal de ofertas que vende en Colombia.
+Convierte este título de producto en un título VIRAL, MAGNÉTICO y MUY PERSUASIVO.
+
+REGLAS:
+1. Idioma: ESPAÑOL.
+2. Longitud: Máximo 70 caracteres.
+3. Tono: Exclamativo, de oportunidad única, usando disparadores psicológicos (Curiosidad, Escasez o Ahorro).
+4. Estructura recomendada: [Emoji] [Gancho de Venta] [Beneficio/Modelo].
+5. Emojis: Usa 1 o 2 emojis llamativos.
+6. SOLO responde con el nuevo título, sin comillas.
 
 Título original: ${rawTitle}`;
 
