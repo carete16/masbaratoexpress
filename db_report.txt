@@ -1,0 +1,48 @@
+
+=== DIAGN├ôSTICO DE BASE DE DATOS ===
+
+­ƒôï Estructura de la tabla products:
+CREATE TABLE products (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    images TEXT, -- JSON array de URLs
+    category TEXT CHECK(category IN ('Electr├│nica Premium', 'Lifestyle & Street', 'Relojes & Wearables')),
+    status TEXT CHECK(status IN ('disponible', 'agotado', 'pendiente')) DEFAULT 'pendiente',
+    delivery_time_est TEXT DEFAULT '10-15 d├¡as h├íbiles',
+    warranty TEXT DEFAULT 'Garant├¡a b├ísica de 30 d├¡as',
+    
+    -- Datos Internos (Administraci├│n)
+    source_link TEXT,
+    price_usd REAL,
+    trm_applied REAL,
+    tax_usa_perc REAL DEFAULT 7.0,
+    weight_lb REAL DEFAULT 4.0, -- M├¡nimo 4 lb por defecto
+    cost_lb_usd REAL DEFAULT 6.0,
+    margin_perc REAL DEFAULT 30.0,
+    
+    -- Calculado (Visible)
+    price_cop_final INTEGER,
+    
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+
+
+­ƒôè Productos por estado:
+  disponible: 6
+
+
+­ƒöì ├Ültimos 5 productos PENDIENTES:
+
+
+­ƒôª TODOS LOS PRODUCTOS (6 total):
+  1. [disponible] iPhone 15 Pro Max - 256GB Platinum
+  2. [disponible] Nike Air Jordan 1 Retro Low OG
+  3. [disponible] Apple Watch Ultra 2 - Ocean Band
+  4. [disponible] Apple Watch Series 9 GPS 41mm
+  5. [disponible] Nike Air Max Excee Mens Sneakers
+  6. [disponible] Logitech G PRO X Mechanical Keyboard
+
+=== FIN DEL DIAGN├ôSTICO ===
+
