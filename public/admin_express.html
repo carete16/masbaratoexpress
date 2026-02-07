@@ -13,18 +13,20 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         :root {
-            --primary: #1e40af;
-            --primary-glow: rgba(30, 64, 175, 0.3);
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --primary-glow: rgba(37, 99, 235, 0.2);
             --secondary: #6366f1;
             --accent-green: #10b981;
             --accent-yellow: #f59e0b;
             --accent-red: #ef4444;
-            --bg-body: #f1f5f9;
+            --bg-body: #f8fafc;
             --card-bg: #ffffff;
-            --text-main: #1e293b;
+            --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
             --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            --radius: 24px;
         }
 
         body {
@@ -32,6 +34,42 @@
             color: var(--text-main);
             font-family: 'Outfit', sans-serif;
             min-height: 100vh;
+            padding-bottom: 50px;
+        }
+
+        /* --- INPUTS PREMIUM --- */
+        .premium-input-box {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-premium);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .premium-input-box:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+
+        .premium-input-box label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 800;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .premium-input-box input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 1.62rem;
+            font-weight: 900;
+            color: var(--primary);
+            background: transparent;
         }
 
         .premium-header {
@@ -74,13 +112,104 @@
         }
 
         .price-cop-display {
-            font-size: 2.2rem;
-            font-weight: 900;
+            font-size: 3rem;
+            font-weight: 950;
             color: var(--primary);
-            letter-spacing: -2px;
+            letter-spacing: -3px;
+            line-height: 1;
         }
 
-        /* TOGGLE SWITCH STYLE */
+        /* --- MODAL IMAGE --- */
+        #mediaModal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mediaModal img {
+            max-width: 95%;
+            max-height: 90%;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            object-fit: contain;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            color: white;
+            font-size: 45px;
+            cursor: pointer;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        /* --- MOBILE OPTIMIZATION --- */
+        @media (max-width: 768px) {
+            .premium-header .container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .logo-box {
+                width: 30px;
+                height: 30px;
+            }
+
+            .price-cop-display {
+                font-size: 2.3rem;
+            }
+
+            .img-container {
+                width: 100% !important;
+                height: 280px !important;
+            }
+
+            .card-deal .row .col-md-2 {
+                border-right: none !important;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .card-deal .row .col-md-4 {
+                border-left: none !important;
+                border-top: 1px solid var(--border);
+            }
+
+            .nav-pills-custom {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 15px;
+                margin-bottom: 20px !important;
+            }
+
+            .nav-pills-custom .nav-link {
+                white-space: nowrap;
+                font-size: 0.85rem;
+                padding: 10px 18px;
+            }
+        }
+
+        .breakdown {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #edf2f7;
+        }
+
         .switch {
             position: relative;
             display: inline-block;
@@ -102,7 +231,6 @@
             right: 0;
             bottom: 0;
             background-color: #ef4444;
-            /* Rojo por defecto (Agotado) */
             transition: .4s;
             border-radius: 34px;
         }
@@ -121,58 +249,40 @@
 
         input:checked+.slider {
             background-color: #10b981;
-            /* Verde (Activo) */
-        }
-
-        input:focus+.slider {
-            box-shadow: 0 0 1px #10b981;
         }
 
         input:checked+.slider:before {
             transform: translateX(26px);
         }
 
-        .status-label {
-            font-weight: 800;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .btn-action {
-            border-radius: 12px;
-            padding: 12px;
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            border: none;
-            width: 100%;
-            margin-top: 10px;
-        }
-
         .nav-pills-custom .nav-link {
-            border-radius: 15px;
+            border-radius: 18px;
             padding: 12px 25px;
             font-weight: 700;
             color: var(--text-muted);
-            background: #e2e8f0;
+            background: white;
+            border: 1px solid var(--border);
             margin-right: 10px;
         }
 
         .nav-pills-custom .nav-link.active {
             background: var(--primary) !important;
             color: white !important;
+            border-color: var(--primary);
         }
 
         .img-container {
-            width: 140px;
-            height: 140px;
+            width: 100%;
+            height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: white;
             border-radius: 18px;
             padding: 10px;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
             border: 1px solid #f1f5f9;
         }
 
@@ -180,6 +290,31 @@
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
+        }
+
+        .img-container::after {
+            content: "\f00e";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 16px;
+            opacity: 0;
+            transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .img-container:hover::after {
+            opacity: 1;
         }
 
         .btn-ia-magic {
@@ -191,12 +326,6 @@
             padding: 4px 8px;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-ia-magic:hover {
-            background: var(--primary);
-            color: white;
         }
 
         .manual-alert-premium {
@@ -240,95 +369,197 @@
                     <h1 class="h5 fw-bold mb-0">Masbarato <span style="color:var(--secondary)">Express</span></h1>
                     <p class="text-muted small mb-0 fw-semibold">Admin Panel Pro</p>
                 </div>
-                <div class="col-md-3">
-                    <div class="p-2 rounded-3 border-start border-primary border-4 bg-light small fw-semibold"
-                        style="font-size: 0.7rem;">
-                        Regla: Peso Real (redondeado hacia arriba). Tarifa plana por libra.
-                    </div>
-                </div>
             </div>
-            <div class="d-flex gap-3">
-                <div class="badge bg-white border text-dark p-2 rounded-3 small fw-bold">TRM Real: <span
-                        class="text-primary" id="trm-real">$3.628</span></div>
-                <div class="badge bg-white border text-dark p-2 rounded-3 small fw-bold">Operativo: <span
-                        class="text-primary" id="trm-op">$3.928</span></div>
+            <div class="d-flex flex-column align-items-end gap-1">
+                <div class="d-flex gap-2">
+                    <div class="badge bg-white border text-dark p-2 rounded-3 small fw-bold">TRM Real: <span
+                            class="text-primary" id="trm-real">$0</span></div>
+                    <div class="badge bg-white border text-dark p-2 rounded-3 small fw-bold">Operativo: <span
+                            class="text-primary" id="trm-op">$0</span></div>
+                </div>
+                <div id="trm-date" class="text-muted" style="font-size: 0.65rem; font-weight: 700;">TRM última
+                    actualización: <span id="trm-time">Cargando...</span></div>
             </div>
         </div>
     </header>
 
     <div class="container">
         <!-- Dashboard Params -->
-        <div class="row mb-5 g-4">
-            <div class="col-md-1">
-                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
-                    <label class="small fw-bold mb-2 text-primary" style="font-size:0.6rem">Dólar</label>
-                    <input type="number" id="globalDolarOp" class="form-control fw-bold form-control-sm" value="3928"
-                        onchange="saveConfig(); refreshView()">
+        <div class="row mb-4 g-3 dashboard-params-row">
+            <div class="col-6 col-md-2">
+                <div class="premium-input-box">
+                    <label class="text-primary">Dólar TRM+</label>
+                    <input type="number" id="globalDolarOp" value="3928" onchange="saveConfig(); refreshView()">
                 </div>
             </div>
-            <div class="col-md-1">
-                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
-                    <label class="small fw-bold mb-2 text-primary" style="font-size:0.6rem">$/Libre</label>
-                    <input type="number" id="globalRate" class="form-control fw-bold form-control-sm" value="6"
-                        onchange="saveConfig(); refreshView()">
+            <div class="col-6 col-md-2">
+                <div class="premium-input-box">
+                    <label class="text-primary">$/Libra</label>
+                    <input type="number" id="globalRate" value="6" onchange="saveConfig(); refreshView()">
                 </div>
             </div>
-            <div class="col-md-1">
-                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
-                    <label class="small fw-bold mb-2 text-success" style="font-size:0.6rem">Gan %</label>
-                    <input type="number" id="globalProfit" class="form-control fw-bold form-control-sm" value="30"
-                        onchange="saveConfig(); refreshView()">
+            <div class="col-6 col-md-2">
+                <div class="premium-input-box">
+                    <label class="text-success">Ganancia %</label>
+                    <input type="number" id="globalProfit" value="30" onchange="saveConfig(); refreshView()">
                 </div>
             </div>
-            <div class="col-md-1">
-                <div class="card p-3 border-0 shadow-sm rounded-4 h-100">
-                    <label class="small fw-bold mb-2 text-danger" style="font-size:0.6rem">Tax %</label>
-                    <input type="number" id="globalTax" class="form-control fw-bold form-control-sm" value="7"
-                        onchange="saveConfig(); refreshView()">
+            <div class="col-6 col-md-2">
+                <div class="premium-input-box">
+                    <label class="text-danger">USA Tax %</label>
+                    <input type="number" id="globalTax" value="7" onchange="saveConfig(); refreshView()">
                 </div>
             </div>
             <div class="col-md-4">
-                <!-- Search -->
-                <div class="card p-3 border-0 shadow-sm rounded-4 h-100" style="background: #f8fafc;">
-                    <label class="small fw-bold mb-2"><i class="fa-solid fa-search me-1"></i> Buscar producto...</label>
-                    <input type="text" id="searchTerm" class="form-control" placeholder="Filtrar por nombre..."
-                        oninput="renderItemsFiltered()">
+                <div class="premium-input-box h-100" style="background: #f8fafc;">
+                    <label><i class="fa-solid fa-search me-1"></i> Buscador</label>
+                    <input type="text" id="searchTerm" placeholder="Filtrar por nombre..."
+                        oninput="renderItemsFiltered()" style="font-size: 1.2rem;">
                 </div>
             </div>
-            <div class="col-md-4">
-                <!-- Quick Post -->
-                <div class="card p-3 border-0 shadow-sm rounded-4 h-100" style="background: #eff6ff;">
-                    <label class="small fw-bold mb-2">Auto-Post Links (Amazon, etc)</label>
-                    <div class="input-group">
-                        <input type="text" id="manualUrl" class="form-control" placeholder="Pega el enlace aquí...">
-                        <button onclick="postManual()" id="btnProcess" class="btn btn-primary fw-bold">PROCESAR</button>
+        </div>
+
+        <!-- Quick Post -->
+        <div class="card p-4 border-0 shadow-sm rounded-4 mb-5"
+            style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-1"><i class="fa-solid fa-link me-2"></i> Procesar Enlace</h5>
+                    <p class="small text-muted mb-0">Pega el link de Amazon, Nike, eBay, etc.</p>
+                </div>
+                <div class="col-md-8">
+                    <div class="input-group input-group-lg">
+                        <input type="text" id="manualUrl" class="form-control border-0"
+                            placeholder="https://www.amazon.com/dp/..." style="border-radius: 15px 0 0 15px;">
+                        <button onclick="postManual()" id="btnProcess" class="btn btn-primary px-4 fw-bold"
+                            style="border-radius: 0 15px 15px 0;">PROCESAR LINK</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <ul class="nav nav-pills nav-pills-custom mb-5">
-            <li class="nav-item"><button class="nav-link active" id="tab-pending"
-                    onclick="switchTab('pending')">PENDIENTES</button></li>
-            <li class="nav-item"><button class="nav-link" id="tab-published" onclick="switchTab('published')">PUBLICADAS
-                    / VIVO</button></li>
-            <li class="nav-item"><button class="nav-link" id="tab-archived" onclick="switchTab('archived')">HISTORIAL /
-                    ARCHIVO</button></li>
-        </ul>
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <ul class="nav nav-pills nav-pills-custom m-0">
+                <li class="nav-item"><button class="nav-link active" id="tab-pending"
+                        onclick="switchTab('pending')">PENDIENTES</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-published"
+                        onclick="switchTab('published')">PUBLICADAS / VIVO</button></li>
+                <li class="nav-item"><button class="nav-link" id="tab-archived"
+                        onclick="switchTab('archived')">HISTORIAL / ARCHIVO</button></li>
+            </ul>
+            <button onclick="runHealthCheck()"
+                class="btn btn-outline-secondary btn-sm fw-bold rounded-pill px-3 shadow-sm"
+                style="font-size: 0.7rem; background: white;">
+                <i class="fa-solid fa-stethoscope me-1 text-primary"></i> CHEQUEO PROFESIONAL
+            </button>
+        </div>
+
+        <div id="health-check-results" class="mb-4 d-none">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-4 border-info">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold m-0"><i class="fa-solid fa-microchip me-2 text-primary"></i> DIAGNÓSTICO DEL
+                        SISTEMA</h6>
+                    <button onclick="document.getElementById('health-check-results').classList.add('d-none')"
+                        class="btn-close" style="font-size: 0.6rem;"></button>
+                </div>
+                <div id="health-details" class="row g-3">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+        </div>
 
         <div id="main-container"></div>
+    </div>
+
+    <!-- Modal para zoom de imagen -->
+    <div id="mediaModal">
+        <span class="close-modal" onclick="closeZoom()">&times;</span>
+        <img id="modalImg" src="">
     </div>
 
     <script>
         const API_URL = '/api';
         let currentTab = 'pending';
 
-        function switchTab(tab) {
+        // --- FUNCIONES DE ZOOM PROFESIONAL ---
+        function openZoom(imgUrl) {
+            if (!imgUrl) return;
+            const modal = document.getElementById('mediaModal');
+            const modalImg = document.getElementById('modalImg');
+            // Usar el proxy para mayor fidelidad
+            modalImg.src = '/api/proxy-image?url=' + encodeURIComponent(imgUrl);
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Evitar scroll
+        }
+
+        function closeZoom() {
+            const modal = document.getElementById('mediaModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar modal al hacer click fuera de la imagen
+        window.onclick = function (event) {
+            const modal = document.getElementById('mediaModal');
+            if (event.target == modal) closeZoom();
+        }
+
+        async function switchTab(tab) {
             currentTab = tab;
             document.getElementById('tab-pending').classList.toggle('active', tab === 'pending');
             document.getElementById('tab-published').classList.toggle('active', tab === 'published');
             document.getElementById('tab-archived').classList.toggle('active', tab === 'archived');
-            loadData();
+            await loadData();
+        }
+
+        async function postManual() {
+            const urlInput = document.getElementById('manualUrl');
+            const url = urlInput.value.trim();
+            if (!url) {
+                alert("⚠️ Por favor ingresa un enlace para procesar.");
+                return;
+            }
+
+            const btn = document.getElementById('btnProcess');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
+            btn.disabled = true;
+
+            try {
+                // NORMALIZAR LINK (Llamada al backend)
+                const analysisRes = await axios.post(API_URL + '/admin/express/analyze', { url }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+
+                const data = analysisRes.data;
+
+                // Crear el borrador en la DB
+                const response = await axios.post(API_URL + '/admin/express/manual-post', {
+                    url: data.url,
+                    price: 0,
+                    weight: 0,
+                    category: 'Lifestyle & Street',
+                    title: '',
+                    image: '',
+                    store: data.store
+                }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+
+                if (response.data.success) {
+                    urlInput.value = '';
+                    // Notificar éxito y cambiar a pendientes
+                    alert(`✅ NORMALIZADO CON ÉXITO\nTienda Detectada: ${data.store}\n\nEste producto ha sido enviado a la pestaña "PENDIENTES" para que completes sus datos manuales.`);
+                    switchTab('pending');
+                }
+            } catch (e) {
+                console.error("DEBUG ERROR LINK:", e);
+                const serverMsg = e.response?.data?.error || "Error desconocido en el servidor";
+                alert(`❌ FALLO EL PROCESAMIENTO:\n${serverMsg}\n\nPrueba con un link directo del producto.`);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
         function calculateFinal(priceUSD, weightLbs) {
@@ -430,7 +661,7 @@
                 card.innerHTML = `
                 <div class="row g-0 align-items-center">
                     <div class="col-md-2 p-4 text-center border-end">
-                        <div class="img-container mx-auto mb-3 shadow-sm" id="preview-box-${item.id}" style="position:relative;">
+                        <div class="img-container mx-auto mb-3 shadow-sm" id="preview-box-${item.id}" onclick="openZoom('${item.image || ''}')">
                             <img src="${item.image ? '/api/proxy-image?url=' + encodeURIComponent(item.image) : 'https://placehold.co/400?text=SIN+FOTO'}">
                             ${!item.image ? '<div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.7); font-weight:800; color:var(--accent-red); font-size:0.7rem;">REQUERIDO</div>' : ''}
                         </div>
@@ -787,48 +1018,7 @@
             }
         }
 
-        async function postManual() {
-            const urlInput = document.getElementById('manualUrl');
-            const url = urlInput.value.trim();
-            if (!url) return;
 
-            const btn = document.getElementById('btnProcess');
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESANDO...';
-            btn.disabled = true;
-
-            try {
-                // NORMALIZAR LINK
-                const analysisRes = await axios.post(API_URL + '/admin/express/analyze', { url }, {
-                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
-                });
-
-                const data = analysisRes.data;
-
-                // Crear el ghost en la DB con la tienda detectada
-                const response = await axios.post(API_URL + '/admin/express/manual-post', {
-                    url: data.url,
-                    price: 0,
-                    weight: 0,
-                    category: 'Lifestyle & Street',
-                    title: '',
-                    image: '',
-                    store: data.store
-                }, {
-                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
-                });
-
-                if (response.data.success) {
-                    urlInput.value = '';
-                    alert(`📋 NORMALIZACIÓN COMPLETADA:\nTienda detectada: ${data.store}\n\nLos enlaces afiliados (Sovrn) no proporcionan información del producto. El precio, título e imagen deben ingresarse manualmente en la fila que aparecerá ahora.`);
-                    switchTab('pending');
-                }
-            } catch (e) {
-                console.error(e);
-                alert("❌ Falló el procesamiento del link.");
-            }
-            btn.innerHTML = 'PROCESAR';
-            btn.disabled = false;
-        }
 
         function copyToWA(id) {
             const title = document.getElementById(`title-${id}`).value;
@@ -911,21 +1101,77 @@
                 const res = await axios.get(API_URL + '/express/trm');
                 if (res.data.success) {
                     const trm = Math.round(res.data.trm);
-                    const trmOp = Math.ceil((trm + 300) / 10) * 10; // Redondeo a la decena más cercana
+                    const trmOp = Math.ceil((trm + 300) / 10) * 10;
 
                     const fmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
                     document.getElementById('trm-real').innerText = fmt.format(trm);
                     document.getElementById('trm-op').innerText = fmt.format(trmOp);
-                    document.getElementById('globalDolarOp').value = trmOp;
+                    document.getElementById('trm-time').innerText = res.data.updated_at || 'Recientemente';
+
+                    // Si el input está vacío o es el default, actualizarlo
+                    const inputDolar = document.getElementById('globalDolarOp');
+                    if (!inputDolar.value || inputDolar.value == "3928") {
+                        inputDolar.value = trmOp;
+                    }
                     if (typeof refreshView === 'function') refreshView();
                 }
             } catch (e) { console.error("Error TRM:", e); }
         }
 
         function refreshView() { loadData(); }
-        loadConfig();
-        fetchTRM();
-        loadData();
+        async function runHealthCheck() {
+            const container = document.getElementById('health-check-results');
+            const details = document.getElementById('health-details');
+            container.classList.remove('d-none');
+            details.innerHTML = '<div class="col-12 text-center py-2"><i class="fa-solid fa-spinner fa-spin me-2"></i> Analizando sistema...</div>';
+
+            try {
+                const res = await axios.get(API_URL + '/admin/diagnostics', {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+                const d = res.data;
+
+                let html = `
+                    <div class="col-md-4">
+                        <div class="p-2 border rounded-3 bg-light">
+                            <div class="xsmall fw-bold text-muted">BASE DE DATOS</div>
+                            <div class="fw-bold ${d.database.status === 'OK' ? 'text-success' : 'text-danger'}">
+                                ${d.database.status === 'OK' ? '<i class="fa-solid fa-check-circle me-1"></i> Operativa' : '<i class="fa-solid fa-circle-xmark me-1"></i> ERROR'}
+                            </div>
+                            <div style="font-size: 0.6rem;">${d.database.details}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-2 border rounded-3 bg-light">
+                            <div class="xsmall fw-bold text-muted">INTELIGENCIA ARTIFICIAL (IA)</div>
+                            <div class="fw-bold ${d.env.OPENAI_API_KEY.includes('✅') ? 'text-success' : 'text-warning'}">
+                                ${d.env.OPENAI_API_KEY}
+                            </div>
+                            <div style="font-size: 0.6rem;">Optimización de títulos y pesos.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-2 border rounded-3 bg-light">
+                            <div class="xsmall fw-bold text-muted">RENDIMIENTO & UPTIME</div>
+                            <div class="fw-bold text-primary"><i class="fa-solid fa-clock me-1"></i> ${Math.floor(d.system.uptime / 3600)}h ${Math.floor((d.system.uptime % 3600) / 60)}m activa</div>
+                            <div style="font-size: 0.6rem;">Plataforma: ${d.system.platform}</div>
+                        </div>
+                    </div>
+                `;
+                details.innerHTML = html;
+            } catch (e) {
+                details.innerHTML = `<div class="col-12 text-danger fw-bold p-2">Error al obtener diagnóstico: ${e.message}</div>`;
+            }
+        }
+
+        function init() {
+            loadConfig();
+            fetchTRM();
+            loadData();
+        }
+
+        // Inicializar
+        init();
     </script>
 </body>
 

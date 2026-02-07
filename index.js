@@ -16,7 +16,9 @@ app.use(express.static('public')); // Servir estáticos principal
 app.use(express.static(path.join(__dirname, 'src/web/public'))); // Fallback
 app.use(express.json());
 
-// --- RUTA DE ESTADO (MONITOREO) ---
+
+
+// --- STATUS PUBLICO ---
 app.get('/api/status', (req, res) => {
   try {
     const lastDeal = db.prepare('SELECT title, posted_at, tienda FROM published_deals ORDER BY posted_at DESC LIMIT 1').get();
@@ -24,7 +26,6 @@ app.get('/api/status', (req, res) => {
 
     res.json({
       online: true,
-      bot_status: CoreProcessor.status,
       last_cycle: CoreProcessor.lastCycle,
       last_success: CoreProcessor.lastSuccess,
       last_deal: lastDeal,
@@ -120,6 +121,31 @@ app.get('/api/deals', async (req, res) => {
     const deals = db.prepare("SELECT * FROM published_deals WHERE status IN ('published', 'expired') ORDER BY posted_at DESC LIMIT 60").all();
     res.json(deals);
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// --- ENDPOINT DE SALUD Y DIAGNÓSTICO (ADMIN) ---
+app.get('/api/admin/diagnostics', authMiddleware, async (req, res) => {
+  const diagnostics = {
+    database: { status: 'OK', details: 'Conectada (SQLite)' },
+    env: {
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
+      RENDER_URL: process.env.RENDER_EXTERNAL_URL ? 'CONFIGURADA ✅' : 'USANDO LOCALHOST 🏠',
+      SOVRN_KEY: process.env.SOVRN_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
+    },
+    system: {
+      uptime: Math.floor(process.uptime()),
+      platform: process.platform,
+      node_version: process.version
+    }
+  };
+
+  try {
+    db.prepare("SELECT 1").get();
+  } catch (e) {
+    diagnostics.database = { status: 'ERROR', details: e.message };
+  }
+
+  res.json(diagnostics);
 });
 
 // 1.1 OBTENER OFERTAS EXPRESS (PÚBLICO)
@@ -301,6 +327,55 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
     db.prepare("UPDATE published_deals SET status = 'expired' WHERE id = ?").run(id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 6.5.3 ANALIZAR LINK PARA POST MANUAL (ADMIN)
+app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
+  const { url } = req.body;
+  try {
+    const LinkTransformer = require('./src/utils/LinkTransformer');
+    const finalUrl = await LinkTransformer.transform(url);
+    const store = LinkTransformer.detectarTienda(finalUrl);
+    res.json({ url: finalUrl, store });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 6.5.4 CREAR BORRADOR MANUAL (ADMIN)
+app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
+  const { url, title, price, image, weight, store, category, gallery } = req.body;
+  try {
+    const { saveDeal } = require('./src/database/db');
+    const id = 'exp_' + Date.now();
+
+    // El DB tiene un CHECK constraint de price_offer > 0
+    // Si estamos en borrador y no tenemos precio, usamos 0.01 como placeholder
+    const safePrice = parseFloat(price) > 0 ? parseFloat(price) : 0.01;
+
+    const deal = {
+      id,
+      link: url,
+      original_link: url,
+      title: title || '',
+      price_official: safePrice,
+      price_offer: safePrice,
+      image: image || '',
+      weight: parseFloat(weight) || 0,
+      tienda: store || 'Tienda USA',
+      categoria: category || 'Lifestyle & Street',
+      gallery: gallery || '[]',
+      status: 'pending_express',
+      score: 0,
+      description: '',
+      coupon: '',
+      is_historic_low: 0,
+      price_cop: 0
+    };
+    saveDeal(deal);
+    res.json({ success: true, id });
+  } catch (e) {
+    console.error("❌ Error en manual-post:", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // 6.5.2.5 ARCHIVAR OFERTA (NUEVO - Backup histórico)
@@ -549,17 +624,31 @@ app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) =
 // 7.5.0 OBTENER TRM ACTUAL (ADMIN)
 app.get('/api/express/trm', async (req, res) => {
   try {
-    // Intentar con una API de respaldo muy estable
-    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 10000 });
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', { timeout: 10 * 1000 });
     if (response.data && response.data.rates && response.data.rates.COP) {
-      res.json({ success: true, trm: response.data.rates.COP });
+      res.json({
+        success: true,
+        trm: response.data.rates.COP,
+        updated_at: new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      });
     } else {
-      res.status(500).json({ success: false, error: 'No se pudo obtener la TRM de respaldo' });
+      res.status(500).json({ success: false, error: 'No se pudo obtener la TRM' });
     }
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
 });
+
+// --- AUTO-PINGER: Mantiene la app activa en Render ---
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+if (RENDER_URL) {
+  setInterval(async () => {
+    try {
+      await axios.get(`${RENDER_URL}/api/status`);
+      console.log(`💓 [HEARTBEAT] Ping enviado a ${RENDER_URL}`);
+    } catch (e) { console.error("💓 [HEARTBEAT] Error al auto-pingear."); }
+  }, 1000 * 60 * 14); // Cada 14 minutos (Render duerme a los 15)
+}
 
 // 7.5.1 BUSCAR PRECIO EN MERCADOLIBRE (ADMIN)
 app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
