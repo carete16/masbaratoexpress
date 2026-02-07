@@ -51,15 +51,26 @@ Título original: ${rawTitle}`;
 
             return optimized || this.pseudoTranslate(rawTitle);
         } catch (e) {
-            logger.warn(`⚠️ OpenAI Title Error: ${e.message}. Usando fallback.`);
+            // Manejo específico para cuota excedida (429)
+            if (e.response && e.response.status === 429) {
+                logger.warn(`⚠️ OpenAI Quota Exceeded (429). Usando traductor de emergencia.`);
+            } else {
+                logger.warn(`⚠️ OpenAI Title Error: ${e.message}. Usando fallback.`);
+            }
             return this.pseudoTranslate(rawTitle);
         }
     }
 
     pseudoTranslate(title) {
         if (!title) return "Oferta Exclusiva";
+        let translated = title;
 
-        let translated = title.toLowerCase();
+        // 0. Limpieza inicial agresiva (Marcas, modelos largos)
+        translated = translated
+            .replace(/Amazon.com\s*:|Wal-Mart\s*:|eBay\s*:/gi, '')
+            .replace(/\s*-\s*.*$/, '') // Eliminar todo después del primer guion
+            .replace(/\|\s*.*$/, '')   // Eliminar todo después del pipe
+            .trim();
 
         // 1. Reemplazos de frases comunes (Orden de importancia)
         const phrases = {
