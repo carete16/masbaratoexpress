@@ -32,17 +32,26 @@ REGLAS:
 
 Título original: ${rawTitle}`;
 
-            const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-                model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: prompt }],
+            // Usar DEEPSEEK si está disponible, sino volver a OPENAI
+            const useDeepSeek = process.env.DEEPSEEK_API_KEY ? true : false;
+            const apiUrl = useDeepSeek ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+            const apiKey = useDeepSeek ? process.env.DEEPSEEK_API_KEY : this.apiKey;
+            const model = useDeepSeek ? "deepseek-chat" : "gpt-3.5-turbo";
+
+            const response = await axios.post(apiUrl, {
+                model: model,
+                messages: [
+                    { role: "system", content: "Eres un experto en Copywriting para e-commerce en Colombia." },
+                    { role: "user", content: prompt }
+                ],
                 temperature: 0.7,
-                max_tokens: 60
+                max_tokens: 70
             }, {
                 headers: {
-                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                timeout: 5000
+                timeout: 8000
             });
 
             let optimized = response.data.choices[0].message.content.trim();
