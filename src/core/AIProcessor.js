@@ -9,28 +9,27 @@ class AIProcessor {
         this.apiKey = process.env.OPENAI_API_KEY;
     }
 
-    async generateOptimizedTitle(rawTitle) {
-        // Recargar la llave por si no estaba lista en el constructor
-        if (!this.apiKey) this.apiKey = process.env.OPENAI_API_KEY;
-
+    async generateEnhancedContent(rawTitle) {
         if (!this.apiKey) {
-            logger.warn("⚠️ OPENAI_API_KEY no detectada en .env. Usando traductor básico.");
-            return this.pseudoTranslate(rawTitle);
+            this.apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
         }
 
         try {
-            const prompt = `Actúa como un experto en Copywriting y Growth Hacking para un canal de ofertas que vende en Colombia.
-Convierte este título de producto en un título VIRAL, MAGNÉTICO y MUY PERSUASIVO.
+            const prompt = `Actúa como un redactor experto en E-commerce y Tecnología para Colombia.
+Analiza este producto: "${rawTitle}"
 
-REGLAS:
-1. Idioma: ESPAÑOL.
-2. Longitud: Máximo 70 caracteres.
-3. Tono: Exclamativo, de oportunidad única, usando disparadores psicológicos (Curiosidad, Escasez o Ahorro).
-4. Estructura recomendada: [Emoji] [Gancho de Venta] [Beneficio/Modelo].
-5. Emojis: Usa 1 o 2 emojis llamativos.
-6. SOLO responde con el nuevo título, sin comillas.
+Genera una respuesta en formato JSON con la siguiente estructura exacta:
+{
+    "title": "Un título CORTO (max 70 chars), VIRAL y PERSUASIVO con 1-2 emojis al inicio.",
+    "description": "Una descripción de venta persuasiva de 2 párrafos cortos (max 300 chars) enfocada en beneficios, no solo características.",
+    "specs": "Lista de 3 a 5 especificaciones técnicas clave (bullet points) usando emojis como viñeta."
+}
 
-Título original: ${rawTitle}`;
+Reglas:
+1. Idioma: Español Neutro/Colombiano.
+2. Tono: Entusiasta y profesional.
+3. Formato specs: "- 📱 Pantalla: AMOLED..." (una por línea).
+4. SOLO responde el JSON válido, sin markdown ni explicaciones adicionales.`;
 
             // Usar DEEPSEEK si está disponible, sino volver a OPENAI
             const useDeepSeek = process.env.DEEPSEEK_API_KEY ? true : false;
@@ -41,33 +40,50 @@ Título original: ${rawTitle}`;
             const response = await axios.post(apiUrl, {
                 model: model,
                 messages: [
-                    { role: "system", content: "Eres un experto en Copywriting para e-commerce en Colombia." },
+                    { role: "system", content: "Eres un asistente de e-commerce que solo responde en JSON válido." },
                     { role: "user", content: prompt }
                 ],
                 temperature: 0.7,
-                max_tokens: 70
+                max_tokens: 400
             }, {
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                timeout: 8000
+                timeout: 12000
             });
 
-            let optimized = response.data.choices[0].message.content.trim();
-            // Limpiar si la IA agregó comillas o "Título:"
-            optimized = optimized.replace(/^["']|["']$/g, '').replace(/^Título:\s*/i, '');
+            let content = response.data.choices[0].message.content.trim();
+            // Limpiar markdown si la IA lo puso
+            content = content.replace(/```json|```/g, '').trim();
 
-            return optimized || this.pseudoTranslate(rawTitle);
-        } catch (e) {
-            // Manejo específico para cuota excedida (429)
-            if (e.response && e.response.status === 429) {
-                logger.warn(`⚠️ OpenAI Quota Exceeded (429). Usando traductor de emergencia.`);
-            } else {
-                logger.warn(`⚠️ OpenAI Title Error: ${e.message}. Usando fallback.`);
+            try {
+                return JSON.parse(content);
+            } catch (jsonErr) {
+                console.error("Error parseando JSON IA:", jsonErr);
+                // Fallback manual si el JSON falla
+                return {
+                    title: this.pseudoTranslate(rawTitle),
+                    description: "Producto importado de alta calidad. Aprovecha esta oferta por tiempo limitado.",
+                    specs: "- ✅ Garantía de calidad\n- 📦 Envío internacional\n- 💯 Oportunidad única"
+                };
             }
-            return this.pseudoTranslate(rawTitle);
+
+        } catch (e) {
+            logger.warn(`⚠️ AI Content Error: ${e.message}`);
+            return {
+                title: this.pseudoTranslate(rawTitle),
+                description: "",
+                specs: ""
+            };
         }
+    }
+
+    async generateOptimizedTitle(rawTitle) {
+        // Redirigir a la nueva lógica simplificada si solo piden título, 
+        // pero mantenemos el método por compatibilidad.
+        const res = await this.generateEnhancedContent(rawTitle);
+        return res.title;
     }
 
     pseudoTranslate(title) {

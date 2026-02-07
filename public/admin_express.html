@@ -963,6 +963,56 @@
             }
         }
 
+        async function applyIA(id) {
+            const btn = document.querySelector(`button[onclick="applyIA('${id}')"]`);
+            if (!btn) return;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> MAGIA...';
+            btn.disabled = true;
+
+            const titleVal = document.getElementById(`title-${id}`).value;
+
+            try {
+                // Usar el nuevo endpoint avanzado
+                const response = await axios.post(API_URL + '/admin/express/optimize-all', { title: titleVal }, {
+                    headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
+                });
+
+                if (response.data.success) {
+                    const content = response.data.content;
+
+                    // Actualizar Título
+                    const titleInput = document.getElementById(`title-${id}`);
+                    if (titleInput) titleInput.value = content.title;
+
+                    // Adivinar peso si es 0
+                    const weightInput = document.getElementById(`weight-${id}`);
+                    if (weightInput && (!weightInput.value || weightInput.value == "0")) {
+                        let w = 1;
+                        const t = content.title.toLowerCase();
+                        if (t.includes('laptop') || t.includes('portátil') || t.includes('consola')) w = 6;
+                        if (t.includes('monitor') || t.includes('tv') || t.includes('impresora')) w = 12;
+                        if (t.includes('reloj') || t.includes('watch') || t.includes('audífonos') || t.includes('mouse')) w = 0.5;
+                        weightInput.value = w;
+                    }
+
+                    // Recalcular UI
+                    updateRow(id);
+
+                    // Notificar generación extra
+                    alert(`✨ ¡IA MÁGICA COMPLETADA!\n\nTITULO: ${content.title}\n\nSPECS GENERADAS:\n${content.specs}\n\n(Estas especificaciones se han generado internamente para la descripción del producto).`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error al conectar con la IA: " + (e.response?.data?.error || e.message));
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }
+            }
+        }
+
         function updateRow(id) {
             const pInput = document.getElementById(`price-${id}`).value.replace(',', '.');
             const wInput = document.getElementById(`weight-${id}`).value.replace(',', '.');
@@ -1170,10 +1220,10 @@
                     <div class="col-md-4">
                         <div class="p-2 border rounded-3 bg-light">
                             <div class="xsmall fw-bold text-muted">INTELIGENCIA ARTIFICIAL (IA)</div>
-                            <div class="fw-bold ${d.env.OPENAI_API_KEY.includes('✅') ? 'text-success' : 'text-warning'}">
-                                ${d.env.OPENAI_API_KEY}
+                            <div class="fw-bold ${d.env.OPENAI_API_KEY.includes('✅') || d.env.DEEPSEEK_KEY ? 'text-success' : 'text-warning'}">
+                                ${d.env.DEEPSEEK_KEY ? 'DEEPSEEK V3 🚀' : d.env.OPENAI_API_KEY}
                             </div>
-                            <div style="font-size: 0.6rem;">Optimización de títulos y pesos.</div>
+                            <div style="font-size: 0.6rem;">Optimización de títulos, descripciones y pesos.</div>
                         </div>
                     </div>
                     <div class="col-md-4">

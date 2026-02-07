@@ -129,8 +129,8 @@ app.get('/api/admin/diagnostics', authMiddleware, async (req, res) => {
     database: { status: 'OK', details: 'Conectada (SQLite)' },
     env: {
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
-      RENDER_URL: process.env.RENDER_EXTERNAL_URL ? 'CONFIGURADA ✅' : 'USANDO LOCALHOST 🏠',
-      SOVRN_KEY: process.env.SOVRN_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
+      DEEPSEEK_KEY: process.env.DEEPSEEK_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
+      RENDER_URL: process.env.RENDER_EXTERNAL_URL ? 'CONFIGURADA ✅' : 'USANDO LOCALHOST 🏠'
     },
     system: {
       uptime: Math.floor(process.uptime()),
@@ -570,6 +570,18 @@ app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) =
     const AIProcessor = require('./src/core/AIProcessor');
     const optimized = await AIProcessor.generateOptimizedTitle(title);
     res.json({ success: true, optimized });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// 7.6 OPTIMIZAR TODO (TÍTULO + DESC + SPECS) CON IA (ADMIN)
+app.post('/api/admin/express/optimize-all', authMiddleware, async (req, res) => {
+  const { title } = req.body;
+  try {
+    const AIProcessor = require('./src/core/AIProcessor');
+    const content = await AIProcessor.generateEnhancedContent(title);
+    res.json({ success: true, content });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
