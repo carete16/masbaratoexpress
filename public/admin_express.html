@@ -112,11 +112,22 @@
         }
 
         .price-cop-display {
-            font-size: 3rem;
+            font-size: 2.2rem;
+            /* Reducido un poco para asegurar que quepa */
             font-weight: 950;
             color: var(--primary);
-            letter-spacing: -3px;
+            letter-spacing: -1px;
+            /* Espaciado más normal */
             line-height: 1;
+            white-space: nowrap;
+            /* Evitar saltos de línea */
+        }
+
+        /* Ajuste específico para móviles muy pequeños */
+        @media (max-width: 400px) {
+            .price-cop-display {
+                font-size: 1.8rem;
+            }
         }
 
         /* --- MODAL IMAGE --- */
@@ -171,7 +182,8 @@
             }
 
             .price-cop-display {
-                font-size: 2.3rem;
+                font-size: 2rem;
+                /* Ajuste móvil */
             }
 
             .img-container {
@@ -1048,13 +1060,26 @@
         }
 
         async function removeItem(id) {
-            if (!confirm("¿Seguro que deseas eliminar esta oferta?")) return;
+            const confirm1 = confirm("⚠️ ¿BORRAR DEFINITIVAMENTE?\n\nEsta acción eliminará la oferta de la base de datos para siempre. NO se podrá recuperar.");
+            if (!confirm1) return;
+
             try {
                 await axios.post(API_URL + '/admin/express/delete', { id }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
-                loadData();
-            } catch (e) { alert("Error al eliminar"); }
+                // Animación de salida
+                const el = document.getElementById(`card-${id}`);
+                if (el) {
+                    el.style.transition = "all 0.5s ease";
+                    el.style.opacity = '0';
+                    el.style.transform = "translateX(50px)";
+                    setTimeout(() => el.remove(), 500);
+                } else {
+                    loadData();
+                }
+            } catch (e) {
+                alert("Error al eliminar: " + (e.response?.data?.error || e.message));
+            }
         }
 
         async function searchMeli(id) {
