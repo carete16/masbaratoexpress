@@ -56,41 +56,38 @@ app.get('/admin-express', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin_express.html'));
 });
 
-// --- PROXY DE IMÁGENES (Bypass de bloqueos con Doble Capa) ---
+// --- PROXY DE IMÁGENES (Referer Dinámico para Bypass) ---
 app.get('/api/proxy-image', async (req, res) => {
   const imageUrl = req.query.url;
   if (!imageUrl) return res.status(400).send('URL missing');
 
-  const fetchImage = async (url) => {
-    return axios({
+  let referer = 'https://www.google.com/';
+  if (imageUrl.includes('amazon.com') || imageUrl.includes('media-amazon')) referer = 'https://www.amazon.com/';
+  if (imageUrl.includes('nike.com') || imageUrl.includes('nikecdn')) referer = 'https://www.nike.com/';
+
+  try {
+    const response = await axios({
       method: 'get',
-      url: url,
-      responseType: 'stream',
+      url: imageUrl,
+      responseType: 'arraybuffer',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'Referer': 'https://www.google.com/'
+        'Referer': referer,
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
       },
       timeout: 10000
     });
-  };
-
-  try {
-    // Intento 1: Directo
-    const response = await fetchImage(imageUrl);
-    res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-    response.data.pipe(res);
+    res.set('Content-Type', response.headers['content-type']);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(response.data);
   } catch (error) {
-    // Intento 2: Via Weserv (Bypass extremo)
     try {
-      console.log(`⚠️ Proxy directo falló para ${imageUrl.substring(0, 40)}... reintentando vía Weserv`);
       const weservUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}`;
-      const response = await fetchImage(weservUrl);
-      res.setHeader('Content-Type', response.headers['content-type'] || 'image/jpeg');
-      response.data.pipe(res);
+      const response = await axios.get(weservUrl, { responseType: 'arraybuffer' });
+      res.set('Content-Type', response.headers['content-type']);
+      res.send(response.data);
     } catch (e) {
-      res.status(404).send('Image not found');
+      res.redirect(imageUrl);
     }
   }
 });
@@ -120,35 +117,29 @@ app.post('/api/login', (req, res) => {
 // 1. OBTENER OFERTAS (PÚBLICO)
 app.get('/api/deals', async (req, res) => {
   try {
-    const deals = db.prepare("SELECT * FROM published_deals WHERE status IN ('published', 'expired') ORDER BY posted_at DESC LIMIT 50").all();
-
-    // Transformar links en tiempo real para asegurar que el tag esté presente
-    const transformedDeals = await Promise.all(deals.map(async (deal) => {
-      deal.link = await LinkTransformer.transform(deal.original_link || deal.link);
-      return deal;
-    }));
-
-    res.json(transformedDeals);
+    const deals = db.prepare("SELECT * FROM published_deals WHERE status IN ('published', 'expired') ORDER BY posted_at DESC LIMIT 60").all();
+    res.json(deals);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 1.1 OBTENER OFERTAS EXPRESS
+// 1.1 OBTENER OFERTAS EXPRESS (PÚBLICO)
 app.get('/api/deals/express', async (req, res) => {
   try {
+    // Simplificamos: Mostramos todo lo publicado sin filtros de categoría agresivos
     const deals = db.prepare(`
         SELECT * FROM published_deals 
         WHERE status IN ('published', 'expired') 
-        AND (price_cop > 0 OR categoria IN ('Electrónica Premium', 'Lifestyle & Street', 'Relojes & Wearables'))
-        ORDER BY posted_at DESC LIMIT 50
+        ORDER BY posted_at DESC LIMIT 60
     `).all();
 
-    const transformedDeals = await Promise.all(deals.map(async (deal) => {
-      deal.link = await LinkTransformer.transform(deal.original_link || deal.link);
-      return deal;
-    }));
-
-    res.json(transformedDeals);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    // OPTIMIZACIÓN CRÍTICA: NO transformamos links aquí (es muy lento para 50 items)
+    // El frontend usa IDs o el link que ya está guardado.
+    // La transformación real sucede en /go/:id cuando el usuario hace click.
+    res.json(deals);
+  } catch (e) {
+    console.error("[API DEALS ERR]", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // 1.5. SUSCRIPCIÓN NEWSLETTER
