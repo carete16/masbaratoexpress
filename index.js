@@ -45,15 +45,15 @@ app.get('/', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/admin_express.html'));
+});
+
+app.get('/admin-deals', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin_dark_v4.html'));
 });
 
 app.get('/express', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/express.html'));
-});
-
-app.get('/admin-express', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/admin_express.html'));
 });
 
 // --- PROXY DE IMÁGENES (Referer Dinámico para Bypass) ---
