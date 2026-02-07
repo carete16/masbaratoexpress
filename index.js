@@ -364,6 +364,104 @@ app.post('/api/admin/express/update', authMiddleware, async (req, res) => {
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
+// --- PROXY DE IMÁGENES (Referer Dinámico para Bypass) ---
+app.get('/api/proxy-image', async (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl) return res.status(400).send('URL missing');
+
+  let referer = 'https://www.google.com/';
+  if (imageUrl.includes('amazon.com') || imageUrl.includes('media-amazon')) referer = 'https://www.amazon.com/';
+  if (imageUrl.includes('nike.com') || imageUrl.includes('nikecdn')) referer = 'https://www.nike.com/';
+
+  try {
+    const response = await axios({
+      method: 'get',
+      url: imageUrl,
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Referer': referer,
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+      },
+      timeout: 10000
+    });
+    res.set('Content-Type', response.headers['content-type']);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(response.data);
+  } catch (error) {
+    try {
+      const weservUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}`;
+      const response = await axios.get(weservUrl, { responseType: 'arraybuffer' });
+      res.set('Content-Type', response.headers['content-type']);
+      res.send(response.data);
+    } catch (e) {
+      res.redirect(imageUrl); // Fallback final: intentar cargar directo
+    }
+  }
+});
+
+// --- RUTA DE ANALIZAR LINK (CON MODO RESCATE) ---
+app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL requerida' });
+  try {
+    console.log(`[ANALYZE] Procesando: ${url}`);
+    const LinkTransformer = require('./src/utils/LinkTransformer');
+    const finalUrl = await LinkTransformer.transform(url);
+
+    // 1. Intentar Scraper estándar
+    const Validator = require('./src/core/Bot2_Explorer');
+    let result = { realPrice: 0, title: 'Analizando...', image: '', weight: 4 };
+
+    try {
+      result = await Validator.validate({ sourceLink: finalUrl, title: 'Analysis', isManual: true });
+    } catch (e) { }
+
+    // 2. MODO RESCATE (Si falla o precio es basura)
+    if (!result || !result.realPrice || result.realPrice <= 1) {
+      console.log("[ANALYZE] 🆘 Activando modo rescate...");
+      const axRes = await axios.get(finalUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        }, timeout: 10000
+      });
+      const html = axRes.data;
+
+      // Precio
+      const pMatch = html.match(/<span class="a-offscreen">\$([\d\.]+)<\/span>/) || html.match(/"price":{"amount":([\d\.]+)/);
+      if (pMatch) result.realPrice = parseFloat(pMatch[1]);
+
+      // Imagen (OG)
+      const iMatch = html.match(/<meta property="og:image" content="(.*?)"/) || html.match(/<meta name="twitter:image" content="(.*?)"/);
+      if (iMatch) result.image = iMatch[1];
+
+      // Título limpio
+      const tMatch = html.match(/<title>(.*?)<\/title>/);
+      if (tMatch) {
+        result.title = tMatch[1]
+          .replace(/Amazon\.com: | : .*/g, '')
+          .replace(/en Amazon/gi, '')
+          .replace(/\s+-\s+Amazon.*/gi, '')
+          .trim();
+      }
+    }
+
+    res.json({
+      title: result.title || 'Producto USA',
+      price: result.realPrice || 0,
+      image: result.image || '',
+      weight: result.weight || 4,
+      store: '',
+      url: finalUrl,
+      categoria: result.categoria || 'Lifestyle & Street'
+    });
+  } catch (e) {
+    console.error("[ANALYZE ERR]", e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/api/admin/stats', authMiddleware, (req, res) => {
   try {
     const totalDeals = db.prepare('SELECT COUNT(*) as count FROM published_deals').get().count;
@@ -498,25 +596,6 @@ app.post('/api/admin/express/meli-search', authMiddleware, async (req, res) => {
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
-});
-
-// 7.6 ANALIZAR LINK (ADMIN)
-app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
-  const { url } = req.body;
-  if (!url) return res.status(400).json({ error: 'URL requerida' });
-  try {
-    const Validator = require('./src/core/Bot2_Explorer');
-    const result = await Validator.validate({ sourceLink: url, title: 'Analysis', isManual: true });
-    res.json({
-      title: result.title,
-      price: result.realPrice,
-      image: result.image,
-      weight: result.weight || 0,
-      store: result.storeName,
-      url: result.finalUrl,
-      categoria: result.categoria
-    });
-  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // 8. PURGAR CORRUPTOS (ADMIN)
