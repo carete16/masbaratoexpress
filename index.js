@@ -486,9 +486,9 @@ app.post('/api/admin/express/analyze', async (req, res) => {
     let scraperResult = null;
     try {
       console.log(`[ANALYZE] 2. Iniciando DeepScraper en: ${finalUrl}`);
-      // Timeout de seguridad para el scraper completo
+      // Timeout de seguridad: 18s para Puppeteer
       const scraperPromise = DeepScraper.scrape(finalUrl);
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Scraper Timeout')), 25000));
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Scraper Timeout')), 18000));
 
       scraperResult = await Promise.race([scraperPromise, timeoutPromise]);
       console.log("[ANALYZE] Resultado Scraper:", scraperResult ? "EXITO" : "NULO");
@@ -505,9 +505,10 @@ app.post('/api/admin/express/analyze', async (req, res) => {
             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9'
-          }, timeout: 10000
+          }, timeout: 6000
         });
         const h = axRes.data;
+        // ... (resto de la lógica de rescate se mantiene igual)
         // Intentar regex precios comunes Amazon
         const m1 = h.match(/<span class="a-offscreen">\$([\d\.]+)<\/span>/);
         const m2 = h.match(/"price":{"amount":([\d\.]+)/);
@@ -550,7 +551,7 @@ app.post('/api/admin/express/analyze', async (req, res) => {
             }
           }
         }
-      } catch (ex) { console.error("Rescate fallido:", ex.message); }
+      } catch (ex) { console.error("[ANALYZE] Rescate Axios fallido:", ex.message); }
     }
 
     // 4. ✨ NEW: MERCADOLIBRE AUTO-SEARCH (CONDITION=NEW) ✨
@@ -559,10 +560,13 @@ app.post('/api/admin/express/analyze', async (req, res) => {
     if (searchTitle) {
       try {
         const cleanQuery = searchTitle.replace(/[^a-zA-Z0-9\sñÑáéíóúÁÉÍÓÚ]/g, '').split(/\s+/).slice(0, 6).join(' ');
-        console.log(`[ANALYZE] Buscando competencia en ML para: "${cleanQuery}"`);
+        console.log(`[ANALYZE] 4. Buscando competencia en ML para: "${cleanQuery}"`);
         const meliUrl = `https://api.mercadolibre.com/sites/MCO/search?q=${encodeURIComponent(cleanQuery)}&condition=new&limit=5`;
 
-        const meliRes = await axios.get(meliUrl, { headers: { 'User-Agent': 'MasbaratoExpress/1.0' }, timeout: 10000 });
+        const meliRes = await axios.get(meliUrl, {
+          headers: { 'User-Agent': 'MasbaratoExpress/1.0' },
+          timeout: 4000
+        });
 
         if (meliRes.data && meliRes.data.results && meliRes.data.results.length > 0) {
           const results = meliRes.data.results;
