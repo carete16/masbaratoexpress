@@ -392,92 +392,84 @@ app.get('/api/proxy-image', async (req, res) => {
   }
 });
 
-// --- RUTA DE ANALIZAR LINK (VERSIÓN ULTRA-RÁPIDA PARA ADMIN) ---
+// --- RUTA DE ANALIZAR LINK (VERSIÓN ULTRA-RÁPIDA Y EN ESPAÑOL) ---
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL requerida' });
 
   try {
-    console.log(`[FAST-ANALYZE] 🚀 Iniciando análisis: ${url}`);
-    const LinkTransformer = require('./src/utils/LinkTransformer');
+    const start = Date.now();
+    console.log(`[FAST-ANALYZE] 🚀 Link: ${url.substring(0, 60)}...`);
 
-    // 1. Transformar link (con timeout)
-    let finalUrl;
-    try {
-      finalUrl = await LinkTransformer.transform(url);
-      console.log(`[FAST-ANALYZE] 🔗 URL Transformada: ${finalUrl}`);
-    } catch (e) {
-      finalUrl = url;
-      console.warn(`[FAST-ANALYZE] ⚠️ Error en LinkTransformer, usando original.`);
-    }
+    // 1. Transformar link (Instantáneo para Amazon/Nike/eBay)
+    const finalUrl = await LinkTransformer.transform(url);
 
-    // 2. Intentar Scrape con Axios (Modo Mobile)
-    let html;
-    try {
-      const axRes = await axios.get(finalUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Cache-Control': 'no-cache'
-        },
-        timeout: 10000
-      });
-      html = axRes.data;
-    } catch (e) {
-      console.error(`[FAST-ANALYZE] ❌ Error en Axios GET: ${e.message}`);
-      throw new Error(`Error de conexión con la tienda: ${e.message}`);
-    }
+    // 2. Descarga de HTML con timeout agresivo
+    const axRes = await axios.get(finalUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
+      },
+      timeout: 8000
+    });
 
-    let result = { title: 'Producto USA', price: 0, image: '', url: finalUrl, weight: 4 };
+    const html = axRes.data;
+    let result = { title: 'Producto USA', price: 0, image: '', url: finalUrl, weight: 3.5 };
 
-    // EXTRACCIÓN MEJORADA
-    // Precio
-    const pMatch = html.match(/<span [^>]*class="a-offscreen"[^>]*>\$([\d\.]+)<\/span>/) ||
+    // EXTRACCIÓN DE PRECIO
+    const pMatch = html.match(/class="a-offscreen"[^>]*>\$([\d\.]+)<\/span>/) ||
       html.match(/"price":{"amount":([\d\.]+)/) ||
       html.match(/\$([\d\.]+)/);
     if (pMatch) result.price = parseFloat(pMatch[1]);
 
-    // Imagen
-    const iMatch = html.match(/<img [^>]*id="landingImage"[^>]*src="(.*?)"/) ||
-      html.match(/<meta property="og:image" content="(.*?)"/) ||
+    // EXTRACCIÓN DE IMAGEN (Formatos Amazon Mobile/Desktop)
+    const iMatch = html.match(/"mainUrl":"(.*?)"/) ||
+      html.match(/id="landingImage"[^>]*src="(.*?)"/) ||
+      html.match(/property="og:image" content="(.*?)"/) ||
       html.match(/"large":"(.*?)"/) ||
-      html.match(/<img[^>]+src="([^">]+amazon-adsystem.com[^">]+)"/);
-    if (iMatch) result.image = iMatch[1];
+      html.match(/data-a-hires="(.*?)"/) ||
+      html.match(/data-a-dynamic-image="{&quot;(.*?)&quot;/);
+    if (iMatch) {
+      result.image = iMatch[1].replace(/&quot;/g, '');
+      // Limpiar URLs de imagen de Amazon (sacar el ._AC_...)
+      result.image = result.image.replace(/\._[A-Z0-9_,]+\./g, '.');
+    }
 
-    // Título
-    const tMatch = html.match(/<span id="productTitle"[^>]*>\s*(.*?)\s*<\/span>/s) ||
+    // TÍTULO + LIMPIEZA + TRADUCCIÓN AUTO
+    const tMatch = html.match(/id="productTitle"[^>]*>\s*(.*?)\s*<\/span>/s) ||
       html.match(/<title>(.*?)<\/title>/);
+
     if (tMatch) {
-      let cleanT = tMatch[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
-      cleanT = cleanT.replace(/^Amazon\.com: | : Amazon\.com.*| - Amazon.*/gi, '').trim();
-      if (cleanT.length > 3 && cleanT.toLowerCase() !== 'amazon.com') {
-        result.title = cleanT;
+      let rawT = tMatch[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Limpieza AGRESIVA (quitar todo rastro de Amazon.com)
+      rawT = rawT.replace(/^Amazon\.com\s*[:|-]\s*/gi, '')
+        .replace(/\s*[:|-]\s*Amazon\.com\s*/gi, '')
+        .replace(/Amazon\.com/gi, '')
+        .trim();
+
+      if (rawT.length > 2) {
+        // Traducción instantánea usando lógica de diccionario local
+        const AI = require('./src/core/AIProcessor');
+        result.title = AI.pseudoTranslate(rawT);
       }
     }
 
-    // Si falló todo, intentar un último recurso (OpenGraph puro)
-    if (!result.price && html.includes('og:title')) {
-      console.log("[FAST-ANALYZE] ⚠️ Usando fallback de metadatos básicos...");
-      const ogTitle = html.match(/property="og:title" content="(.*?)"/);
-      if (ogTitle && result.title === 'Producto USA') result.title = ogTitle[1];
-    }
-
-    console.log(`[FAST-ANALYZE] ✅ Resultado: ${result.title.substring(0, 40)} | $${result.price}`);
+    console.log(`[FAST-ANALYZE] ✅ LISTO EN ${Date.now() - start}ms | ${result.title}`);
 
     res.json({
       title: result.title,
       price: result.price,
       image: result.image,
       weight: result.weight,
-      store: 'TIENDA USA',
+      store: 'Amazon',
       url: finalUrl,
       categoria: 'Lifestyle & Street'
     });
 
   } catch (e) {
-    console.error("[FAST-ANALYZE CRITICAL ERR]", e.message);
-    res.status(500).json({ error: e.message || "Error interno en el analizador." });
+    console.error("[FAST-ANALYZE ERR]", e.message);
+    res.status(500).json({ error: "Fallo de conexión o bloqueo de tienda. Intenta de nuevo." });
   }
 });
 
@@ -519,31 +511,40 @@ app.post('/api/admin/manual-post', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 7.5 PUBLICACIÓN MANUAL EXPRESS (ADMIN)
+// 7.5 PUBLICACIÓN MANUAL EXPRESS (ADMIN) - ¡AHORA INSTANTÁNEO!
 app.post('/api/admin/express/manual-post', authMiddleware, async (req, res) => {
-  const { url, price, weight, category, title } = req.body;
-  try {
-    let cat = 'Lifestyle & Street'; // Fallback por defecto
-    if (category === 'relojes' || category === 'Relojes & Wearables') cat = 'Relojes & Wearables';
-    if (category === 'pc' || category === 'Electrónica Premium') cat = 'Electrónica Premium';
-    if (category === 'tenis' || category === 'Lifestyle & Street') cat = 'Lifestyle & Street';
+  const { url, price, weight, category, title, image } = req.body;
+  const { saveDeal } = require('./src/database/db');
+  const crypto = require('crypto');
 
-    const success = await CoreProcessor.processDeal({
-      sourceLink: url,
-      title: title || 'Manual Express Order',
-      price_offer: price ? parseFloat(price) : null,
-      weight: weight ? parseFloat(weight) : null,
+  try {
+    // Generar ID único basado en el link
+    const id = crypto.createHash('md5').update(url).digest('hex').substring(0, 12);
+
+    // Guardar directamente saltándose el "Crawler" pesado
+    const success = saveDeal({
+      id,
+      link: url,
+      original_link: url,
+      title: title || 'Producto Importado',
+      price_offer: parseFloat(price) || 0,
+      weight: parseFloat(weight) || 0,
+      image: image || 'https://placehold.co/400?text=Masbarato+Express',
       categoria: category || 'Lifestyle & Street',
-      isManual: true,
-      status: 'pending_express'
+      status: 'pending_express',
+      tienda: 'Amazon USA'
     });
 
     if (success) {
-      res.json({ success: true, message: 'Enviado a cola de aprobación Express' });
+      console.log(`[EXPRESS-POST] ✅ Guardado directo: ${title.substring(0, 40)}`);
+      res.json({ success: true, message: 'Agregado a Pendientes al instante.' });
     } else {
-      res.status(400).json({ error: 'El bot rechazó la oferta.' });
+      res.status(400).json({ error: 'Fallo al guardar en la base de datos.' });
     }
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) {
+    console.error("[EXPRESS-POST ERR]", e.message);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // 7.5 OPTIMIZAR TÍTULO CON IA (ADMIN)

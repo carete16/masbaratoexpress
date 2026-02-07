@@ -17,16 +17,21 @@ class LinkTransformer {
 
     // Seguir redirecciones reales (Slickdeals, etc.)
     async resolverRedirect(url) {
+        if (!url) return url;
+
+        // OPTIMIZACIÓN: Si ya es un link directo de tienda conocida, NO resolver redirect
+        if (url.includes('amazon.com') || url.includes('nike.com') || url.includes('ebay.com') || url.includes('walmart.com')) {
+            return url;
+        }
+
         try {
-            // Algunos sitios bloquean bots, intentamos con un User-Agent real
             const res = await axios.get(url, {
-                maxRedirects: 10,
-                timeout: 5000,
+                maxRedirects: 4, // Bajamos de 10 a 4 para velocidad
+                timeout: 4000,   // Bajamos de 5s a 3s
                 headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
             });
             return res.request.res.responseUrl || res.config.url;
         } catch (e) {
-            // logger.warn(`⚠️ Error resolviendo redirect para ${url}: ${e.message}`);
             return url;
         }
     }
