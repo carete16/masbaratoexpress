@@ -3,7 +3,7 @@ const axios = require('axios');
 
 /**
  * LinkTransformer: El motor de limpieza y monetización.
- * Versión MASBARATO EXPRESS - CORE ENGINE
+ * Versión MASBARATO EXPRESS - ULTRA FAST EDITION
  */
 class LinkTransformer {
     constructor() {
@@ -15,20 +15,15 @@ class LinkTransformer {
         };
     }
 
-    // Seguir redirecciones reales (Slickdeals, etc.)
     async resolverRedirect(url) {
         if (!url) return url;
-
-        // OPTIMIZACIÓN: Si ya es un link directo de tienda conocida, NO resolver redirect
-        if (url.includes('amazon.com') || url.includes('nike.com') || url.includes('ebay.com') || url.includes('walmart.com')) {
-            return url;
-        }
+        if (url.includes('amazon.com') || url.includes('nike.com') || url.includes('ebay.com')) return url;
 
         try {
             const res = await axios.get(url, {
-                maxRedirects: 4, // Bajamos de 10 a 4 para velocidad
-                timeout: 4000,   // Bajamos de 5s a 3s
-                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+                maxRedirects: 3,
+                timeout: 4000,
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
             });
             return res.request.res.responseUrl || res.config.url;
         } catch (e) {
@@ -39,8 +34,6 @@ class LinkTransformer {
     detectarTienda(url) {
         if (url.includes("amazon.")) return "amazon";
         if (url.includes("walmart.")) return "walmart";
-        if (url.includes("bestbuy.")) return "bestbuy";
-        if (url.includes("target.")) return "target";
         if (url.includes("ebay.")) return "ebay";
         return "otro";
     }
@@ -57,20 +50,24 @@ class LinkTransformer {
     async transform(url) {
         if (!url) return url;
 
-        // 1. Resolver redirecciones reales
+        // 1. BYPASS TOTAL PARA TIENDAS DIRECTAS (MÁXIMA VELOCIDAD)
+        if (url.includes('amazon.com') || url.includes('nike.com') || url.includes('ebay.com')) {
+            if (url.includes('amazon.com')) {
+                const asin = this.extraerASIN(url);
+                if (asin) return `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
+            }
+            return url.split('?')[0];
+        }
+
+        // 2. Resolver redirecciones
         const urlFinal = await this.resolverRedirect(url);
         const tienda = this.detectarTienda(urlFinal);
 
-        // 2. Lógica por tienda
         if (tienda === "amazon") {
             const asin = this.extraerASIN(urlFinal);
-            if (asin) {
-                logger.info(`🎯 Amazon ASIN: ${asin} (vía MASBARATO CORE)`);
-                return `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
-            }
+            if (asin) return `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
         }
 
-        // 3. Sovrn (Otras tiendas)
         if (this.tags.sovrn_key) {
             const limpia = this.limpiarURL(urlFinal);
             return `https://redirect.viglink.com?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(limpia)}`;

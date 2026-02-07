@@ -392,75 +392,94 @@ app.get('/api/proxy-image', async (req, res) => {
   }
 });
 
-// --- RUTA DE ANALIZAR LINK (VERSIÓN ULTRA-RÁPIDA Y EN ESPAÑOL) ---
+// --- RUTA DE ANALIZAR LINK (VERSIÓN ULTRA-RÁPIDA, CHEERIO Y DICCIONARIO PRO) ---
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL requerida' });
 
   try {
     const start = Date.now();
+    const cheerio = require('cheerio');
     console.log(`[FAST-ANALYZE] 🚀 Link: ${url.substring(0, 60)}...`);
 
-    // 1. Transformar link (Instantáneo para Amazon/Nike/eBay)
+    // 1. Transformar link (Instantáneo ahora)
     const finalUrl = await LinkTransformer.transform(url);
 
-    // 2. Descarga de HTML con timeout agresivo
+    // 2. Descarga de HTML súper ligera
     const axRes = await axios.get(finalUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache'
       },
-      timeout: 8000
+      timeout: 10000
     });
 
-    const html = axRes.data;
+    const $ = cheerio.load(axRes.data);
     let result = { title: 'Producto USA', price: 0, image: '', url: finalUrl, weight: 3.5 };
 
-    // EXTRACCIÓN DE PRECIO
-    const pMatch = html.match(/class="a-offscreen"[^>]*>\$([\d\.]+)<\/span>/) ||
-      html.match(/"price":{"amount":([\d\.]+)/) ||
-      html.match(/\$([\d\.]+)/);
-    if (pMatch) result.price = parseFloat(pMatch[1]);
+    // 1. EXTRAER PRECIO
+    const priceTxt = $('.a-price .a-offscreen').first().text() ||
+      $('#priceblock_ourprice').text() ||
+      $('#priceblock_dealprice').text() ||
+      $('.a-color-price').first().text();
 
-    // EXTRACCIÓN DE IMAGEN (Formatos Amazon Mobile/Desktop)
-    const iMatch = html.match(/"mainUrl":"(.*?)"/) ||
-      html.match(/id="landingImage"[^>]*src="(.*?)"/) ||
-      html.match(/property="og:image" content="(.*?)"/) ||
-      html.match(/"large":"(.*?)"/) ||
-      html.match(/data-a-hires="(.*?)"/) ||
-      html.match(/data-a-dynamic-image="{&quot;(.*?)&quot;/);
-    if (iMatch) {
-      result.image = iMatch[1].replace(/&quot;/g, '');
+    if (priceTxt) {
+      const match = priceTxt.match(/[\d\.]+/);
+      if (match) result.price = parseFloat(match[0]);
+    }
+
+    // 2. EXTRAER IMAGEN (Multi-selector)
+    result.image = $('#landingImage').attr('src') ||
+      $('#main-image').attr('src') ||
+      $('meta[property="og:image"]').attr('content') ||
+      $('#imgBlkFront').attr('src');
+
+    if (!result.image) {
+      const dynImg = $('#imgTagWrapperId img').attr('data-a-dynamic-image');
+      if (dynImg) {
+        try {
+          result.image = Object.keys(JSON.parse(dynImg))[0];
+        } catch (e) { }
+      }
+    }
+
+    if (result.image) {
       // Limpiar URLs de imagen de Amazon (sacar el ._AC_...)
       result.image = result.image.replace(/\._[A-Z0-9_,]+\./g, '.');
     }
 
-    // TÍTULO + LIMPIEZA + TRADUCCIÓN AUTO
-    const tMatch = html.match(/id="productTitle"[^>]*>\s*(.*?)\s*<\/span>/s) ||
-      html.match(/<title>(.*?)<\/title>/);
+    // 3. EXTRAER TÍTULO Y TRADUCIR
+    let rawT = $('#productTitle').text().trim() || $('title').text().trim();
 
-    if (tMatch) {
-      let rawT = tMatch[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    // Limpiar toda la basura de Amazon
+    rawT = rawT.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '')
+      .replace(/\s*[:|-]?\s*Amazon\.com\s*/gi, '')
+      .replace(/Amazon\.com/gi, '')
+      .trim();
 
-      // Limpieza AGRESIVA (quitar todo rastro de Amazon.com)
-      rawT = rawT.replace(/^Amazon\.com\s*[:|-]\s*/gi, '')
-        .replace(/\s*[:|-]\s*Amazon\.com\s*/gi, '')
-        .replace(/Amazon\.com/gi, '')
-        .trim();
+    if (rawT && rawT.length > 2) {
+      const AI = require('./src/core/AIProcessor');
+      // DICCIONARIO DE EMERGENCIA para asegurar español
+      const emergencyDict = {
+        'flask': 'Termo/Frasco', 'adventure': 'Aventura', 'leakproof': 'hermético',
+        'hip': 'de bolsillo', 'hinge': 'bisagra', 'steel': 'acero', 'insulated': 'térmico'
+      };
 
-      if (rawT.length > 2) {
-        // Traducción instantánea usando lógica de diccionario local
-        const AI = require('./src/core/AIProcessor');
-        result.title = AI.pseudoTranslate(rawT);
+      let translated = AI.pseudoTranslate(rawT);
+      for (let [eng, esp] of Object.entries(emergencyDict)) {
+        translated = translated.replace(new RegExp(`\\b${eng}\\b`, 'gi'), esp);
       }
+      result.title = translated;
     }
 
     console.log(`[FAST-ANALYZE] ✅ LISTO EN ${Date.now() - start}ms | ${result.title}`);
 
     res.json({
       title: result.title,
-      price: result.price,
-      image: result.image,
+      price: result.price || 0,
+      image: result.image || '',
       weight: result.weight,
       store: 'Amazon',
       url: finalUrl,
