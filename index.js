@@ -398,58 +398,86 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   if (!url) return res.status(400).json({ error: 'URL requerida' });
 
   try {
-    console.log(`[FAST-ANALYZE] 🚀 Procesando: ${url}`);
+    console.log(`[FAST-ANALYZE] 🚀 Iniciando análisis: ${url}`);
     const LinkTransformer = require('./src/utils/LinkTransformer');
-    const finalUrl = await LinkTransformer.transform(url);
 
-    // MODO ULTRA-RÁPIDO: Petición simulando iPhone (Amazon no bloquea y es instantáneo)
-    const axRes = await axios.get(finalUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9'
-      },
-      timeout: 8000
-    });
+    // 1. Transformar link (con timeout)
+    let finalUrl;
+    try {
+      finalUrl = await LinkTransformer.transform(url);
+      console.log(`[FAST-ANALYZE] 🔗 URL Transformada: ${finalUrl}`);
+    } catch (e) {
+      finalUrl = url;
+      console.warn(`[FAST-ANALYZE] ⚠️ Error en LinkTransformer, usando original.`);
+    }
 
-    const html = axRes.data;
+    // 2. Intentar Scrape con Axios (Modo Mobile)
+    let html;
+    try {
+      const axRes = await axios.get(finalUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache'
+        },
+        timeout: 10000
+      });
+      html = axRes.data;
+    } catch (e) {
+      console.error(`[FAST-ANALYZE] ❌ Error en Axios GET: ${e.message}`);
+      throw new Error(`Error de conexión con la tienda: ${e.message}`);
+    }
+
     let result = { title: 'Producto USA', price: 0, image: '', url: finalUrl, weight: 4 };
 
-    // 1. Extraer Precio (Regex multi-patrón)
+    // EXTRACCIÓN MEJORADA
+    // Precio
     const pMatch = html.match(/<span [^>]*class="a-offscreen"[^>]*>\$([\d\.]+)<\/span>/) ||
       html.match(/"price":{"amount":([\d\.]+)/) ||
       html.match(/\$([\d\.]+)/);
     if (pMatch) result.price = parseFloat(pMatch[1]);
 
-    // 2. Extraer Imagen (Prioridad a la imagen principal)
+    // Imagen
     const iMatch = html.match(/<img [^>]*id="landingImage"[^>]*src="(.*?)"/) ||
       html.match(/<meta property="og:image" content="(.*?)"/) ||
-      html.match(/"large":"(.*?)"/);
+      html.match(/"large":"(.*?)"/) ||
+      html.match(/<img[^>]+src="([^">]+amazon-adsystem.com[^">]+)"/);
     if (iMatch) result.image = iMatch[1];
 
-    // 3. Extraer Título REAL (Saltando el "Amazon.com")
+    // Título
     const tMatch = html.match(/<span id="productTitle"[^>]*>\s*(.*?)\s*<\/span>/s) ||
       html.match(/<title>(.*?)<\/title>/);
     if (tMatch) {
       let cleanT = tMatch[1].replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
       cleanT = cleanT.replace(/^Amazon\.com: | : Amazon\.com.*| - Amazon.*/gi, '').trim();
-      if (cleanT.length > 5 && cleanT.toLowerCase() !== 'amazon.com') {
+      if (cleanT.length > 3 && cleanT.toLowerCase() !== 'amazon.com') {
         result.title = cleanT;
       }
     }
+
+    // Si falló todo, intentar un último recurso (OpenGraph puro)
+    if (!result.price && html.includes('og:title')) {
+      console.log("[FAST-ANALYZE] ⚠️ Usando fallback de metadatos básicos...");
+      const ogTitle = html.match(/property="og:title" content="(.*?)"/);
+      if (ogTitle && result.title === 'Producto USA') result.title = ogTitle[1];
+    }
+
+    console.log(`[FAST-ANALYZE] ✅ Resultado: ${result.title.substring(0, 40)} | $${result.price}`);
 
     res.json({
       title: result.title,
       price: result.price,
       image: result.image,
       weight: result.weight,
-      store: 'AMAZON',
+      store: 'TIENDA USA',
       url: finalUrl,
       categoria: 'Lifestyle & Street'
     });
+
   } catch (e) {
-    console.error("[FAST-ANALYZE ERR]", e.message);
-    res.status(500).json({ error: "No se pudo extraer info. Prueba pegar el título manual." });
+    console.error("[FAST-ANALYZE CRITICAL ERR]", e.message);
+    res.status(500).json({ error: e.message || "Error interno en el analizador." });
   }
 });
 
