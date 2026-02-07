@@ -51,7 +51,8 @@ class LinkTransformer {
     }
 
     extraerASIN(url) {
-        const match = url.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
+        // Regex permisivo para mayúsculas y minúsculas (a veces el navegador convierte URLs)
+        const match = url.match(/\/dp\/([a-zA-Z0-9]{10})|\/gp\/product\/([a-zA-Z0-9]{10})/);
         return match ? (match[1] || match[2]) : null;
     }
 

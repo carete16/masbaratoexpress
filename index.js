@@ -354,8 +354,9 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       isManualNotice: true
     });
   } catch (e) {
-    console.error("[MANUAL-MODE ERR]", e.message);
-    res.status(500).json({ error: "Error al procesar el enlace." });
+    console.error("[MANUAL-MODE ERR]", e);
+    // Devolvemos el error real para saber qué está pasando (regex, axios, etc)
+    res.status(500).json({ error: `Error interno: ${e.message}` });
   }
 });
 
