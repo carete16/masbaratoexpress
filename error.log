@@ -85,3 +85,4 @@
 {"level":"error","message":"❌ DeepScraper Error: Navigation timeout of 60000 ms exceeded","timestamp":"2026-02-08T02:17:41.762Z"}
 {"level":"error","message":"❌ DeepScraper Error: Navigation timeout of 60000 ms exceeded","timestamp":"2026-02-08T02:22:00.483Z"}
 {"level":"error","message":"❌ DeepScraper Error: Execution context was destroyed, most likely because of a navigation.","timestamp":"2026-02-08T02:27:45.165Z"}
+{"level":"error","message":"❌ DeepScraper Error: Navigation timeout of 60000 ms exceeded","timestamp":"2026-02-08T02:54:48.495Z"}
