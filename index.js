@@ -334,6 +334,7 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL requerida' });
+
   try {
     const start = Date.now();
     console.log(`[ANALYZE] 🔍 Procesando: ${url.substring(0, 60)}...`);
@@ -343,25 +344,54 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
     const store = LinkTransformer.detectarTienda(finalUrl);
     console.log(`[ANALYZE] URL transformada | Tienda: ${store}`);
 
-    // 2. SCRAPING con DeepScraper (intento 1)
     let scrapedData = null;
-    try {
-      console.log(`[ANALYZE] Intentando DeepScraper...`);
-      scrapedData = await DeepScraper.scrape(finalUrl);
-    } catch (deepErr) {
-      console.warn(`[ANALYZE] DeepScraper falló: ${deepErr.message}`);
+
+    // 2. ESTRATEGIA PROFESIONAL EN CASCADA
+
+    // 2.1 Amazon: Usar API Oficial (si está configurada)
+    if (finalUrl.includes('amazon.com')) {
+      try {
+        console.log(`[ANALYZE] Intentando Amazon Product Advertising API...`);
+        const AmazonAPI = require('./src/utils/AmazonAPI');
+        scrapedData = await AmazonAPI.getProductDetails(finalUrl);
+        if (scrapedData && scrapedData.title) {
+          console.log(`[ANALYZE] ✅ Amazon API exitosa`);
+        }
+      } catch (apiErr) {
+        console.warn(`[ANALYZE] Amazon API falló: ${apiErr.message}`);
+      }
     }
 
-    // 3. FALLBACK: BasicScraper si DeepScraper falla
+    // 2.2 FALLBACK: BasicScraper (Cheerio + Axios)
     if (!scrapedData || !scrapedData.title) {
-      console.log(`[ANALYZE] Usando BasicScraper como respaldo...`);
-      const BasicScraper = require('./src/utils/BasicScraper');
-      scrapedData = await BasicScraper.scrape(finalUrl);
+      try {
+        console.log(`[ANALYZE] Usando BasicScraper...`);
+        const BasicScraper = require('./src/utils/BasicScraper');
+        scrapedData = await BasicScraper.scrape(finalUrl);
+        if (scrapedData && scrapedData.title) {
+          console.log(`[ANALYZE] ✅ BasicScraper exitoso`);
+        }
+      } catch (basicErr) {
+        console.warn(`[ANALYZE] BasicScraper falló: ${basicErr.message}`);
+      }
     }
 
-    // 4. Si ambos fallan, modo manual
+    // 2.3 ÚLTIMO RECURSO: DeepScraper (solo si está disponible)
     if (!scrapedData || !scrapedData.title) {
-      console.warn(`[ANALYZE] Ambos scrapers fallaron. Modo manual.`);
+      try {
+        console.log(`[ANALYZE] Intentando DeepScraper (último recurso)...`);
+        scrapedData = await DeepScraper.scrape(finalUrl);
+        if (scrapedData && scrapedData.title) {
+          console.log(`[ANALYZE] ✅ DeepScraper exitoso`);
+        }
+      } catch (deepErr) {
+        console.warn(`[ANALYZE] DeepScraper falló: ${deepErr.message}`);
+      }
+    }
+
+    // 3. Si todos fallan, modo manual
+    if (!scrapedData || !scrapedData.title) {
+      console.warn(`[ANALYZE] Todos los métodos fallaron. Activando modo manual.`);
       return res.json({
         url: finalUrl,
         store,
@@ -374,7 +404,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       });
     }
 
-    // 5. Procesar datos obtenidos
+    // 4. Procesar datos obtenidos
     const result = {
       url: finalUrl,
       store,
@@ -386,7 +416,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       isManualNotice: false
     };
 
-    // Ajuste de categoría
+    // 5. Ajuste inteligente de categoría y peso
     const lowTitle = (result.title || '').toLowerCase();
     if (lowTitle.match(/laptop|macbook|monitor|tv|console|ps5|xbox|gpu/)) {
       result.categoria = 'Electrónica Premium';
@@ -394,6 +424,9 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
     } else if (lowTitle.match(/watch|reloj/)) {
       result.categoria = 'Relojes & Wearables';
       if (!result.weight) result.weight = 1;
+    } else if (lowTitle.match(/shoe|sneaker|nike|adidas|jordan/)) {
+      result.categoria = 'Lifestyle & Street';
+      if (!result.weight) result.weight = 3;
     }
 
     console.log(`[ANALYZE] ✅ Éxito en ${Date.now() - start}ms: ${result.title.substring(0, 30)}... $${result.price}`);

@@ -10,6 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "amazon-paapi": "^1.0.7",
     "axios": "^1.6.2",
     "better-sqlite3": "^12.6.2",
     "cheerio": "^1.0.0-rc.12",
