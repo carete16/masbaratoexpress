@@ -343,12 +343,25 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
     const store = LinkTransformer.detectarTienda(finalUrl);
     console.log(`[ANALYZE] URL transformada | Tienda: ${store}`);
 
-    // 2. SCRAPING ACTIVO con DeepScraper
-    console.log(`[ANALYZE] Iniciando DeepScraper...`);
-    let scrapedData = await DeepScraper.scrape(finalUrl);
+    // 2. SCRAPING con DeepScraper (intento 1)
+    let scrapedData = null;
+    try {
+      console.log(`[ANALYZE] Intentando DeepScraper...`);
+      scrapedData = await DeepScraper.scrape(finalUrl);
+    } catch (deepErr) {
+      console.warn(`[ANALYZE] DeepScraper falló: ${deepErr.message}`);
+    }
 
+    // 3. FALLBACK: BasicScraper si DeepScraper falla
     if (!scrapedData || !scrapedData.title) {
-      console.warn(`[ANALYZE] DeepScraper falló. Modo manual activado.`);
+      console.log(`[ANALYZE] Usando BasicScraper como respaldo...`);
+      const BasicScraper = require('./src/utils/BasicScraper');
+      scrapedData = await BasicScraper.scrape(finalUrl);
+    }
+
+    // 4. Si ambos fallan, modo manual
+    if (!scrapedData || !scrapedData.title) {
+      console.warn(`[ANALYZE] Ambos scrapers fallaron. Modo manual.`);
       return res.json({
         url: finalUrl,
         store,
@@ -361,7 +374,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       });
     }
 
-    // 3. Procesar datos
+    // 5. Procesar datos obtenidos
     const result = {
       url: finalUrl,
       store,
