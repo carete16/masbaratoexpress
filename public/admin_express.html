@@ -538,33 +538,36 @@
             btn.disabled = true;
 
             try {
-                // NORMALIZAR LINK (Llamada al backend)
+                // 1. ANALIZAR Y EXTRAER DATOS CON DEEPSCRAPER
                 const analysisRes = await axios.post(API_URL + '/admin/express/analyze', { url }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
                 const data = analysisRes.data;
+                console.log('[FRONTEND] Datos recibidos del análisis:', data);
 
-                // Crear el borrador en la DB
-                // Crear el borrador en la DB
-                // NOTA: Enviamos price: 0 para que el backend use el fallback seguro (0.01)
+                // 2. CREAR BORRADOR CON LOS DATOS EXTRAÍDOS
                 await axios.post(API_URL + '/admin/express/manual-post', {
                     url: data.url,
-                    price: 0,
-                    weight: 0,
-                    category: 'Lifestyle & Street',
-                    title: '',
-                    image: '',
+                    price: data.price || 0.01,        // ✅ Usar precio extraído
+                    weight: data.weight || 0,         // ✅ Usar peso extraído
+                    category: data.categoria || 'Lifestyle & Street',
+                    title: data.title || '',          // ✅ Usar título extraído
+                    image: data.image || '',          // ✅ Usar imagen extraída
                     store: data.store
                 }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }
                 });
 
-                // Éxito directo sin esperar respuesta compleja
+                // 3. NOTIFICAR ÉXITO
                 urlInput.value = '';
-                alert(`✅ ENLACE PROCESADO\nTienda: ${data.store}\n\nEl producto está ahora en PENDIENTES. Completa los datos manuales.`);
+                if (data.isManualNotice) {
+                    alert(`⚠️ MODO MANUAL ACTIVADO\nTienda: ${data.store}\n\nNo se pudieron extraer datos automáticamente.\nPor favor completa título, precio e imagen manualmente.`);
+                } else {
+                    alert(`✅ PRODUCTO EXTRAÍDO\nTítulo: ${data.title}\nPrecio: $${data.price} USD\n\nRevisa y ajusta los datos antes de publicar.`);
+                }
                 switchTab('pending');
-                loadData(); // Recargar la lista inmediatamente
+                loadData();
             } catch (e) {
                 console.error("DEBUG ERROR LINK:", e);
                 const serverMsg = e.response?.data?.error || "Error desconocido en el servidor";
