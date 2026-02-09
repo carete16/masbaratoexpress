@@ -329,18 +329,19 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 6.5.3 ANALIZAR LINK PARA POST MANUAL (ADMIN) - ULTRA FAST EDITION
+// 6.5.3 ANALIZAR LINK PARA POST MANUAL (ADMIN) - SHOTGUN STRATEGY (Anti-Block)
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL requerida' });
+
   try {
     const start = Date.now();
-    console.log(`[MANUAL-MODE] ⚡ Análisis rápido: ${url.substring(0, 60)}...`);
+    console.log(`[MANUAL-MODE] ⚡ Análisis Shotgun: ${url.substring(0, 60)}...`);
 
     const LinkTransformer = require('./src/utils/LinkTransformer');
     const cheerio = require('cheerio');
 
-    // 1. Normalizar
+    // 1. Normalizar Link
     const finalUrl = await LinkTransformer.transform(url);
     const store = LinkTransformer.detectarTienda(finalUrl);
 
@@ -355,116 +356,134 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       isManualNotice: true
     };
 
-    // 2. Scraping ULTRA-RÁPIDO (Amazon) - V2 ROBUSTA (Docker/Axios)
+    // 2. Scraping "SHOTGUN" (Estrategia Múltiple Automática Anti-Bloqueo)
     if (store === 'Amazon US' || finalUrl.includes('amazon.com')) {
-      try {
-        console.log(`[MANUAL-MODE] 🔍 Scraping Amazon (Axios+Cheerio v2)...`);
+      const strategies = [
+        { name: 'Desktop Direct', ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36', proxy: false },
+        { name: 'Mobile iPhone', ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1', proxy: false },
+        { name: 'Google Translate Tunnel', proxy: true } // El arma secreta
+      ];
 
-        // Headers de Navegador Real (Chrome 121) para evitar bloqueos
-        const response = await axios.get(finalUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Cache-Control': 'max-age=0'
-          },
-          timeout: 15000,
-          maxRedirects: 5
-        });
+      for (const strat of strategies) {
+        if (!result.isManualNotice) break; // Ya tenemos éxito, salir
 
-        const html = response.data;
-        const $ = cheerio.load(html);
+        try {
+          console.log(`[MANUAL-MODE] 🔫 Probando estrategia: ${strat.name}...`);
+          let html = '';
+          let currentUrl = finalUrl;
+          let requestConfig = {
+            timeout: 10000, // 10s por intento
+            maxRedirects: 5
+          };
 
-        // --- EXTRACCIÓN ROBUSTA ---
+          if (strat.proxy) {
+            // Truco: Usar Google Translate como Proxy gratuito
+            currentUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(finalUrl)}`;
+            // Google no necesita headers fake complejos
+            requestConfig.headers = {
+              'User-Agent': strat.ua || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            };
+          } else {
+            requestConfig.headers = {
+              'User-Agent': strat.ua,
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'Connection': 'keep-alive',
+              'Upgrade-Insecure-Requests': '1',
+              'Cache-Control': 'max-age=0',
+              'Sec-Fetch-Dest': 'document',
+              'Sec-Fetch-Site': 'none',
+              'Sec-Fetch-User': '?1'
+            };
+          }
 
-        // A. EXTRAER ASIN (Vital para imagen de respaldo)
-        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
-        const asin = asinMatch ? (asinMatch[1] || asinMatch[2]) : null;
+          const response = await axios.get(currentUrl, requestConfig);
+          html = response.data;
 
-        // B. TÍTULO
-        result.title = $('#productTitle').text().trim() ||
-          $('meta[name="title"]').attr('content') ||
-          $('title').text().split(':')[0].trim();
+          const $ = cheerio.load(html);
 
-        if (result.title) {
-          result.title = result.title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
-          if (result.title.length > 200) result.title = result.title.substring(0, 200) + '...';
-        }
+          // --- EXTRACTOR UNIVERSAL ---
 
-        // C. PRECIO (La parte difícil)
-        let price = 0;
+          // A. TÍTULO
+          let title = $('#productTitle').text().trim() ||
+            $('.product-title-word-break').text().trim() ||
+            $('meta[name="title"]').attr('content') ||
+            $('title').text().split(':')[0].trim();
 
-        // C.1. Selectores CSS
-        const priceSelectors = [
-          '.a-price .a-offscreen',
-          '#priceblock_ourprice',
-          '#priceblock_dealprice',
-          '.a-price-whole',
-          '#corePriceDisplay_desktop_feature_div .a-price-whole',
-          'span.a-price-whole'
-        ];
+          // Si usamos Google Translate, el título puede tener basura iframe, limpiamos
+          if (strat.proxy) {
+            const iframeTitle = $('iframe').contents().find('#productTitle').text();
+            if (iframeTitle) title = iframeTitle;
+            if (!title) title = $('title').text().replace(' - Google Translate', '').trim();
+          }
 
-        for (const sel of priceSelectors) {
-          const txt = $(sel).first().text().trim();
-          if (txt) {
-            const match = txt.match(/[\d,]+\.?\d*/);
-            if (match) {
-              price = parseFloat(match[0].replace(/,/g, ''));
-              if (price > 0) break;
+          if (title) {
+            title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
+            if (title.length > 200) title = title.substring(0, 200) + '...';
+            result.title = title;
+          }
+
+          // B. PRECIO
+          let price = 0;
+          const priceSelectors = [
+            '.a-price .a-offscreen', '#priceblock_ourprice', '#priceblock_dealprice', '.a-price-whole',
+            '#corePriceDisplay_desktop_feature_div .a-price-whole', 'span.a-price-whole',
+            '.priceToPay', '.apexPriceToPay'
+          ];
+
+          for (const sel of priceSelectors) {
+            let txt = $(sel).first().text().trim();
+            if (txt) {
+              const match = txt.match(/[\d,]+\.?\d*/);
+              if (match) {
+                price = parseFloat(match[0].replace(/,/g, ''));
+                if (price > 0) break;
+              }
             }
           }
-        }
 
-        // C.2. Fallback JSON/Regex (Si selectores fallan)
-        if (price === 0) {
-          const jsonRegex = /"priceAmount":([\d.]+)/;
-          const match = html.match(jsonRegex);
-          if (match && match[1]) {
-            price = parseFloat(match[1]);
+          if (price === 0 && !strat.proxy) {
+            const jsonRegex = /"priceAmount":([\d.]+)/;
+            const match = html.match(jsonRegex);
+            if (match && match[1]) price = parseFloat(match[1]);
           }
+
+          result.price = price;
+
+          // C. IMAGEN
+          let imgUrl = $('#landingImage').attr('data-old-hires') ||
+            $('#landingImage').attr('src') ||
+            $('#imgBlkFront').attr('src') ||
+            $('.a-dynamic-image').attr('data-a-dynamic-image');
+
+          if (imgUrl && imgUrl.startsWith('{')) {
+            try { imgUrl = Object.keys(JSON.parse(imgUrl))[0]; } catch (e) { }
+          }
+
+          if (imgUrl) {
+            result.image = imgUrl.replace(/\._[A-Z]{2,4}_[A-Z]{2,4}\d+_/, '');
+          }
+
+          // ÉXITO?
+          if (result.title && (result.price > 0 || result.image)) {
+            if (result.price > 0) result.isManualNotice = false;
+            console.log(`[MANUAL-MODE] ✅ ÉXITO con estrategia ${strat.name}!`);
+          }
+
+        } catch (err) {
+          console.warn(`[MANUAL-MODE] ⚠️ Falló ${strat.name}: ${err.message}`);
         }
+      } // Fin Bucle
 
-        result.price = price;
-
-        // D. IMAGEN (Prioridad: LandingImage > Selectores > ASIN)
-        let imgUrl = $('#landingImage').attr('data-old-hires') ||
-          $('#landingImage').attr('src') ||
-          $('#imgBlkFront').attr('src') ||
-          $('.a-dynamic-image').attr('data-a-dynamic-image');
-
-        // Si es JSON de imágenes dinámicas
-        if (imgUrl && imgUrl.startsWith('{')) {
-          try {
-            const keys = Object.keys(JSON.parse(imgUrl));
-            imgUrl = keys[0]; // La primera suele ser la más grande
-          } catch (e) { }
-        }
-
-        if (imgUrl) {
-          // Limpiar resize de Amazon (quitamos ._AC_SY400_.jpg)
-          result.image = imgUrl.replace(/\._[A-Z]{2,4}_[A-Z]{2,4}\d+_/, '');
-        }
-
-        // E. FALLBACK IMAGEN POR ASIN (INFALIBLE)
-        if ((!result.image || result.image.length < 10) && asin) {
-          // URL directa de alta calidad
+      // FALLBACK DE IMAGEN (ASIN)
+      if (!result.image) {
+        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
+        const asin = asinMatch ? (asinMatch[1] || asinMatch[2]) : null;
+        if (asin) {
           result.image = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&ASIN=${asin}&Format=_SL500_&ID=AsinImage&MarketPlace=US&ServiceVersion=20070822&WS=1`.replace('_SL500_', '_SL1000_');
         }
-
-        if (result.title || result.price > 0) {
-          result.isManualNotice = false; // Datos encontrados AUTOMÁTICAMENTE
-        }
-
-      } catch (err) {
-        console.error(`[MANUAL-MODE] ❌ Error scraping Amazon: ${err.message}`);
       }
+
     } else {
       console.log(`[MANUAL-MODE] ℹ️ Tienda no soportada para auto-scraping: ${store}`);
     }
@@ -474,7 +493,8 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
 
   } catch (e) {
     console.error("[MANUAL-MODE ERR]", e);
-    res.status(500).json({ error: `Error interno: ${e.message}` });
+    // Enviar lo que se tenga, aunque sea manual
+    res.status(200).json({ error: e.message, isManualNotice: true, url });
   }
 });
 
