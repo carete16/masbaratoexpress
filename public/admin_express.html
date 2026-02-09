@@ -401,7 +401,7 @@
             <div class="col-6 col-md-2">
                 <div class="premium-input-box">
                     <label class="text-primary">Dólar TRM+</label>
-                    <input type="number" id="globalDolarOp" value="3928" onchange="saveConfig(); refreshView()">
+                    <input type="number" id="globalDolarOp" value="3990" onchange="saveConfig(); refreshView()">
                 </div>
             </div>
             <div class="col-6 col-md-2">
@@ -547,14 +547,13 @@
 
                 // Crear el borrador en la DB
                 // Crear el borrador en la DB
-                // NOTA: Enviamos price: 0 para que el backend use el fallback seguro (0.01)
                 await axios.post(API_URL + '/admin/express/manual-post', {
                     url: data.url,
-                    price: 0,
-                    weight: 0,
-                    category: 'Lifestyle & Street',
-                    title: '',
-                    image: '',
+                    price: data.price || 0,
+                    weight: data.weight || 0,
+                    category: data.categoria || 'Lifestyle & Street',
+                    title: data.title || '',
+                    image: data.image || '',
                     store: data.store
                 }, {
                     headers: { 'x-admin-password': localStorage.getItem('adminPass') || 'Masbarato2026' }

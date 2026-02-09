@@ -335,27 +335,80 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   if (!url) return res.status(400).json({ error: 'URL requerida' });
   try {
     const start = Date.now();
-    console.log(`[MANUAL-MODE] 🔍 Normalizando link: ${url.substring(0, 60)}...`);
+    console.log(`[MANUAL-MODE] 🚀 Analizando: ${url.substring(0, 60)}...`);
 
     const LinkTransformer = require('./src/utils/LinkTransformer');
-    const finalUrl = await LinkTransformer.transform(url);
+    const LinkResolver = require('./src/utils/LinkResolver');
+    const cheerio = require('cheerio');
+
+    // 1. Limpiar y Resolver (Importante para Sovrn/Afiliados)
+    const normalizedUrl = await LinkTransformer.transform(url);
+    const finalUrl = await LinkResolver.resolve(normalizedUrl);
     const store = LinkTransformer.detectarTienda(finalUrl);
 
-    console.log(`[MANUAL-MODE] ✅ Listo en ${Date.now() - start}ms | Tienda: ${store}`);
-
-    res.json({
+    let result = {
       url: finalUrl,
       store,
       title: '',
       price: 0,
       image: '',
-      weight: 0,
+      weight: 3.5,
       categoria: 'Lifestyle & Street',
       isManualNotice: true
-    });
+    };
+
+    // 2. Intento de Extracción Ultra-Rápida (Cheerio)
+    try {
+      const axRes = await axios.get(finalUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8'
+        },
+        timeout: 10000
+      });
+
+      const $ = cheerio.load(axRes.data);
+
+      // EXTRAER TÍTULO
+      let rawTitle = $('#productTitle').text().trim() || $('title').text().trim();
+      if (rawTitle) {
+        // Limpieza básica
+        rawTitle = rawTitle.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').replace(/Amazon\.com/gi, '').trim();
+        const AIProcessor = require('./src/core/AIProcessor');
+        result.title = await AIProcessor.generateOptimizedTitle(rawTitle);
+      }
+
+      // EXTRAER PRECIO
+      const priceTxt = $('.a-price .a-offscreen').first().text() ||
+        $('#priceblock_ourprice').text() ||
+        $('.a-color-price').first().text();
+      if (priceTxt) {
+        const match = priceTxt.match(/[\d\.]+/);
+        if (match) result.price = parseFloat(match[0]);
+      }
+
+      // EXTRAER IMAGEN
+      result.image = $('#landingImage').attr('src') ||
+        $('#main-image').attr('src') ||
+        $('meta[property="og:image"]').attr('content');
+
+      if (result.image) {
+        result.image = result.image.replace(/\._[A-Z0-9_,]+\./g, '.'); // Limpiar Amazon
+      }
+
+      if (result.title || result.price > 0) {
+        result.isManualNotice = false;
+      }
+    } catch (err) {
+      console.warn(`[MANUAL-MODE] ⚠️ Cheerio falló o fue bloqueado, usando datos vacíos para manual.`);
+    }
+
+    console.log(`[MANUAL-MODE] ✅ Analizado en ${Date.now() - start}ms | Tienda: ${store} | Auto-data: ${!result.isManualNotice}`);
+
+    res.json(result);
   } catch (e) {
     console.error("[MANUAL-MODE ERR]", e);
-    // Devolvemos el error real para saber qué está pasando (regex, axios, etc)
     res.status(500).json({ error: `Error interno: ${e.message}` });
   }
 });
