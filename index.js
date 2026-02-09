@@ -423,29 +423,31 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
             result.title = title;
           }
 
-          // B. PRECIO (Blindado y Mejorado)
+          // B. PRECIO (Ultra-Robusto y Flexible)
           let price = 0;
 
           // Estrategia 1: Selectores CSS (Ordenados por probabilidad)
           const priceSelectors = [
             '.priceToPay .a-offscreen',
+            '.apexPriceToPay .a-offscreen',
             '#corePriceDisplay_mobile_feature_div .a-offscreen',
             '.a-price .a-offscreen',
             '#priceblock_ourprice',
             '#priceblock_dealprice',
-            '.a-price-whole',
-            'div[id*="corePrice"] span.a-offscreen',
-            '.apexPriceToPay span.a-offscreen',
+            '#price_inside_buybox',
+            '.priceToPay',
+            '.apexPriceToPay',
+            '#corePrice_desktop_feature_div .a-price-whole',
             '#twister-plus-price-data-price',
-            'input[id="attach-base-product-price"]' // Hidden input
+            'input[id="attach-base-product-price"]'
           ];
 
           for (const sel of priceSelectors) {
             const el = $(sel).first();
-            let txt = el.val() || el.text().trim(); // val() para inputs, text() para spans
+            let txt = el.val() || el.text().trim();
             if (txt) {
-              // Limpiar: "$24.99" -> "24.99" | "US$ 24.99" -> "24.99"
-              const match = txt.match(/[\d,]+\.?\d{2}/);
+              // Regex flexible: captura números con o sin decimales (ej: 24, 24.99, 1,500.00)
+              const match = txt.match(/[\d,]+(\.?\d+)?/);
               if (match) {
                 let p = parseFloat(match[0].replace(/,/g, ''));
                 if (p > 0) {
@@ -456,13 +458,22 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
             }
           }
 
-          // Estrategia 2: Búsqueda Profunda en JSON/Script (Si CSS falla)
+          // Estrategia 2: Recomponer Precio (Parte entera + Parte fraccionaria)
+          if (price === 0) {
+            const whole = $('.a-price-whole').first().text().replace(/[^0-9]/g, '');
+            const fraction = $('.a-price-fraction').first().text().replace(/[^0-9]/g, '');
+            if (whole) {
+              price = parseFloat(whole + '.' + (fraction || '00'));
+            }
+          }
+
+          // Estrategia 3: Búsqueda Profunda en JSON/Script
           if (price === 0) {
             const patterns = [
-              /"priceAmount":([\d.]+)/,
-              /"buyingPrice":([\d.]+)/,
-              /"price":([\d.]+)/,
-              /"displayedPrice":([\d.]+)/,
+              /"priceAmount":\s*([\d.]+)/,
+              /"buyingPrice":\s*([\d.]+)/,
+              /"price":\s*([\d.]+)/,
+              /"displayedPrice":\s*([\d.]+)/,
               /priceToPay":\s*{\s*"amount":\s*([\d.]+)/,
               /value":\s*([\d.]+),\s*"currency":"USD"/
             ];
@@ -476,12 +487,10 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
             }
           }
 
-          // Estrategia 3: Fuerza Bruta (Buscar "$XX.XX" en el texto visible al inicio)
+          // Estrategia 4: Fuerza Bruta (Buscar "$XX.XX" o "$XX")
           if (price === 0) {
-            // Buscar en los primeros 15k caracteres para ahorrar CPU
-            const snippet = html.substring(0, 15000);
-            // Regex para buscar precios aislados con signo $
-            const rawMatch = snippet.match(/\$[\s]*([\d,]+\.\d{2})/);
+            const snippet = html.substring(0, 20000);
+            const rawMatch = snippet.match(/\$[\s]*([\d,]+(\.?\d+)?)/);
             if (rawMatch && rawMatch[1]) {
               price = parseFloat(rawMatch[1].replace(/,/g, ''));
             }
