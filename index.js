@@ -329,18 +329,18 @@ app.post('/api/admin/express/finalize', authMiddleware, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// 6.5.3 ANALIZAR LINK PARA POST MANUAL (ADMIN)
+// 6.5.3 ANALIZAR LINK PARA POST MANUAL (ADMIN) - ULTRA FAST EDITION
 app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL requerida' });
   try {
     const start = Date.now();
-    console.log(`[MANUAL-MODE] 🔍 Iniciando análisis profundo: ${url.substring(0, 60)}...`);
+    console.log(`[MANUAL-MODE] ⚡ Análisis rápido: ${url.substring(0, 60)}...`);
 
     const LinkTransformer = require('./src/utils/LinkTransformer');
-    const Validator = require('./src/core/Bot2_Explorer');
+    const cheerio = require('cheerio');
 
-    // 1. Normalizar link
+    // 1. Normalizar
     const finalUrl = await LinkTransformer.transform(url);
     const store = LinkTransformer.detectarTienda(finalUrl);
 
@@ -355,33 +355,104 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       isManualNotice: true
     };
 
-    // 2. Usar ValidatorBot (Puppeteer) para extracción confiable
-    try {
-      console.log(`[MANUAL-MODE] 🤖 Ejecutando ValidatorBot...`);
-      const validation = await Validator.validate({
-        sourceLink: finalUrl,
-        title: 'Producto Manual',
-        isManual: true
-      });
+    // 2. Scraping ULTRA-RÁPIDO (solo Amazon por ahora)
+    if (store === 'Amazon US' || finalUrl.includes('amazon.com')) {
+      try {
+        console.log(`[MANUAL-MODE] 🔍 Scraping Amazon...`);
+        const response = await axios.get(finalUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+          },
+          timeout: 15000,
+          maxRedirects: 5
+        });
 
-      if (validation.isValid) {
-        result.title = validation.title || '';
-        result.price = validation.realPrice || 0;
-        result.image = validation.image || '';
-        result.weight = validation.weight || 3.5;
-        result.categoria = validation.categoria || 'Lifestyle & Street';
-        result.isManualNotice = false;
-        console.log(`[MANUAL-MODE] ✅ Datos extraídos: ${result.title.substring(0, 40)}... | $${result.price}`);
-      } else {
-        console.warn(`[MANUAL-MODE] ⚠️ ValidatorBot no pudo extraer datos, modo manual requerido.`);
+        const $ = cheerio.load(response.data);
+
+        // TÍTULO - Múltiples selectores
+        let title = $('#productTitle').text().trim() ||
+          $('span[id="productTitle"]').text().trim() ||
+          $('h1.product-title').text().trim() ||
+          $('meta[name="title"]').attr('content') ||
+          $('title').text().split('|')[0].trim();
+
+        if (title) {
+          title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '')
+            .replace(/Amazon\.com/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+          // Optimizar con IA si es muy largo o tiene basura
+          if (title.length > 15) {
+            try {
+              const AIProcessor = require('./src/core/AIProcessor');
+              result.title = await AIProcessor.generateOptimizedTitle(title);
+            } catch (e) {
+              result.title = title.substring(0, 80); // Fallback
+            }
+          } else {
+            result.title = title;
+          }
+        }
+
+        // PRECIO - Múltiples selectores
+        let priceText = $('.a-price .a-offscreen').first().text() ||
+          $('#priceblock_ourprice').text() ||
+          $('#priceblock_dealprice').text() ||
+          $('.a-price-whole').first().text() ||
+          $('span[data-a-color="price"]').first().text() ||
+          $('.priceToPay .a-offscreen').text();
+
+        if (priceText) {
+          const match = priceText.match(/[\d,]+\.?\d*/);
+          if (match) {
+            result.price = parseFloat(match[0].replace(/,/g, ''));
+          }
+        }
+
+        // IMAGEN - Múltiples selectores
+        let imageUrl = $('#landingImage').attr('data-old-hires') ||
+          $('#landingImage').attr('src') ||
+          $('#imgBlkFront').attr('src') ||
+          $('#main-image').attr('src') ||
+          $('img[data-a-image-name="landingImage"]').attr('src') ||
+          $('meta[property="og:image"]').attr('content');
+
+        if (imageUrl) {
+          // Limpiar parámetros de tamaño de Amazon para obtener imagen grande
+          imageUrl = imageUrl.split('._')[0] + '.jpg';
+          result.image = imageUrl;
+        }
+
+        // ASIN para imagen de respaldo
+        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
+        if (asinMatch && !result.image) {
+          const asin = asinMatch[1] || asinMatch[2];
+          result.image = `https://images-na.ssl-images-amazon.com/images/I/${asin}.jpg`;
+        }
+
+        if (result.title && result.price > 0) {
+          result.isManualNotice = false;
+          console.log(`[MANUAL-MODE] ✅ Extraído: "${result.title.substring(0, 40)}..." | $${result.price}`);
+        } else {
+          console.warn(`[MANUAL-MODE] ⚠️ Datos parciales: título=${!!result.title}, precio=${result.price}`);
+        }
+
+      } catch (err) {
+        console.error(`[MANUAL-MODE] ❌ Error scraping: ${err.message}`);
       }
-    } catch (err) {
-      console.warn(`[MANUAL-MODE] ⚠️ Error en ValidatorBot: ${err.message}`);
+    } else {
+      console.log(`[MANUAL-MODE] ℹ️ Tienda no soportada para auto-scraping: ${store}`);
     }
 
-    console.log(`[MANUAL-MODE] ✅ Completado en ${Date.now() - start}ms | Tienda: ${store} | Auto-data: ${!result.isManualNotice}`);
-
+    console.log(`[MANUAL-MODE] ⚡ Completado en ${Date.now() - start}ms | Auto-data: ${!result.isManualNotice}`);
     res.json(result);
+
   } catch (e) {
     console.error("[MANUAL-MODE ERR]", e);
     res.status(500).json({ error: `Error interno: ${e.message}` });
