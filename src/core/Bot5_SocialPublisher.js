@@ -48,8 +48,16 @@ class SocialPublisher {
 
     async publishToInstagram(deal) {
         try {
-            // Instagram requiere 2 pasos: Subir contenedor y luego publicar
-            const caption = `🔥 ${deal.title}\n\n💰 Precio: $${deal.price_offer}\n\n🛒 Link en BIO o aquí: ${deal.link}\n\n#ofertas #instadeals #sale #usa`;
+            const priceFmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(deal.price_cop || 0);
+
+            const caption = `🔥 *OFERTA EXCLUSIVA* 🇨🇴\n\n` +
+                `📦 *Producto:* ${deal.title}\n` +
+                `💰 *Precio Final:* ${priceFmt}\n\n` +
+                `✅ *TODO INCLUIDO:* Envío + Impuestos.\n` +
+                `🚀 *ENTREGA:* 12-15 días.\n\n` +
+                `💳 *PAGOS:* Bancolombia (Gratis) / PayPal o MercadoPago (+10%).\n\n` +
+                `🛒 *COMPRA AQUÍ:* Enlace en el primer comentario o DM.\n\n` +
+                `#ofertascolombia #shoppingusa #masbarato #importados #envioscolombia`;
 
             // Paso 1: Crear contenedor de imagen
             const mediaUrl = `https://graph.facebook.com/v19.0/${this.igUserId}/media`;
