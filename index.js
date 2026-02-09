@@ -423,82 +423,66 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
             result.title = title;
           }
 
-          // B. PRECIO (Ultra-Robusto y Flexible)
+          // B. PRECIO (Sistema de 5 Niveles de Redundancia)
           let price = 0;
 
-          // Estrategia 1: Selectores CSS (Ordenados por probabilidad)
+          // Nivel 1: Selectores CSS dinámicos
           const priceSelectors = [
-            '.priceToPay .a-offscreen',
-            '.apexPriceToPay .a-offscreen',
-            '#corePriceDisplay_mobile_feature_div .a-offscreen',
-            '.a-price .a-offscreen',
-            '#priceblock_ourprice',
-            '#priceblock_dealprice',
-            '#price_inside_buybox',
-            '.priceToPay',
-            '.apexPriceToPay',
-            '#corePrice_desktop_feature_div .a-price-whole',
-            '#twister-plus-price-data-price',
-            'input[id="attach-base-product-price"]'
+            '.priceToPay .a-offscreen', '.apexPriceToPay .a-offscreen',
+            '#corePriceDisplay_mobile_feature_div .a-offscreen', '.a-price .a-offscreen',
+            '#priceblock_ourprice', '#priceblock_dealprice', '#price_inside_buybox',
+            '#twister-plus-price-data-price', 'input[id="attach-base-product-price"]'
           ];
 
           for (const sel of priceSelectors) {
             const el = $(sel).first();
             let txt = el.val() || el.text().trim();
             if (txt) {
-              // Regex flexible: captura números con o sin decimales (ej: 24, 24.99, 1,500.00)
               const match = txt.match(/[\d,]+(\.?\d+)?/);
               if (match) {
                 let p = parseFloat(match[0].replace(/,/g, ''));
-                if (p > 0) {
-                  price = p;
-                  break;
-                }
+                if (p > 0) { price = p; break; }
               }
             }
           }
 
-          // Estrategia 2: Recomponer Precio (Parte entera + Parte fraccionaria)
+          // Nivel 2: Composición manual (Entero + Fracción)
           if (price === 0) {
             const whole = $('.a-price-whole').first().text().replace(/[^0-9]/g, '');
             const fraction = $('.a-price-fraction').first().text().replace(/[^0-9]/g, '');
-            if (whole) {
-              price = parseFloat(whole + '.' + (fraction || '00'));
-            }
+            if (whole) price = parseFloat(whole + '.' + (fraction || '00'));
           }
 
-          // Estrategia 3: Búsqueda Profunda en JSON/Script
+          // Nivel 3: Búsqueda en Meta Tags (SEO)
+          if (price === 0) {
+            const metaP = $('meta[property="og:price:amount"]').attr('content') ||
+              $('meta[property="product:price:amount"]').attr('content');
+            if (metaP) price = parseFloat(metaP);
+          }
+
+          // Nivel 4: Análisis de bloques JSON/Script
           if (price === 0) {
             const patterns = [
-              /"priceAmount":\s*([\d.]+)/,
-              /"buyingPrice":\s*([\d.]+)/,
-              /"price":\s*([\d.]+)/,
-              /"displayedPrice":\s*([\d.]+)/,
-              /priceToPay":\s*{\s*"amount":\s*([\d.]+)/,
-              /value":\s*([\d.]+),\s*"currency":"USD"/
+              /"priceAmount":\s*([\d.]+)/, /"buyingPrice":\s*([\d.]+)/,
+              /"price":\s*([\d.]+)/, /"displayedPrice":\s*([\d.]+)/,
+              /priceToPay":\s*{\s*"amount":\s*([\d.]+)/
             ];
-
             for (const regex of patterns) {
               const match = html.match(regex);
-              if (match && match[1]) {
-                price = parseFloat(match[1]);
-                if (price > 0) break;
-              }
+              if (match && match[1]) { price = parseFloat(match[1]); if (price > 0) break; }
             }
           }
 
-          // Estrategia 4: Fuerza Bruta (Buscar "$XX.XX" o "$XX")
+          // Nivel 5: Fuerza Bruta ($XX.XX)
           if (price === 0) {
             const snippet = html.substring(0, 20000);
             const rawMatch = snippet.match(/\$[\s]*([\d,]+(\.?\d+)?)/);
-            if (rawMatch && rawMatch[1]) {
-              price = parseFloat(rawMatch[1].replace(/,/g, ''));
-            }
+            if (rawMatch && rawMatch[1]) price = parseFloat(rawMatch[1].replace(/,/g, ''));
           }
 
           result.price = price;
 
-          // C. IMAGEN
+          // C. IMAGEN (Blindaje Total)
           let imgUrl = $('#landingImage').attr('data-old-hires') ||
             $('#landingImage').attr('src') ||
             $('#imgBlkFront').attr('src') ||
@@ -512,7 +496,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
             result.image = imgUrl.replace(/\._[A-Z]{2,4}_[A-Z]{2,4}\d+_/, '');
           }
 
-          // ÉXITO?
+          // ÉXITO Y VALIDACIÓN
           if (result.title && (result.price > 0 || result.image)) {
             if (result.price > 0) result.isManualNotice = false;
             console.log(`[MANUAL-MODE] ✅ ÉXITO con estrategia ${strat.name}!`);
@@ -523,7 +507,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
         }
       } // Fin Bucle
 
-      // FALLBACK DE IMAGEN (ASIN)
+      // FALLBACK FINAL DE IMAGEN (ASIN)
       if (!result.image) {
         const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
         const asin = asinMatch ? (asinMatch[1] || asinMatch[2]) : null;
