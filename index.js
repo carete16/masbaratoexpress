@@ -181,50 +181,38 @@ app.post('/api/subscribe', async (req, res) => {
   }
 });
 
-// 2. REDIRECTOR INTELIGENTE (PÚBLICO)
+// 2. REDIRECTOR INTELIGENTE CON VISTA PREVIA (OG TAGS)
 app.get('/go/:id', (req, res) => {
   try {
-    const deal = db.prepare('SELECT link, title FROM published_deals WHERE id = ?').get(req.params.id);
-    if (deal && deal.link) {
+    const deal = db.prepare('SELECT link, original_link, title, image, price_cop FROM published_deals WHERE id = ?').get(req.params.id);
+    if (deal) {
       db.prepare("UPDATE published_deals SET clicks = clicks + 1 WHERE id = ?").run(req.params.id);
 
-      // Transformar el link en tiempo real usando el original si existe
-      LinkTransformer.transform(deal.original_link || deal.link).then(finalUrl => {
-        // SEGURIDAD: Nunca enviar a Slickdeals
-        if (finalUrl.includes('slickdeals.net')) {
-          console.log(`🔒 Intento de Resolución Profunda para: ${deal.title}`);
-          const LinkResolver = require('./src/utils/LinkResolver');
-          LinkResolver.resolve(finalUrl).then(resolved => {
-            if (resolved && !resolved.includes('slickdeals.net')) {
-              return res.redirect(resolved);
-            }
-            // Fallback final: Buscar en Amazon con nuestro tag
-            const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
-            const fallbackUrl = `https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`;
-            res.redirect(fallbackUrl);
-          }).catch(() => {
-            const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
-            const fallbackUrl = `https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`;
-            res.redirect(fallbackUrl);
-          });
-          return;
-        }
+      const finalUrl = deal.original_link || deal.link;
+      const proxyImageUrl = `${req.protocol}://${req.get('host')}/api/proxy-image?url=${encodeURIComponent(deal.image)}`;
+      const priceFmt = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(deal.price_cop || 0);
 
-        // Asegurar protocolo
-        if (!finalUrl.startsWith('http')) {
-          finalUrl = 'https://' + finalUrl;
-        }
-        res.redirect(finalUrl);
-      }).catch(err => {
-        console.error('Transform error:', err);
-        // En caso de error, si el link original es slickdeals, usar fallback también
-        if (deal.link.includes('slickdeals.net')) {
-          const cleanTitle = deal.title.replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 50);
-          res.redirect(`https://www.amazon.com/s?k=${encodeURIComponent(cleanTitle)}&tag=${process.env.AMAZON_TAG || 'masbaratodeal-20'}`);
-        } else {
-          res.redirect(deal.link);
-        }
-      });
+      // Si es un bot de previsualización (WhatsApp, Facebook, etc), enviamos los Meta Tags
+      const ua = req.headers['user-agent'] || '';
+      if (ua.match(/whatsapp|facebookexternalhit|twitterbot|slackbot/i)) {
+        return res.send(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>${deal.title}</title>
+              <meta property="og:title" content="${deal.title}" />
+              <meta property="og:description" content="🔥 PRECIO FINAL COLOMBIA: ${priceFmt} - Masbarato Express" />
+              <meta property="og:image" content="${deal.image}" />
+              <meta property="og:type" content="product" />
+              <meta http-equiv="refresh" content="0;url=${finalUrl}" />
+            </head>
+            <body>Redirigiendo a la oferta...</body>
+          </html>
+        `);
+      }
+
+      // Para usuarios normales, redirección directa (para máxima velocidad)
+      res.redirect(finalUrl);
     } else {
       res.redirect('/?error=deal_not_found');
     }
