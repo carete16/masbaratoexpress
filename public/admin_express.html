@@ -1089,7 +1089,16 @@
             const origin = window.location.origin;
             const link = `${origin}/go/${id}`;
 
-            const text = `🔥 *OFERTA MASBARATO EXPRESS* 🇨🇴\n\n*Producto:* ${title}\n*Precio Final Colombia:* ${cop}\n*Precio Ref USA:* $${usd} USD\n\n✅ *Todo Incluido (Impuestos + Envío)*\n🚀 Recibe en 10-15 días\n\n🔗 *Ver y Comprar aquí:* ${link}\n\n_¡Pocas unidades disponibles!_`;
+            const text = `🔥 *OFERTA EXCLUSIVA - MASBARATO EXPRESS* 🇨🇴\n\n` +
+                `📦 *Producto:* ${title}\n` +
+                `💰 *Precio Final:* ${cop}\n` +
+                `🇺🇸 *Precio Ref USA:* $${usd} USD\n\n` +
+                `✅ *TODO INCLUIDO:* Impuestos + Envío Internacional.\n` +
+                `🚀 *ENTREGA:* 12-15 días en tu puerta.\n\n` +
+                `💳 *FORMAS DE PAGO:*\n` +
+                `Transferencia Nequi, Daviplata, Bancolombia o PSE.\n\n` +
+                `🔗 *Ver Detalles:* ${link}\n\n` +
+                `🔒 _Compra segura y sin sorpresas._`;
 
             navigator.clipboard.writeText(text).then(() => {
                 alert("📋 ¡Texto listo para pegar en WhatsApp!");

@@ -1102,7 +1102,16 @@
                                 PRODUCTO AGOTADO
                             </button>
                         ` : `
-                            <a href="https://wa.me/573012722472?text=${encodeURIComponent('Hola Masbarato Express 🇨🇴, me interesa este producto: ' + deal.title + ' | Precio: ' + currentPrice)}" target="_blank" class="btn-view" style="background: #075e54;">
+                            <a href="https://wa.me/573012722472?text=${encodeURIComponent(
+                                `🚀 *SOLICITUD DE COMPRA - MASBARATO EXPRESS* 🇨🇴\n\n` +
+                                `Hola, me interesa este producto:\n` +
+                                `📦 *Producto:* ${deal.title}\n` +
+                                `💰 *Precio:* ${currentPrice}\n\n` +
+                                `💳 *MÉTODOS DE PAGO:* \n` +
+                                `✅ Nequi, Daviplata, Bancolombia o PSE.\n\n` +
+                                `🔒 *SEGURIDAD:* Paga seguro y recibe en casa (12-15 días).\n` +
+                                `¿Cómo puedo realizar el pago?`
+                            )}" target="_blank" class="btn-view" style="background: #075e54;">
                                 PEDIR POR WHATSAPP <i class="fa-brands fa-whatsapp fa-xl"></i>
                             </a>
                         `}
