@@ -1,4 +1,4 @@
-// FORCE DEPLOY: 2026-02-06 12:15 PM - REVERSIÓN HISTÓRICA CONFIRMADA
+// FORCE DEPLOY: 2026-02-08 22:05 PM - FIX ANALYZE ENDPOINT WITH CHEERIO
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
