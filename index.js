@@ -356,18 +356,16 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
         if (!result.isManualNotice) break; // Ya tenemos éxito, salir
 
         try {
-          console.log(`[MANUAL-MODE] 🔫 Probando estrategia: ${strat.name}...`);
+          console.log(`[MANUAL-MODE] 🔫 Probando estrategia Amazon: ${strat.name}...`);
           let html = '';
           let currentUrl = finalUrl;
           let requestConfig = {
-            timeout: 10000, // 10s por intento
+            timeout: 10000,
             maxRedirects: 5
           };
 
           if (strat.proxy) {
-            // Truco: Usar Google Translate como Proxy gratuito
             currentUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(finalUrl)}`;
-            // Google no necesita headers fake complejos
             requestConfig.headers = {
               'User-Agent': strat.ua || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             };
@@ -376,21 +374,13 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
               'User-Agent': strat.ua,
               'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.9',
-              'Connection': 'keep-alive',
-              'Upgrade-Insecure-Requests': '1',
-              'Cache-Control': 'max-age=0',
-              'Sec-Fetch-Dest': 'document',
-              'Sec-Fetch-Site': 'none',
-              'Sec-Fetch-User': '?1'
+              'Connection': 'keep-alive'
             };
           }
 
           const response = await axios.get(currentUrl, requestConfig);
           html = response.data;
-
           const $ = cheerio.load(html);
-
-          // --- EXTRACTOR UNIVERSAL ---
 
           // A. TÍTULO
           let title = $('#productTitle').text().trim() ||
@@ -398,114 +388,70 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
             $('meta[name="title"]').attr('content') ||
             $('title').text().split(':')[0].trim();
 
-          // Si usamos Google Translate, el título puede tener basura iframe, limpiamos
-          if (strat.proxy) {
-            const iframeTitle = $('iframe').contents().find('#productTitle').text();
-            if (iframeTitle) title = iframeTitle;
-            if (!title) title = $('title').text().replace(' - Google Translate', '').trim();
-          }
-
           if (title) {
             title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
-            if (title.length > 200) title = title.substring(0, 200) + '...';
             result.title = title;
           }
 
-          // B. PRECIO (Sistema de 5 Niveles de Redundancia)
+          // B. PRECIO
           let price = 0;
-
-          // Nivel 1: Selectores CSS dinámicos
-          const priceSelectors = [
-            '.priceToPay .a-offscreen', '.apexPriceToPay .a-offscreen',
-            '#corePriceDisplay_mobile_feature_div .a-offscreen', '.a-price .a-offscreen',
-            '#priceblock_ourprice', '#priceblock_dealprice', '#price_inside_buybox',
-            '#twister-plus-price-data-price', 'input[id="attach-base-product-price"]'
-          ];
-
+          const priceSelectors = ['.priceToPay .a-offscreen', '.apexPriceToPay .a-offscreen', '.a-price .a-offscreen', '#priceblock_ourprice'];
           for (const sel of priceSelectors) {
-            const el = $(sel).first();
-            let txt = el.val() || el.text().trim();
+            let txt = $(sel).first().text().trim();
             if (txt) {
               const match = txt.match(/[\d,]+(\.?\d+)?/);
-              if (match) {
-                let p = parseFloat(match[0].replace(/,/g, ''));
-                if (p > 0) { price = p; break; }
-              }
+              if (match) { price = parseFloat(match[0].replace(/,/g, '')); if (price > 0) break; }
             }
           }
-
-          // Nivel 2: Composición manual (Entero + Fracción)
-          if (price === 0) {
-            const whole = $('.a-price-whole').first().text().replace(/[^0-9]/g, '');
-            const fraction = $('.a-price-fraction').first().text().replace(/[^0-9]/g, '');
-            if (whole) price = parseFloat(whole + '.' + (fraction || '00'));
-          }
-
-          // Nivel 3: Búsqueda en Meta Tags (SEO)
-          if (price === 0) {
-            const metaP = $('meta[property="og:price:amount"]').attr('content') ||
-              $('meta[property="product:price:amount"]').attr('content');
-            if (metaP) price = parseFloat(metaP);
-          }
-
-          // Nivel 4: Análisis de bloques JSON/Script
-          if (price === 0) {
-            const patterns = [
-              /"priceAmount":\s*([\d.]+)/, /"buyingPrice":\s*([\d.]+)/,
-              /"price":\s*([\d.]+)/, /"displayedPrice":\s*([\d.]+)/,
-              /priceToPay":\s*{\s*"amount":\s*([\d.]+)/
-            ];
-            for (const regex of patterns) {
-              const match = html.match(regex);
-              if (match && match[1]) { price = parseFloat(match[1]); if (price > 0) break; }
-            }
-          }
-
-          // Nivel 5: Fuerza Bruta ($XX.XX)
-          if (price === 0) {
-            const snippet = html.substring(0, 20000);
-            const rawMatch = snippet.match(/\$[\s]*([\d,]+(\.?\d+)?)/);
-            if (rawMatch && rawMatch[1]) price = parseFloat(rawMatch[1].replace(/,/g, ''));
-          }
-
           result.price = price;
 
-          // C. IMAGEN (Blindaje Total)
-          let imgUrl = $('#landingImage').attr('data-old-hires') ||
-            $('#landingImage').attr('src') ||
-            $('#imgBlkFront').attr('src') ||
-            $('.a-dynamic-image').attr('data-a-dynamic-image');
+          // C. IMAGEN
+          let imgUrl = $('#landingImage').attr('src') || $('#imgBlkFront').attr('src');
+          if (imgUrl) result.image = imgUrl;
 
-          if (imgUrl && imgUrl.startsWith('{')) {
-            try { imgUrl = Object.keys(JSON.parse(imgUrl))[0]; } catch (e) { }
-          }
-
-          if (imgUrl) {
-            result.image = imgUrl.replace(/\._[A-Z]{2,4}_[A-Z]{2,4}\d+_/, '');
-          }
-
-          // ÉXITO Y VALIDACIÓN
-          if (result.title && (result.price > 0 || result.image)) {
-            if (result.price > 0) result.isManualNotice = false;
-            console.log(`[MANUAL-MODE] ✅ ÉXITO con estrategia ${strat.name}!`);
-          }
-
-        } catch (err) {
-          console.warn(`[MANUAL-MODE] ⚠️ Falló ${strat.name}: ${err.message}`);
-        }
-      } // Fin Bucle
-
-      // FALLBACK FINAL DE IMAGEN (ASIN)
-      if (!result.image) {
-        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
-        const asin = asinMatch ? (asinMatch[1] || asinMatch[2]) : null;
-        if (asin) {
-          result.image = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&ASIN=${asin}&Format=_SL500_&ID=AsinImage&MarketPlace=US&ServiceVersion=20070822&WS=1`.replace('_SL500_', '_SL1000_');
-        }
+          if (result.title && result.price > 0) result.isManualNotice = false;
+        } catch (err) { }
       }
+    }
+    else if (store === 'eBay' || finalUrl.includes('ebay.com')) {
+      try {
+        console.log(`[MANUAL-MODE] 🔫 Analizando eBay Shotgun...`);
+        const response = await axios.get(finalUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' },
+          timeout: 8000
+        });
+        const $ = cheerio.load(response.data);
 
-    } else {
-      console.log(`[MANUAL-MODE] ℹ️ Tienda no soportada para auto-scraping: ${store}`);
+        result.title = $('.x-item-title__mainTitle span').first().text().trim() || $('#itemTitle').text().replace('Details about', '').trim();
+
+        let pText = $('.x-price-primary span').first().text().trim() || $('#prcIsum').text().trim();
+        if (pText) {
+          const pMatch = pText.match(/[\d,]+(\.?\d+)?/);
+          if (pMatch) result.price = parseFloat(pMatch[0].replace(/,/g, ''));
+        }
+
+        result.image = $('.ux-image-magnify__image--main').attr('src') || $('#icImg').attr('src');
+
+        if (result.title && result.price > 0) result.isManualNotice = false;
+      } catch (e) { console.warn("eBay Shotgun falló"); }
+    }
+
+    // 3. ULTIMO RECURSO: DeepScraper (Puppeteer) - Solo si lo anterior falló y no es una redirección infinita
+    if (result.isManualNotice) {
+      try {
+        console.log(`[MANUAL-MODE] 🕵️ Usando DeepScraper para: ${store}`);
+        const DeepScraper = require('./src/utils/DeepScraper');
+        const deepData = await DeepScraper.scrape(finalUrl);
+        if (deepData) {
+          if (deepData.title) result.title = deepData.title;
+          if (deepData.offerPrice) result.price = deepData.offerPrice;
+          if (deepData.image) result.image = deepData.image;
+          if (deepData.weight) result.weight = deepData.weight;
+          if (result.title && result.price > 0) result.isManualNotice = false;
+        }
+      } catch (e) {
+        console.error("DeepScraper en modo manual falló:", e.message);
+      }
     }
 
     console.log(`[MANUAL-MODE] ⚡ Completado en ${Date.now() - start}ms | Auto-data: ${!result.isManualNotice}`);
