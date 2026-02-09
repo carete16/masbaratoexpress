@@ -1,4 +1,4 @@
-// FORCE DEPLOY: 2026-02-08 22:05 PM - FIX ANALYZE ENDPOINT WITH CHEERIO
+// FORCE DEPLOY: 2026-02-06 12:15 PM - REVERSIÓN HISTÓRICA CONFIRMADA
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -129,8 +129,8 @@ app.get('/api/admin/diagnostics', authMiddleware, async (req, res) => {
     database: { status: 'OK', details: 'Conectada (SQLite)' },
     env: {
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
-      DEEPSEEK_KEY: process.env.DEEPSEEK_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
-      RENDER_URL: process.env.RENDER_EXTERNAL_URL ? 'CONFIGURADA ✅' : 'USANDO LOCALHOST 🏠'
+      RENDER_URL: process.env.RENDER_EXTERNAL_URL ? 'CONFIGURADA ✅' : 'USANDO LOCALHOST 🏠',
+      SOVRN_KEY: process.env.SOVRN_API_KEY ? 'DETECTADA ✅' : 'FALTANTE ⚠️',
     },
     system: {
       uptime: Math.floor(process.uptime()),
@@ -335,56 +335,27 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
   if (!url) return res.status(400).json({ error: 'URL requerida' });
   try {
     const start = Date.now();
-    console.log(`[MANUAL-MODE] 🔍 Iniciando análisis profundo: ${url.substring(0, 60)}...`);
+    console.log(`[MANUAL-MODE] 🔍 Normalizando link: ${url.substring(0, 60)}...`);
 
     const LinkTransformer = require('./src/utils/LinkTransformer');
-    const Validator = require('./src/core/Bot2_Explorer');
-
-    // 1. Normalizar link
     const finalUrl = await LinkTransformer.transform(url);
     const store = LinkTransformer.detectarTienda(finalUrl);
 
-    let result = {
+    console.log(`[MANUAL-MODE] ✅ Listo en ${Date.now() - start}ms | Tienda: ${store}`);
+
+    res.json({
       url: finalUrl,
       store,
       title: '',
       price: 0,
       image: '',
-      weight: 3.5,
+      weight: 0,
       categoria: 'Lifestyle & Street',
       isManualNotice: true
-    };
-
-    // 2. Usar ValidatorBot (Puppeteer) para extracción confiable
-    try {
-      console.log(`[MANUAL-MODE] 🤖 Ejecutando ValidatorBot...`);
-      const validation = await Validator.validate({
-        sourceLink: finalUrl,
-        title: 'Producto Manual',
-        isManual: true
-      });
-
-      if (validation.isValid) {
-        result.title = validation.title || '';
-        result.price = validation.realPrice || 0;
-        result.image = validation.image || '';
-        result.weight = validation.weight || 3.5;
-        result.categoria = validation.categoria || 'Lifestyle & Street';
-        result.isManualNotice = false;
-        console.log(`[MANUAL-MODE] ✅ Datos extraídos: ${result.title.substring(0, 40)}... | $${result.price}`);
-      } else {
-        console.warn(`[MANUAL-MODE] ⚠️ ValidatorBot no pudo extraer datos, modo manual requerido.`);
-      }
-    } catch (err) {
-      console.warn(`[MANUAL-MODE] ⚠️ Error en ValidatorBot: ${err.message}`);
-    }
-
-    console.log(`[MANUAL-MODE] ✅ Completado en ${Date.now() - start}ms | Tienda: ${store} | Auto-data: ${!result.isManualNotice}`);
-
-    res.json(result);
+    });
   } catch (e) {
-    console.error("[MANUAL-MODE ERR]", e);
-    res.status(500).json({ error: `Error interno: ${e.message}` });
+    console.error("[MANUAL-MODE ERR]", e.message);
+    res.status(500).json({ error: "Error al procesar el enlace." });
   }
 });
 
@@ -599,18 +570,6 @@ app.post('/api/admin/express/optimize-title', authMiddleware, async (req, res) =
     const AIProcessor = require('./src/core/AIProcessor');
     const optimized = await AIProcessor.generateOptimizedTitle(title);
     res.json({ success: true, optimized });
-  } catch (e) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
-
-// 7.6 OPTIMIZAR TODO (TÍTULO + DESC + SPECS) CON IA (ADMIN)
-app.post('/api/admin/express/optimize-all', authMiddleware, async (req, res) => {
-  const { title } = req.body;
-  try {
-    const AIProcessor = require('./src/core/AIProcessor');
-    const content = await AIProcessor.generateEnhancedContent(title);
-    res.json({ success: true, content });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
