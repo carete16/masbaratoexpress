@@ -423,29 +423,68 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
             result.title = title;
           }
 
-          // B. PRECIO
+          // B. PRECIO (Blindado y Mejorado)
           let price = 0;
+
+          // Estrategia 1: Selectores CSS (Ordenados por probabilidad)
           const priceSelectors = [
-            '.a-price .a-offscreen', '#priceblock_ourprice', '#priceblock_dealprice', '.a-price-whole',
-            '#corePriceDisplay_desktop_feature_div .a-price-whole', 'span.a-price-whole',
-            '.priceToPay', '.apexPriceToPay'
+            '.priceToPay .a-offscreen',
+            '#corePriceDisplay_mobile_feature_div .a-offscreen',
+            '.a-price .a-offscreen',
+            '#priceblock_ourprice',
+            '#priceblock_dealprice',
+            '.a-price-whole',
+            'div[id*="corePrice"] span.a-offscreen',
+            '.apexPriceToPay span.a-offscreen',
+            '#twister-plus-price-data-price',
+            'input[id="attach-base-product-price"]' // Hidden input
           ];
 
           for (const sel of priceSelectors) {
-            let txt = $(sel).first().text().trim();
+            const el = $(sel).first();
+            let txt = el.val() || el.text().trim(); // val() para inputs, text() para spans
             if (txt) {
-              const match = txt.match(/[\d,]+\.?\d*/);
+              // Limpiar: "$24.99" -> "24.99" | "US$ 24.99" -> "24.99"
+              const match = txt.match(/[\d,]+\.?\d{2}/);
               if (match) {
-                price = parseFloat(match[0].replace(/,/g, ''));
+                let p = parseFloat(match[0].replace(/,/g, ''));
+                if (p > 0) {
+                  price = p;
+                  break;
+                }
+              }
+            }
+          }
+
+          // Estrategia 2: Búsqueda Profunda en JSON/Script (Si CSS falla)
+          if (price === 0) {
+            const patterns = [
+              /"priceAmount":([\d.]+)/,
+              /"buyingPrice":([\d.]+)/,
+              /"price":([\d.]+)/,
+              /"displayedPrice":([\d.]+)/,
+              /priceToPay":\s*{\s*"amount":\s*([\d.]+)/,
+              /value":\s*([\d.]+),\s*"currency":"USD"/
+            ];
+
+            for (const regex of patterns) {
+              const match = html.match(regex);
+              if (match && match[1]) {
+                price = parseFloat(match[1]);
                 if (price > 0) break;
               }
             }
           }
 
-          if (price === 0 && !strat.proxy) {
-            const jsonRegex = /"priceAmount":([\d.]+)/;
-            const match = html.match(jsonRegex);
-            if (match && match[1]) price = parseFloat(match[1]);
+          // Estrategia 3: Fuerza Bruta (Buscar "$XX.XX" en el texto visible al inicio)
+          if (price === 0) {
+            // Buscar en los primeros 15k caracteres para ahorrar CPU
+            const snippet = html.substring(0, 15000);
+            // Regex para buscar precios aislados con signo $
+            const rawMatch = snippet.match(/\$[\s]*([\d,]+\.\d{2})/);
+            if (rawMatch && rawMatch[1]) {
+              price = parseFloat(rawMatch[1].replace(/,/g, ''));
+            }
           }
 
           result.price = price;
