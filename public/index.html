@@ -1080,6 +1080,7 @@
                 card.className = `deal-card ${isExpired ? 'expired' : ''}`;
                 card.style.opacity = isExpired ? '0.7' : '1';
 
+                const productLink = window.location.origin + '/go/' + deal.id;
                 card.innerHTML = `
                     <div class="image-container" onclick='openZoom(${JSON.stringify(deal.image)}, ${JSON.stringify(deal.title)}, ${deal.gallery || "[]"})'>
                         ${isExpired ? '<div class="badge-cop" style="background:#64748b">AGOTADA</div>' : '<div class="badge-cop"><i class="fa-solid fa-check"></i> 🇨🇴 Todo Incluido</div>'}
@@ -1103,15 +1104,13 @@
                             </button>
                         ` : `
                             <a href="https://wa.me/573012722472?text=${encodeURIComponent(
-                                `🚀 *SOLICITUD DE COMPRA - MASBARATO EXPRESS* 🇨🇴\n\n` +
-                                `Hola, me interesa este producto:\n` +
-                                `📦 *Producto:* ${deal.title}\n` +
-                                `💰 *Precio:* ${currentPrice}\n\n` +
-                                `💳 *MÉTODOS DE PAGO:* \n` +
-                                `✅ Nequi, Daviplata, Bancolombia o PSE.\n\n` +
-                                `🔒 *SEGURIDAD:* Paga seguro y recibe en casa (12-15 días).\n` +
-                                `¿Cómo puedo realizar el pago?`
-                            )}" target="_blank" class="btn-view" style="background: #075e54;">
+                    `🚀 *INTERÉS EN PRODUCTO - MASBARATO EXPRESS* 🇨🇴\n\n` +
+                    `📦 *Producto:* ${deal.title}\n` +
+                    `💰 *Precio:* ${currentPrice}\n` +
+                    `🔗 *Enlace:* ${productLink}\n\n` +
+                    `💳 *MÉTODOS DE PAGO:* Nequi, Daviplata, Bancolombia o PSE.\n` +
+                    `¿Cómo realizo el pago?`
+                )}" target="_blank" class="btn-view" style="background: #075e54;">
                                 PEDIR POR WHATSAPP <i class="fa-brands fa-whatsapp fa-xl"></i>
                             </a>
                         `}
