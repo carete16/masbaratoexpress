@@ -355,96 +355,115 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       isManualNotice: true
     };
 
-    // 2. Scraping ULTRA-RÁPIDO (solo Amazon por ahora)
+    // 2. Scraping ULTRA-RÁPIDO (Amazon) - V2 ROBUSTA (Docker/Axios)
     if (store === 'Amazon US' || finalUrl.includes('amazon.com')) {
       try {
-        console.log(`[MANUAL-MODE] 🔍 Scraping Amazon...`);
+        console.log(`[MANUAL-MODE] 🔍 Scraping Amazon (Axios+Cheerio v2)...`);
+
+        // Headers de Navegador Real (Chrome 121) para evitar bloqueos
         const response = await axios.get(finalUrl, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
             'Accept-Language': 'en-US,en;q=0.9',
             'Accept-Encoding': 'gzip, deflate, br',
             'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0'
           },
           timeout: 15000,
           maxRedirects: 5
         });
 
-        const $ = cheerio.load(response.data);
+        const html = response.data;
+        const $ = cheerio.load(html);
 
-        // TÍTULO - Múltiples selectores
-        let title = $('#productTitle').text().trim() ||
-          $('span[id="productTitle"]').text().trim() ||
-          $('h1.product-title').text().trim() ||
+        // --- EXTRACCIÓN ROBUSTA ---
+
+        // A. EXTRAER ASIN (Vital para imagen de respaldo)
+        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
+        const asin = asinMatch ? (asinMatch[1] || asinMatch[2]) : null;
+
+        // B. TÍTULO
+        result.title = $('#productTitle').text().trim() ||
           $('meta[name="title"]').attr('content') ||
-          $('title').text().split('|')[0].trim();
+          $('title').text().split(':')[0].trim();
 
-        if (title) {
-          title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '')
-            .replace(/Amazon\.com/gi, '')
-            .replace(/\s+/g, ' ')
-            .trim();
+        if (result.title) {
+          result.title = result.title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
+          if (result.title.length > 200) result.title = result.title.substring(0, 200) + '...';
+        }
 
-          // Optimizar con IA si es muy largo o tiene basura
-          if (title.length > 15) {
-            try {
-              const AIProcessor = require('./src/core/AIProcessor');
-              result.title = await AIProcessor.generateOptimizedTitle(title);
-            } catch (e) {
-              result.title = title.substring(0, 80); // Fallback
+        // C. PRECIO (La parte difícil)
+        let price = 0;
+
+        // C.1. Selectores CSS
+        const priceSelectors = [
+          '.a-price .a-offscreen',
+          '#priceblock_ourprice',
+          '#priceblock_dealprice',
+          '.a-price-whole',
+          '#corePriceDisplay_desktop_feature_div .a-price-whole',
+          'span.a-price-whole'
+        ];
+
+        for (const sel of priceSelectors) {
+          const txt = $(sel).first().text().trim();
+          if (txt) {
+            const match = txt.match(/[\d,]+\.?\d*/);
+            if (match) {
+              price = parseFloat(match[0].replace(/,/g, ''));
+              if (price > 0) break;
             }
-          } else {
-            result.title = title;
           }
         }
 
-        // PRECIO - Múltiples selectores
-        let priceText = $('.a-price .a-offscreen').first().text() ||
-          $('#priceblock_ourprice').text() ||
-          $('#priceblock_dealprice').text() ||
-          $('.a-price-whole').first().text() ||
-          $('span[data-a-color="price"]').first().text() ||
-          $('.priceToPay .a-offscreen').text();
-
-        if (priceText) {
-          const match = priceText.match(/[\d,]+\.?\d*/);
-          if (match) {
-            result.price = parseFloat(match[0].replace(/,/g, ''));
+        // C.2. Fallback JSON/Regex (Si selectores fallan)
+        if (price === 0) {
+          const jsonRegex = /"priceAmount":([\d.]+)/;
+          const match = html.match(jsonRegex);
+          if (match && match[1]) {
+            price = parseFloat(match[1]);
           }
         }
 
-        // IMAGEN - Múltiples selectores
-        let imageUrl = $('#landingImage').attr('data-old-hires') ||
+        result.price = price;
+
+        // D. IMAGEN (Prioridad: LandingImage > Selectores > ASIN)
+        let imgUrl = $('#landingImage').attr('data-old-hires') ||
           $('#landingImage').attr('src') ||
           $('#imgBlkFront').attr('src') ||
-          $('#main-image').attr('src') ||
-          $('img[data-a-image-name="landingImage"]').attr('src') ||
-          $('meta[property="og:image"]').attr('content');
+          $('.a-dynamic-image').attr('data-a-dynamic-image');
 
-        if (imageUrl) {
-          // Limpiar parámetros de tamaño de Amazon para obtener imagen grande
-          imageUrl = imageUrl.split('._')[0] + '.jpg';
-          result.image = imageUrl;
+        // Si es JSON de imágenes dinámicas
+        if (imgUrl && imgUrl.startsWith('{')) {
+          try {
+            const keys = Object.keys(JSON.parse(imgUrl));
+            imgUrl = keys[0]; // La primera suele ser la más grande
+          } catch (e) { }
         }
 
-        // ASIN para imagen de respaldo
-        const asinMatch = finalUrl.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})/);
-        if (asinMatch && !result.image) {
-          const asin = asinMatch[1] || asinMatch[2];
-          result.image = `https://images-na.ssl-images-amazon.com/images/I/${asin}.jpg`;
+        if (imgUrl) {
+          // Limpiar resize de Amazon (quitamos ._AC_SY400_.jpg)
+          result.image = imgUrl.replace(/\._[A-Z]{2,4}_[A-Z]{2,4}\d+_/, '');
         }
 
-        if (result.title && result.price > 0) {
-          result.isManualNotice = false;
-          console.log(`[MANUAL-MODE] ✅ Extraído: "${result.title.substring(0, 40)}..." | $${result.price}`);
-        } else {
-          console.warn(`[MANUAL-MODE] ⚠️ Datos parciales: título=${!!result.title}, precio=${result.price}`);
+        // E. FALLBACK IMAGEN POR ASIN (INFALIBLE)
+        if ((!result.image || result.image.length < 10) && asin) {
+          // URL directa de alta calidad
+          result.image = `https://ws-na.amazon-adsystem.com/widgets/q?_encoding=UTF8&ASIN=${asin}&Format=_SL500_&ID=AsinImage&MarketPlace=US&ServiceVersion=20070822&WS=1`.replace('_SL500_', '_SL1000_');
+        }
+
+        if (result.title || result.price > 0) {
+          result.isManualNotice = false; // Datos encontrados AUTOMÁTICAMENTE
         }
 
       } catch (err) {
-        console.error(`[MANUAL-MODE] ❌ Error scraping: ${err.message}`);
+        console.error(`[MANUAL-MODE] ❌ Error scraping Amazon: ${err.message}`);
       }
     } else {
       console.log(`[MANUAL-MODE] ℹ️ Tienda no soportada para auto-scraping: ${store}`);
