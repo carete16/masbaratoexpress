@@ -327,14 +327,19 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
     console.log(`[MANUAL-MODE] ⚡ Análisis Shotgun: ${url.substring(0, 60)}...`);
 
     const LinkTransformer = require('./src/utils/LinkTransformer');
+    const LinkResolver = require('./src/utils/LinkResolver');
     const cheerio = require('cheerio');
 
-    // 1. Normalizar Link
-    const finalUrl = await LinkTransformer.transform(url);
-    const store = LinkTransformer.detectarTienda(finalUrl);
+    // 1. Resolver y Limpiar Link (ESENCIAL: Scraper debe ir a la tienda, no al afiliado)
+    const cleanUrl = await LinkResolver.resolve(url);
+    const finalUrl = await LinkTransformer.transform(cleanUrl);
+    const store = LinkTransformer.detectarTienda(cleanUrl);
+
+    console.log(`[MANUAL-MODE] Store: ${store} | Clean URL: ${cleanUrl.substring(0, 60)}...`);
 
     let result = {
-      url: finalUrl,
+      url: finalUrl, // URL con afiliado para la DB
+      cleanUrl: cleanUrl, // URL limpia para el scraper
       store,
       title: '',
       price: 0,
@@ -345,7 +350,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
     };
 
     // 2. Scraping "SHOTGUN" (Estrategia Múltiple Automática Anti-Bloqueo)
-    if (store === 'Amazon US' || finalUrl.includes('amazon.com')) {
+    if (store === 'Amazon US' || cleanUrl.includes('amazon.com')) {
       const strategies = [
         { name: 'Desktop Direct', ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36', proxy: false },
         { name: 'Mobile iPhone', ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1', proxy: false },
@@ -358,14 +363,14 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
         try {
           console.log(`[MANUAL-MODE] 🔫 Probando estrategia Amazon: ${strat.name}...`);
           let html = '';
-          let currentUrl = finalUrl;
+          let currentUrl = cleanUrl;
           let requestConfig = {
             timeout: 10000,
             maxRedirects: 5
           };
 
           if (strat.proxy) {
-            currentUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(finalUrl)}`;
+            currentUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(cleanUrl)}`;
             requestConfig.headers = {
               'User-Agent': strat.ua || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             };
@@ -413,10 +418,10 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
         } catch (err) { }
       }
     }
-    else if (store === 'eBay' || finalUrl.includes('ebay.com')) {
+    else if (store === 'eBay' || cleanUrl.includes('ebay.com')) {
       try {
         console.log(`[MANUAL-MODE] 🔫 Analizando eBay Shotgun...`);
-        const response = await axios.get(finalUrl, {
+        const response = await axios.get(cleanUrl, {
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' },
           timeout: 8000
         });
@@ -441,7 +446,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
       try {
         console.log(`[MANUAL-MODE] 🕵️ Usando DeepScraper para: ${store}`);
         const DeepScraper = require('./src/utils/DeepScraper');
-        const deepData = await DeepScraper.scrape(finalUrl);
+        const deepData = await DeepScraper.scrape(cleanUrl);
         if (deepData) {
           if (deepData.title) result.title = deepData.title;
           if (deepData.offerPrice) result.price = deepData.offerPrice;
