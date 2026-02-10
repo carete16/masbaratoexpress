@@ -233,8 +233,8 @@ app.get('/go/:id', (req, res) => {
             <head>
               <title>${deal.title}</title>
               <meta property="og:title" content="${deal.title}" />
-              <meta property="og:description" content="🔥 PRECIO FINAL COLOMBIA: ${priceFmt} - Masbarato Express" />
-              <meta property="og:image" content="${deal.image}" />
+              <meta property="og:description" content="Compra segura con Masbarato Express. Recibe en la puerta de tu casa en Colombia. Sin cargos ocultos." />
+              <meta property="og:image" content="${proxyImageUrl}" />
               <meta property="og:type" content="product" />
               <meta http-equiv="refresh" content="0;url=${finalUrl}" />
             </head>
