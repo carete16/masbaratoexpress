@@ -53,15 +53,29 @@ class LinkResolver {
             console.log(`[RESOLVER] 🌐 Intentando resolución HTTP para: ${url.substring(0, 50)}...`);
             const response = await axios.get(url, {
                 maxRedirects: 8,
-                timeout: 10000, // Un poco más de tiempo
+                timeout: 10000,
                 validateStatus: null,
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                    'Accept-Language': 'en-US,en;q=0.9',
                     'Referer': 'https://www.google.com/'
                 }
             });
+
+            // --- PROTECCIÓN CRÍTICA: DETECTAR PÁGINAS DE ERROR DE VIGLINK/SOVRN ---
+            const body = response.data && typeof response.data === 'string' ? response.data : '';
+            if (body.includes('invalid API key') || body.includes('Check your API key')) {
+                console.warn(`[RESOLVER] ⚠️ Error de API Key detectado en Viglink. Rescatando URL del parámetro 'u'...`);
+                try {
+                    const uObj = new URL(url);
+                    const realUrl = uObj.searchParams.get('u');
+                    if (realUrl) {
+                        const decoded = decodeURIComponent(realUrl);
+                        console.log(`[RESOLVER] ✅ URL rescatada del error: ${decoded.substring(0, 50)}...`);
+                        return await this.resolve(decoded);
+                    }
+                } catch (e) { }
+            }
 
             // Si hay un refresh header o meta redirect
             const refresh = response.headers['refresh'];

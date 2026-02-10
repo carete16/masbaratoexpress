@@ -21,7 +21,10 @@ app.use(express.json());
 // --- RUTINA DE AUTO-REPARACIÓN DE LINKS (SILENCIOSA) ---
 const autoRepairLinks = () => {
   const currentKey = process.env.SOVRN_API_KEY;
-  if (!currentKey || currentKey === 'tu_api_key_de_sovrn') return;
+  if (!currentKey || currentKey === 'tu_api_key_de_sovrn') {
+    console.warn("[SELF-HEALING] ⚠️ No se puede reparar: SOVRN_API_KEY no configurada.");
+    return;
+  }
 
   try {
     const deals = db.prepare("SELECT id, link FROM published_deals WHERE link LIKE '%viglink.com%' OR link LIKE '%sovrn.com%'").all();
@@ -30,17 +33,32 @@ const autoRepairLinks = () => {
     const updateStmt = db.prepare("UPDATE published_deals SET link = ? WHERE id = ?");
 
     deals.forEach(deal => {
-      if (deal.link.includes('key=') && !deal.link.includes(currentKey)) {
-        // Extraer la parte antes de la llave y después de la llave vieja para rearmar el link
+      try {
         const urlObj = new URL(deal.link);
-        urlObj.searchParams.set('key', currentKey);
-        updateStmt.run(urlObj.toString(), deal.id);
-        fixedCount++;
+        const oldKey = urlObj.searchParams.get('key');
+
+        if (oldKey && oldKey !== currentKey) {
+          urlObj.searchParams.set('key', currentKey);
+          updateStmt.run(urlObj.toString(), deal.id);
+          fixedCount++;
+        }
+      } catch (e) {
+        // Si el link está mal formado, intentamos limpieza manual
+        if (deal.link.includes('key=') && !deal.link.includes(currentKey)) {
+          const parts = deal.link.split('key=');
+          if (parts.length > 1) {
+            const afterKey = parts[1].split('&');
+            afterKey[0] = currentKey;
+            const newLink = parts[0] + 'key=' + afterKey.join('&');
+            updateStmt.run(newLink, deal.id);
+            fixedCount++;
+          }
+        }
       }
     });
 
     if (fixedCount > 0) {
-      console.log(`[SELF-HEALING] 🩹 Se han reparado automáticamente ${fixedCount} enlaces con la nueva API Key.`);
+      console.log(`[SELF-HEALING] 🩹 Se han reparado ${fixedCount} enlaces obsoletos con la clave: ${currentKey.substring(0, 5)}...`);
     }
   } catch (e) {
     console.error(`[SELF-HEALING] Error en reparación:`, e.message);
