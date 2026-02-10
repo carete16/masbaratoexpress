@@ -64,11 +64,17 @@ class LinkTransformer {
     async transform(url) {
         if (!url) return url;
 
+        // Claves que sabemos que están dando problemas (opcional)
+        const problematicKeys = ['8ea30700d20d43f0'];
+
         // 1. LIMPIEZA INICIAL: Resolvemos link corto si existe
         let resolvedUrl = url;
-        if (url.includes('bit.ly') || url.includes('t.co') || url.includes('tinyurl') || url.includes('amzn.to')) {
-            resolvedUrl = await this.resolverRedirect(url);
-        }
+        try {
+            if (url.includes('bit.ly') || url.includes('t.co') || url.includes('tinyurl') || url.includes('amzn.to') || url.includes('redirect.viglink.com')) {
+                const LinkResolver = require('./LinkResolver');
+                resolvedUrl = await LinkResolver.resolve(url);
+            }
+        } catch (e) { console.warn("[TRANSFORM] Falló resolución inicial"); }
 
         const lowUrl = resolvedUrl.toLowerCase();
 
@@ -80,13 +86,17 @@ class LinkTransformer {
         }
 
         // 3. TODO LO DEMÁS: Aplicar SOVRN (Viglink)
-        // Esto cubre eBay, Walmart, Newegg, Nike, Home Depot, etc.
-        if (this.tags.sovrn_key) {
+        // Solo si la clave no está en la lista negra y existe
+        if (this.tags.sovrn_key && !problematicKeys.includes(this.tags.sovrn_key)) {
             const clean = this.limpiarURL(resolvedUrl);
-            console.log(`[TRANSFORM] 💸 Aplicando Sovrn para: ${this.detectarTienda(clean)}`);
+
+            // Si el link ya es un redirect de viglink, no lo volvemos a envolver
+            if (clean.includes('redirect.viglink.com')) return clean;
+
             return `https://redirect.viglink.com?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(clean)}`;
         }
 
+        // Fallback: Devolver link directo si no hay monetización segura disponible
         return this.limpiarURL(resolvedUrl);
     }
 }

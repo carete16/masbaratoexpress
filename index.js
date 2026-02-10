@@ -407,61 +407,39 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
 
     // 2. Scraping "SHOTGUN" (Estrategia Múltiple Automática Anti-Bloqueo)
     if (store === 'Amazon US' || cleanUrl.includes('amazon.com')) {
+      // ... (estrategia Amazon existente)
       const strategies = [
         { name: 'Desktop Direct', ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36', proxy: false },
         { name: 'Mobile iPhone', ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1', proxy: false },
-        { name: 'Google Translate Tunnel', proxy: true } // El arma secreta
+        { name: 'Google Translate Tunnel', proxy: true }
       ];
 
       for (const strat of strategies) {
-        if (!result.isManualNotice) break; // Ya tenemos éxito, salir
-
+        if (!result.isManualNotice) break;
         try {
           console.log(`[MANUAL-MODE] 🔫 Probando estrategia Amazon: ${strat.name}...`);
           let html = '';
           let currentUrl = cleanUrl;
-          let requestConfig = {
-            timeout: 10000,
-            maxRedirects: 5
-          };
+          let requestConfig = { timeout: 10000, maxRedirects: 5 };
 
           if (strat.proxy) {
             currentUrl = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(cleanUrl)}`;
-            requestConfig.headers = {
-              'User-Agent': strat.ua || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            };
+            requestConfig.headers = { 'User-Agent': strat.ua || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
           } else {
-            requestConfig.headers = {
-              'User-Agent': strat.ua,
-              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.9',
-              'Connection': 'keep-alive'
-            };
+            requestConfig.headers = { 'User-Agent': strat.ua, 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' };
           }
 
           const response = await axios.get(currentUrl, requestConfig);
           html = response.data;
           const $ = cheerio.load(html);
 
-          // A. TÍTULO (Reforzado con RegEx)
-          let title = $('#productTitle').text().trim() ||
-            $('.product-title-word-break').text().trim() ||
-            $('meta[name="title"]').attr('content') ||
-            $('title').text().split(':')[0].trim();
-
-          if (!title || title.includes('Pardon Our Interruption') || title.includes('Robot Check')) {
-            const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-            if (titleMatch && titleMatch[1]) title = titleMatch[1].replace(' - Google Translate', '').split('|')[0].trim();
+          let title = $('#productTitle').text().trim() || $('.product-title-word-break').text().trim() || $('meta[name="title"]').attr('content') || $('title').text().split(':')[0].trim();
+          if (title && !title.includes('Pardon Our Interruption')) {
+            result.title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
           }
 
-          if (title && !title.includes('Pardon Our Interruption') && !title.includes('Robot Check')) {
-            title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
-            result.title = title;
-          }
-
-          // B. PRECIO
           let price = 0;
-          const priceSelectors = ['.priceToPay .a-offscreen', '.apexPriceToPay .a-offscreen', '.a-price .a-offscreen', '#priceblock_ourprice'];
+          const priceSelectors = ['.priceToPay .a-offscreen', '.apexPriceToPay .a-offscreen', '.a-price .a-offscreen'];
           for (const sel of priceSelectors) {
             let txt = $(sel).first().text().trim();
             if (txt) {
@@ -469,14 +447,8 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
               if (match) { price = parseFloat(match[0].replace(/,/g, '')); if (price > 0) break; }
             }
           }
-
-          if (price === 0) {
-            const rawPriceMatch = html.match(/\$[\s]*([\d,]+\.\d{2})/);
-            if (rawPriceMatch) price = parseFloat(rawPriceMatch[1].replace(/,/g, ''));
-          }
           result.price = price;
 
-          // C. IMAGEN
           let imgUrl = $('#landingImage').attr('src') || $('#imgBlkFront').attr('src');
           if (!imgUrl) {
             const imgMatch = html.match(/https:\/\/m.media-amazon.com\/images\/I\/[a-zA-Z0-9_-]+.jpg/);
@@ -486,36 +458,41 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
 
           if (result.title && result.price > 0) {
             result.isManualNotice = false;
-            console.log(`[MANUAL-MODE] ✅ ÉXITO con ${strat.name}!`);
             break;
           }
         } catch (err) { }
       }
     }
-    else if (store === 'eBay' || cleanUrl.includes('ebay.com')) {
+    else {
+      // ESTRATEGIA GENERAL (Nike, Newegg, Walmart, etc.)
       try {
-        console.log(`[MANUAL-MODE] 🔫 Analizando eBay Shotgun...`);
+        console.log(`[MANUAL-MODE] 🔫 Probando Estrategia General para ${store}...`);
         const response = await axios.get(cleanUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' },
-          timeout: 8000
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+          },
+          timeout: 10000
         });
         const $ = cheerio.load(response.data);
 
-        result.title = $('.x-item-title__mainTitle span').first().text().trim() || $('#itemTitle').text().replace('Details about', '').trim();
+        result.title = $('meta[property="og:title"]').attr('content') || $('h1').first().text().trim() || $('title').text().trim();
+        result.image = $('meta[property="og:image"]').attr('content') || $('img').first().attr('src');
 
-        let pText = $('.x-price-primary span').first().text().trim() || $('#prcIsum').text().trim();
-        if (pText) {
-          const pMatch = pText.match(/[\d,]+(\.?\d+)?/);
+        // Buscar precio en selectores comunes
+        const genPrices = $('meta[property="product:price:amount"]').attr('content') || $('meta[name="twitter:data1"]').attr('content') || $('.price').text() || $('[data-test="product-price"]').text();
+        if (genPrices) {
+          const pMatch = genPrices.match(/[\d,]+(\.?\d+)?/);
           if (pMatch) result.price = parseFloat(pMatch[0].replace(/,/g, ''));
         }
 
-        result.image = $('.ux-image-magnify__image--main').attr('src') || $('#icImg').attr('src');
-
         if (result.title && result.price > 0) result.isManualNotice = false;
-      } catch (e) { console.warn("eBay Shotgun falló"); }
+      } catch (e) {
+        console.warn(`[MANUAL-MODE] Escaneo general falló para ${store}`);
+      }
     }
 
-    // 3. ULTIMO RECURSO: DeepScraper (Puppeteer) - Solo si lo anterior falló y no es una redirección infinita
+    // 3. ULTIMO RECURSO: DeepScraper (Puppeteer)
     if (result.isManualNotice) {
       try {
         console.log(`[MANUAL-MODE] 🕵️ Usando DeepScraper para: ${store}`);
@@ -529,7 +506,7 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
           if (result.title && result.price > 0) result.isManualNotice = false;
         }
       } catch (e) {
-        console.error("DeepScraper en modo manual falló:", e.message);
+        console.error("DeepScraper falló:", e.message);
       }
     }
 
