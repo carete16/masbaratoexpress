@@ -1085,9 +1085,6 @@
         function copyToWA(id) {
             const title = document.getElementById(`title-${id}`).value;
             const cop = document.getElementById(`cop-${id}`).innerText;
-            const origin = window.location.origin;
-            const link = `${origin}/go/${id}`;
-
             const text = `\uD83D\uDD25 *OFERTA EXCLUSIVA - MASBARATO EXPRESS* \uD83C\uDDE8\uD83C\uDDF4\n\n` +
                 `\uD83D\uDCE6 *Producto:* ${title}\n` +
                 `\uD83D\uDCB0 *Precio Final:* ${cop}\n\n` +
@@ -1096,7 +1093,6 @@
                 `\uD83D\uDCB3 *FORMAS DE PAGO:*\n` +
                 `• Ahorro Bancolombia (Sin recargo).\n` +
                 `• PayPal o MercadoPago (+10% adicional).\n\n` +
-                `\uD83D\uDD0D *VER FOTO Y DETALLES AQUÍ:*\n${link}\n\n` +
                 `\uD83D\uDD12 _Compra segura y sin sorpresas._`;
 
             navigator.clipboard.writeText(text).then(() => {
