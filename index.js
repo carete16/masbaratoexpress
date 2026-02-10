@@ -407,7 +407,6 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
 
     // 2. Scraping "SHOTGUN" (Estrategia Múltiple Automática Anti-Bloqueo)
     if (store === 'Amazon US' || cleanUrl.includes('amazon.com')) {
-      // ... (estrategia Amazon existente)
       const strategies = [
         { name: 'Desktop Direct', ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36', proxy: false },
         { name: 'Mobile iPhone', ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1', proxy: false },
@@ -434,7 +433,8 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
           const $ = cheerio.load(html);
 
           let title = $('#productTitle').text().trim() || $('.product-title-word-break').text().trim() || $('meta[name="title"]').attr('content') || $('title').text().split(':')[0].trim();
-          if (title && !title.includes('Pardon Our Interruption')) {
+
+          if (title && !title.match(/Pardon Our Interruption|Robot Check|Security Check|Access Denied/i)) {
             result.title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
           }
 
@@ -463,6 +463,33 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
         } catch (err) { }
       }
     }
+    else if (store === 'eBay' || cleanUrl.includes('ebay.com')) {
+      try {
+        console.log(`[MANUAL-MODE] 🔫 Probando estrategia específica eBay...`);
+        const response = await axios.get(cleanUrl, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36' },
+          timeout: 10000
+        });
+        const $ = cheerio.load(response.data);
+
+        let title = $('.x-item-title__mainTitle span').first().text().trim() || $('#itemTitle').text().replace('Details about', '').trim();
+        if (title && !title.match(/Pardon Our Interruption|Security Check|Access Denied/i)) {
+          result.title = title;
+        }
+
+        let pText = $('.x-price-primary span').first().text().trim() || $('#prcIsum').text().trim();
+        if (pText) {
+          const pMatch = pText.match(/[\d,]+(\.?\d+)?/);
+          if (pMatch) result.price = parseFloat(pMatch[0].replace(/,/g, ''));
+        }
+
+        result.image = $('.ux-image-magnify__image--main').attr('src') || $('#icImg').attr('src');
+
+        if (result.title && result.price > 0) result.isManualNotice = false;
+      } catch (e) {
+        console.warn("[MANUAL-MODE] eBay Shotgun falló");
+      }
+    }
     else {
       // ESTRATEGIA GENERAL (Nike, Newegg, Walmart, etc.)
       try {
@@ -476,7 +503,11 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
         });
         const $ = cheerio.load(response.data);
 
-        result.title = $('meta[property="og:title"]').attr('content') || $('h1').first().text().trim() || $('title').text().trim();
+        let title = $('meta[property="og:title"]').attr('content') || $('h1').first().text().trim() || $('title').text().trim();
+        if (title && !title.match(/Pardon Our Interruption|Security Check|Access Denied/i)) {
+          result.title = title;
+        }
+
         result.image = $('meta[property="og:image"]').attr('content') || $('img').first().attr('src');
 
         // Buscar precio en selectores comunes

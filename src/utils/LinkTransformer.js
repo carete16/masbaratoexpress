@@ -8,8 +8,16 @@ const axios = require('axios');
 class LinkTransformer {
     constructor() {
         require('dotenv').config();
+
+        let skey = (process.env.SOVRN_API_KEY || '').trim();
+        // Bloqueo de claves muertas o de ejemplo
+        if (!skey || skey === 'tu_api_key_de_sovrn' || skey.includes('8ea30700d20d43f0')) {
+            console.warn("[MONETIZACIÓN] ⚠️ Clave de Sovrn inválida o bloqueada. Usando enlaces directos.");
+            skey = '';
+        }
+
         this.tags = {
-            sovrn_key: process.env.SOVRN_API_KEY || '',
+            sovrn_key: skey,
             sovrn_subid: process.env.SOVRN_SUBID || 'masbarato_deals',
             amazon: process.env.AMAZON_TAG || 'masbaratodeals-20',
         };
