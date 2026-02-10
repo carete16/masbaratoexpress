@@ -387,13 +387,18 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
           html = response.data;
           const $ = cheerio.load(html);
 
-          // A. TÍTULO
+          // A. TÍTULO (Reforzado con RegEx)
           let title = $('#productTitle').text().trim() ||
             $('.product-title-word-break').text().trim() ||
             $('meta[name="title"]').attr('content') ||
             $('title').text().split(':')[0].trim();
 
-          if (title) {
+          if (!title || title.includes('Pardon Our Interruption') || title.includes('Robot Check')) {
+            const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+            if (titleMatch && titleMatch[1]) title = titleMatch[1].replace(' - Google Translate', '').split('|')[0].trim();
+          }
+
+          if (title && !title.includes('Pardon Our Interruption') && !title.includes('Robot Check')) {
             title = title.replace(/^Amazon\.com\s*[:|-]?\s*/gi, '').trim();
             result.title = title;
           }
@@ -408,13 +413,26 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
               if (match) { price = parseFloat(match[0].replace(/,/g, '')); if (price > 0) break; }
             }
           }
+
+          if (price === 0) {
+            const rawPriceMatch = html.match(/\$[\s]*([\d,]+\.\d{2})/);
+            if (rawPriceMatch) price = parseFloat(rawPriceMatch[1].replace(/,/g, ''));
+          }
           result.price = price;
 
           // C. IMAGEN
           let imgUrl = $('#landingImage').attr('src') || $('#imgBlkFront').attr('src');
+          if (!imgUrl) {
+            const imgMatch = html.match(/https:\/\/m.media-amazon.com\/images\/I\/[a-zA-Z0-9_-]+.jpg/);
+            if (imgMatch) imgUrl = imgMatch[0];
+          }
           if (imgUrl) result.image = imgUrl;
 
-          if (result.title && result.price > 0) result.isManualNotice = false;
+          if (result.title && result.price > 0) {
+            result.isManualNotice = false;
+            console.log(`[MANUAL-MODE] ✅ ÉXITO con ${strat.name}!`);
+            break;
+          }
         } catch (err) { }
       }
     }
