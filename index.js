@@ -1,4 +1,4 @@
-// FORCE DEPLOY: 2026-02-08 22:05 PM - FIX ANALYZE ENDPOINT WITH CHEERIO
+// FORCE DEPLOY: 2026-02-09 19:40 PM - FIX ANALYZE FATAL ERROR AND LINKRESOLVER ROBUSTNESS
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -363,7 +363,13 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
     const cheerio = require('cheerio');
 
     // 1. Resolver y Limpiar Link (ESENCIAL: Scraper debe ir a la tienda, no al afiliado)
-    const cleanUrl = await LinkResolver.resolve(url);
+    let cleanUrl = url;
+    try {
+      cleanUrl = await LinkResolver.resolve(url) || url;
+    } catch (err) {
+      console.warn("[MANUAL-MODE] Falló resolución profunda, usando original:", err.message);
+    }
+
     const finalUrl = await LinkTransformer.transform(cleanUrl);
     const store = LinkTransformer.detectarTienda(cleanUrl);
 
@@ -513,9 +519,21 @@ app.post('/api/admin/express/analyze', authMiddleware, async (req, res) => {
     res.json(result);
 
   } catch (e) {
-    console.error("[MANUAL-MODE ERR]", e);
-    // Enviar lo que se tenga, aunque sea manual
-    res.status(200).json({ error: e.message, isManualNotice: true, url });
+    console.error("❌ [MANUAL-MODE CRIT] Error fatal en analyze:", e.stack || e.message);
+
+    // Evitar que la app se quede colgada: Reintentamos enviar lo básico para modo manual
+    if (!res.headersSent) {
+      res.status(200).json({
+        url: url, // Fallback al original
+        cleanUrl: url,
+        store: 'Desconocido',
+        title: '',
+        price: 0,
+        image: '',
+        isManualNotice: true,
+        error: e.message || "Error interno del servidor"
+      });
+    }
   }
 });
 
