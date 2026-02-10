@@ -18,6 +18,38 @@ app.use(express.json());
 
 
 
+// --- RUTINA DE AUTO-REPARACIÓN DE LINKS (SILENCIOSA) ---
+const autoRepairLinks = () => {
+  const currentKey = process.env.SOVRN_API_KEY;
+  if (!currentKey || currentKey === 'tu_api_key_de_sovrn') return;
+
+  try {
+    const deals = db.prepare("SELECT id, link FROM published_deals WHERE link LIKE '%viglink.com%' OR link LIKE '%sovrn.com%'").all();
+    let fixedCount = 0;
+
+    const updateStmt = db.prepare("UPDATE published_deals SET link = ? WHERE id = ?");
+
+    deals.forEach(deal => {
+      if (deal.link.includes('key=') && !deal.link.includes(currentKey)) {
+        // Extraer la parte antes de la llave y después de la llave vieja para rearmar el link
+        const urlObj = new URL(deal.link);
+        urlObj.searchParams.set('key', currentKey);
+        updateStmt.run(urlObj.toString(), deal.id);
+        fixedCount++;
+      }
+    });
+
+    if (fixedCount > 0) {
+      console.log(`[SELF-HEALING] 🩹 Se han reparado automáticamente ${fixedCount} enlaces con la nueva API Key.`);
+    }
+  } catch (e) {
+    console.error(`[SELF-HEALING] Error en reparación:`, e.message);
+  }
+};
+
+// Ejecutar reparación al iniciar
+autoRepairLinks();
+
 // --- STATUS PUBLICO ---
 app.get('/api/status', (req, res) => {
   try {
