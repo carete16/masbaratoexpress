@@ -10,9 +10,15 @@ class LinkResolver {
     async resolve(url) {
         if (!url) return null;
 
-        // Atajo: Si ya es un destino conocido, no dar vueltas
-        const directStores = ['amazon.com', 'ebay.com', 'walmart.com', 'bestbuy.com', 'target.com', 'newegg.com', 'bhphotovideo.com', 'homedepot.com'];
-        if (directStores.some(ds => url.includes(ds))) return url;
+        const lowUrl = url.toLowerCase();
+
+        // Atajo: Solo retornar si es un enlace DIRECTO a la tienda y NO un redirect
+        const isRedirect = lowUrl.includes('redirect') || lowUrl.includes('viglink') || lowUrl.includes('tkqlhce') || lowUrl.includes('anrdoezrs');
+        const directStores = ['amazon.com', 'ebay.com', 'walmart.com', 'bestbuy.com', 'target.com', 'nike.com', 'adidas.com'];
+
+        if (!isRedirect && directStores.some(ds => lowUrl.includes(ds) && !lowUrl.includes('?u=') && !lowUrl.includes('&u='))) {
+            return url;
+        }
 
         // 1. DESEMPAQUETADO DE PARÁMETROS (Sin peticiones HTTP)
         try {
