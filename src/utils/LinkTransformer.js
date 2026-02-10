@@ -40,6 +40,11 @@ class LinkTransformer {
         if (u.includes("nike.")) return "Nike";
         if (u.includes("adidas.")) return "Adidas";
         if (u.includes("target.")) return "Target";
+        if (u.includes("newegg.")) return "Newegg";
+        if (u.includes("homedepot.")) return "Home Depot";
+        if (u.includes("apple.com")) return "Apple";
+        if (u.includes("samsung.com")) return "Samsung";
+        if (u.includes("sephora.com")) return "Sephora";
         return "Tienda USA";
     }
 
@@ -59,44 +64,30 @@ class LinkTransformer {
     async transform(url) {
         if (!url) return url;
 
-        // 1. Detección de Tienda
-        const tiendaId = this.detectarTienda(url);
-
-        // 2. BYPASS TOTAL PARA TIENDAS DIRECTAS (MÁXIMA VELOCIDAD)
-        const isDirect = url.includes('amazon.com') || url.includes('walmart.com') || url.includes('bestbuy.com') || url.includes('nike.com') || url.includes('ebay.com');
-
-        if (isDirect) {
-            let final = url;
-            if (url.includes('amazon.com')) {
-                const asin = this.extraerASIN(url);
-                if (asin) final = `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
-                else final = this.limpiarURL(url);
-            } else {
-                final = this.limpiarURL(url);
-            }
-
-            // Si hay Sovrn, envolverlo (opcional según el usuario, pero usualmente se prefiere Sovrn para todo lo no-Amazon)
-            if (!url.includes('amazon.com') && this.tags.sovrn_key) {
-                return `https://redirect.viglink.com?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(final)}`;
-            }
-            return final;
+        // 1. LIMPIEZA INICIAL: Resolvemos link corto si existe
+        let resolvedUrl = url;
+        if (url.includes('bit.ly') || url.includes('t.co') || url.includes('tinyurl') || url.includes('amzn.to')) {
+            resolvedUrl = await this.resolverRedirect(url);
         }
 
-        // 3. Resolver redirecciones para links cortos (bitly, etc)
-        const urlFinal = await this.resolverRedirect(url);
-        const tiendaFinal = this.detectarTienda(urlFinal);
+        const lowUrl = resolvedUrl.toLowerCase();
 
-        if (tiendaFinal === "Amazon US") {
-            const asin = this.extraerASIN(urlFinal);
+        // 2. CASO AMAZON: Usar TAG directo (Máxima compatibilidad)
+        if (lowUrl.includes('amazon.com')) {
+            const asin = this.extraerASIN(resolvedUrl);
             if (asin) return `https://www.amazon.com/dp/${asin}/?tag=${this.tags.amazon}`;
+            return this.limpiarURL(resolvedUrl);
         }
 
+        // 3. TODO LO DEMÁS: Aplicar SOVRN (Viglink)
+        // Esto cubre eBay, Walmart, Newegg, Nike, Home Depot, etc.
         if (this.tags.sovrn_key) {
-            const limpia = this.limpiarURL(urlFinal);
-            return `https://redirect.viglink.com?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(limpia)}`;
+            const clean = this.limpiarURL(resolvedUrl);
+            console.log(`[TRANSFORM] 💸 Aplicando Sovrn para: ${this.detectarTienda(clean)}`);
+            return `https://redirect.viglink.com?key=${this.tags.sovrn_key}&subId=${this.tags.sovrn_subid}&u=${encodeURIComponent(clean)}`;
         }
 
-        return this.limpiarURL(urlFinal);
+        return this.limpiarURL(resolvedUrl);
     }
 }
 
